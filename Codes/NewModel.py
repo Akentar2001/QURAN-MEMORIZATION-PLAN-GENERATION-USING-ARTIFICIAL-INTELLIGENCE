@@ -10,7 +10,7 @@ import pickle
 # 1. Load Datasets
 # ========================
 # Load lessons dataset
-lessons_df = pd.read_csv('Students_Teacher 898.csv', encoding='utf-8-sig')
+lessons_df = pd.read_csv('cleaned_student_data.csv', encoding='utf-8-sig')
 lessons_df['date_of'] = pd.to_datetime(lessons_df['date_of'])
 
 # Load verses dataset
@@ -23,17 +23,17 @@ models = {}
 scalers = {}
 
 # Fix: Load models with explicit MSE definition
-models[2] = load_model('model_pillar_2.h5', custom_objects={'mse': MeanSquaredError()})  # New memorization
+models[1] = load_model('model_pillar_1.h5', custom_objects={'mse': MeanSquaredError()})  # New memorization
+models[2] = load_model('model_pillar_2.h5', custom_objects={'mse': MeanSquaredError()})  # Minor revision
 models[3] = load_model('model_pillar_3.h5', custom_objects={'mse': MeanSquaredError()})  # Major revision
-models[4] = load_model('model_pillar_4.h5', custom_objects={'mse': MeanSquaredError()})  # Minor revision
 
 # Load scalers
+with open('scaler_pillar_1.pkl', 'rb') as f:
+    scalers[1] = pickle.load(f)
 with open('scaler_pillar_2.pkl', 'rb') as f:
     scalers[2] = pickle.load(f)
 with open('scaler_pillar_3.pkl', 'rb') as f:
     scalers[3] = pickle.load(f)
-with open('scaler_pillar_4.pkl', 'rb') as f:
-    scalers[4] = pickle.load(f)
 
 # ========================
 # 3. Generate Plans for All Pillars
@@ -64,6 +64,15 @@ def generate_plan(student_id, pillar_id, target_letters):
     surah_ids = [verse['surah_id'].values[0] for verse in accumulated_verses]
     
     # Build output
+    if not accumulated_verses:
+        return {
+            "start_verse": None,
+            "end_verse": None,
+            "total_letters": accumulated_letters,
+            "verse_count": 0,
+            "surah_ids": []
+        }
+    
     return {
         "start_verse": accumulated_verses[0]['verse_id'].values[0],
         "end_verse": accumulated_verses[-1]['verse_id'].values[0],
@@ -81,7 +90,7 @@ for student_id in lessons_df['student_id'].unique():
     student_plan = {"student_id": student_id}
     
     # Generate plans for all 3 pillars
-    for pillar_id in [2, 3, 4]:  # 2=New, 3=Major, 4=Minor
+    for pillar_id in [1, 2, 3]:  # 1=New, 2=Minor, 3=Major
         student_data = lessons_df[(lessons_df['student_id'] == student_id) & 
                                  (lessons_df['pillar_id'] == pillar_id)]
         
@@ -108,7 +117,7 @@ output_rows = []
 
 for plan in all_plans:
     student_id = plan['student_id']
-    for pillar_id in [2, 3, 4]:
+    for pillar_id in [1, 2, 3]:
         if f"pillar_{pillar_id}" in plan:
             pillar_plan = plan[f"pillar_{pillar_id}"]
             output_rows.append({

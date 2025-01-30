@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""LSTM Model Training for Quran Memorization Plans (No Arabic Text Handling)"""
+"""LSTM Model Training for Quran Memorization Plans"""
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -10,7 +10,7 @@ import pickle
 # ========================
 # 1. Load Datasets
 # ========================
-lessons_df = pd.read_csv('Students_Teacher 898.csv', encoding='utf-8-sig')
+lessons_df = pd.read_csv('cleaned_student_data.csv', encoding='utf-8-sig')
 lessons_df['date_of'] = pd.to_datetime(lessons_df['date_of'])
 
 # ========================
@@ -69,21 +69,22 @@ def build_lstm_model(input_shape):
     return model
 
 # Preprocess for all pillars
-X_new, y_new, scaler_new = preprocess_data(lessons_df, 2)
+X_new, y_new, scaler_new = preprocess_data(lessons_df, 1)
+X_minor, y_minor, scaler_minor = preprocess_data(lessons_df, 2)
 X_major, y_major, scaler_major = preprocess_data(lessons_df, 3)
-X_minor, y_minor, scaler_minor = preprocess_data(lessons_df, 4)
+
 
 # Train models only if data exists
 models = {}
 if len(X_new) > 0:
-    models[2] = build_lstm_model((X_new.shape[1], X_new.shape[2]))
-    models[2].fit(X_new, y_new, epochs=50, batch_size=16, verbose=0)
+    models[1] = build_lstm_model((X_new.shape[1], X_new.shape[2]))
+    models[1].fit(X_new, y_new, epochs=50, batch_size=16, verbose=0)
+if len(X_minor) > 0:
+    models[2] = build_lstm_model((X_minor.shape[1], X_minor.shape[2]))
+    models[2].fit(X_minor, y_minor, epochs=50, batch_size=16, verbose=0)
 if len(X_major) > 0:
     models[3] = build_lstm_model((X_major.shape[1], X_major.shape[2]))
     models[3].fit(X_major, y_major, epochs=50, batch_size=16, verbose=0)
-if len(X_minor) > 0:
-    models[4] = build_lstm_model((X_minor.shape[1], X_minor.shape[2]))
-    models[4].fit(X_minor, y_minor, epochs=50, batch_size=16, verbose=0)
 
 # ========================
 # 4. Save Models & Scalers
