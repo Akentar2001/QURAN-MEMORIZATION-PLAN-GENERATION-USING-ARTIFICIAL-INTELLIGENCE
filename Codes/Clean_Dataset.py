@@ -4,14 +4,14 @@ import numpy as np
 def clean_student_entries(lessons_df, verses_df, surahs_df, max_invalid=7):
     """
     Clean the dataset by removing all recitations for students with:
-    - More than `max_invalid` invalid inputs (default: 5)
+    - More than `max_invalid` invalid inputs (default: 7)
     - Invalid inputs include: 
         1. Exceeding daily memorization limits (pages/letters)
         2. Illogical Surah jumps in new memorization
     """
     # Define thresholds (adjust based on your standards)
     MAX_PAGES_PER_DAY = 9  # Maximum realistic pages/day
-    MAX_LETTERS_PER_DAY = 3000  # ~300 letters/page * 5 pages
+    MAX_LETTERS_PER_DAY = 3000  # ~3000 letters/page * 9 pages
     
     # Merge lessons with verses to get Surah IDs
     lessons_df = pd.merge(
