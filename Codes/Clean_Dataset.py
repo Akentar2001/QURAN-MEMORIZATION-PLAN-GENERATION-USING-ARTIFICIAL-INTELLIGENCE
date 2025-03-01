@@ -1,18 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def clean_student_entries(lessons_df, verses_df, surahs_df, max_invalid=7):
-    """
-    Clean the dataset by removing all recitations for students with:
-    - More than `max_invalid` invalid inputs (default: 7)
-    - Invalid inputs include: 
-        1. Exceeding daily memorization limits (pages/letters)
-        2. Illogical Surah jumps in new memorization
-    """
-    # Define thresholds (adjust based on your standards)
-    MAX_PAGES_PER_DAY = 9  # Maximum realistic pages/day
-    MAX_LETTERS_PER_DAY = 3000  # ~3000 letters/page * 9 pages
-    
+def merge_df(lessons_df):
     # Merge lessons with verses to get Surah IDs
     lessons_df = pd.merge(
         lessons_df,
@@ -21,6 +10,19 @@ def clean_student_entries(lessons_df, verses_df, surahs_df, max_invalid=7):
         right_on='verse_id',
         how='left'
     )
+    return clean_student_entries(lessons_df, verses_df, surahs_df, 9, 3000, 2, max_invalid=3)
+
+def clean_student_entries(lessons_df, verses_df, surahs_df, max_pages, max_letters, pillar_id, max_invalid=7):
+    """
+    Clean the dataset by removing all recitations for students with:
+    - More than `max_invalid` invalid inputs (default: 7)
+    - Invalid inputs include: 
+        1. Exceeding daily memorization limits (pages/letters)
+        2. Illogical Surah jumps in new memorization
+    """
+    # Define thresholds (adjust based on your standards)
+    MAX_PAGES_PER_DAY = max_pages  # Maximum realistic pages/day
+    MAX_LETTERS_PER_DAY = max_letters  # ~3000 letters/page * 9 pages
     
     # Track invalid entries per student
     invalid_counts = {}  # Format: {student_id: count}
@@ -49,8 +51,8 @@ def clean_student_entries(lessons_df, verses_df, surahs_df, max_invalid=7):
         
         # Check for memorization volume violations
         volume_violations = group[
-            (group['calculated_pages_count'] > MAX_PAGES_PER_DAY) |
-            (group['calculated_letters_count'] > MAX_LETTERS_PER_DAY)
+            ((group['calculated_pages_count'] > MAX_PAGES_PER_DAY) & (group['pillar_id'] == pillar_id)) |
+            ((group['calculated_letters_count'] > MAX_LETTERS_PER_DAY) & (group['pillar_id'] == pillar_id))
         ]
         invalid += len(volume_violations)
         
@@ -75,7 +77,13 @@ verses_df = pd.read_excel('verses.xlsx')
 surahs_df = pd.read_excel('surahs.xlsx')
 
 # Clean the data
-cleaned_data = clean_student_entries(lessons_df, verses_df, surahs_df, max_invalid=5)
+cleaned_data = merge_df(lessons_df)
+cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 20, 15000, 2, max_invalid=0)
+
+cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 50, 30000, 4, max_invalid=0)
+
+cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 100, 55000, 3, max_invalid=0)
+
 
 # Update pillar_id values
 cleaned_data['pillar_id'] = cleaned_data['pillar_id'].replace({2: 1, 4: 2})
