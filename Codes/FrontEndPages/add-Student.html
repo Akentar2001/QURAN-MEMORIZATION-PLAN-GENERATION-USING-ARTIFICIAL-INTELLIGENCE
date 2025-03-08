@@ -33,7 +33,7 @@
 
         .form-section {
             border-radius: 8px;
-            border-top: 3px solid #4a90e2;
+            border-top: 4px solid #4a90e2;
             box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
             padding: 1rem;
             margin-bottom: 1rem;
@@ -44,6 +44,9 @@
             color: #4a90e2;
             margin-bottom: 0.8rem;
             font-weight: 500;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4a90e2; /**/
+            border-bottom-style: groove; /**/
         }
 
         .btn-primary {
@@ -76,12 +79,12 @@
             <form id="addStudentForm">
                 <!-- Personal Information Section -->
                 <div class="form-section">
-                    <h5 class="section-title"><i class="fas fa-user me-2"></i>المعلومات الشخصية</h5>
+                    <h5 class="section-title"><i class="fas fa-user ms-2"></i>المعلومات الشخصية</h5>
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2">
                             <label for="studentName" class="form-label">اسم الطالب</label>
                             <input type="text" class="form-control" id="studentName"
-                                placeholder="أدخل اسم الطالب بالكامل" required>
+                                placeholder="اسم الطالب كاملا" required>
                         </div>
                         <div class="col-md-3 mb-2">
                             <label for="studentAge" class="form-label">العمر</label>
@@ -91,7 +94,7 @@
                         <div class="col-md-3 mb-2">
                             <label for="studentGender" class="form-label">الجنس</label>
                             <select class="form-select" id="studentGender" required>
-                                <option value="" selected disabled>اختر</option>
+                                <option value="" selected disabled>اختر (ذكر / أنثى)</option>
                                 <option value="ذكر">ذكر</option>
                                 <option value="أنثى">أنثى</option>
                             </select>
@@ -99,7 +102,7 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-2">
+                        <div class="col-md-4 mb-2">
                             <label for="nationality" class="form-label">الجنسية</label>
                             <select class="form-select" id="nationality" required>
                                 <option value="" selected disabled>اختر الجنسية</option>
@@ -110,108 +113,61 @@
                                 <option value="أخرى">أخرى</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <label for="registrationDate" class="form-label">تاريخ التسجيل</label>
-                            <input type="date" class="form-control" id="registrationDate" required>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <label for="parentPhone" class="form-label">رقم هاتف ولي الأمر</label>
+                        <div class="col-md-4 mb-2">
+                            <label for="parentPhone" class="form-label">رقم جوال الطالب</label>
                             <input type="tel" class="form-control" id="parentPhone" placeholder="05xxxxxxxx"
                                 pattern="[0-9]{10}">
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label">أيام التسميع</label>
-                            <div class="d-flex flex-wrap gap-1">
-                                <button type="button" class="btn btn-sm btn-outline-secondary day-btn"
-                                    data-day="السبت">السبت</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary day-btn"
-                                    data-day="الأحد">الأحد</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary day-btn"
-                                    data-day="الاثنين">الاثنين</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary day-btn"
-                                    data-day="الثلاثاء">الثلاثاء</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary day-btn"
-                                    data-day="الأربعاء">الأربعاء</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary day-btn"
-                                    data-day="الخميس">الخميس</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary day-btn"
-                                    data-day="الجمعة">الجمعة</button>
-                            </div>
-                            <input type="hidden" id="selectedDays" name="selectedDays">
+                        <div class="col-md-4 mb-2">
+                            <label for="parentPhone" class="form-label">رقم جوال ولي أمر الطالب</label>
+                            <input type="tel" class="form-control" id="parentPhone" placeholder="05xxxxxxxx"
+                                pattern="[0-9]{10}">
                         </div>
                     </div>
                 </div>
 
-                <!-- Previous Memorization Section -->
                 <div class="form-section">
-                    <h5 class="section-title"><i class="fas fa-book-open me-2"></i>الحفظ السابق</h5>
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="hasMemorization"
-                                    id="hasMemorizationYes" value="yes">
-                                <label class="form-check-label" for="hasMemorizationYes">يحفظ سابقاً</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="hasMemorization"
-                                    id="hasMemorizationNo" value="no" checked>
-                                <label class="form-check-label" for="hasMemorizationNo">لا يحفظ</label>
-                            </div>
+                    <h5 class="section-title"><i class="fas fa-book-open ms-2"></i>الخطة</h5>
+                    
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">أيام التسميع</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            <!-- Days will be populated by JavaScript -->
                         </div>
+                        <input type="hidden" id="selectedDays" name="selectedDays">
                     </div>
 
-                    <div id="memorizationDetailsContainer" class="d-none">
+                    <div id="memorizationDetailsContainer" class="">
                         <div class="row mb-3">
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">من</label>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">اتجاه الحفظ</label>
                                 <div class="input-group">
-                                    <select class="form-select" id="fromSurah">
-                                        <option value="">اختر السورة</option>
-                                        <!-- Populated by JS -->
+                                    <select class="form-select" id="memDirection">
                                     </select>
-                                    <input type="number" class="form-control" id="fromVerse" placeholder="الآية"
-                                        min="1">
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label">إلى</label>
-                                <div class="input-group">
+                            <div class="col-md-8 mb-2">
+                                <label class="form-label">ابتداء من:</label>
+                                <div class="input-group gap-2">
                                     <select class="form-select" id="toSurah">
-                                        <option value="">اختر السورة</option>
-                                        <!-- Populated by JS -->
+                                        <option value="" selected disabled>اختر السورة</option>
                                     </select>
-                                    <input type="number" class="form-control" id="toVerse" placeholder="الآية" min="1">
+                                    <select class="form-select" id="toVerse">
+                                        <option value="" selected disabled>اختر الآية</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-12">
-                                <label class="form-label">مستوى الإتقان</label>
-                                <div class="d-flex gap-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="proficiencyLevel"
-                                            id="proficiencyExcellent" value="ممتاز">
-                                        <label class="form-check-label" for="proficiencyExcellent">ممتاز</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="proficiencyLevel"
-                                            id="proficiencyVeryGood" value="جيد جدا">
-                                        <label class="form-check-label" for="proficiencyVeryGood">جيد جدا</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="proficiencyLevel"
-                                            id="proficiencyGood" value="جيد">
-                                        <label class="form-check-label" for="proficiencyGood">جيد</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="proficiencyLevel"
-                                            id="proficiencyWeak" value="ضعيف">
-                                        <label class="form-check-label" for="proficiencyWeak">ضعيف</label>
-                                    </div>
+                    </div>
+
+                    <div id="RevDetailsContainer" class="">
+                        <div class="row mb-3">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">اتجاه المراجعة</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="revDirection">
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -220,25 +176,34 @@
 
                 <!-- Memorization Plan Section -->
                 <div class="form-section">
-                    <h5 class="section-title"><i class="fas fa-tasks me-2"></i>خطة الحفظ</h5>
+                    <h5 class="section-title"><i class="fas fa-tasks ms-2"></i>معايير الخطة (اختياري)</h5>
                     <div class="row mb-3">
                         <div class="col-md-4 mb-2">
-                            <label class="form-label">الحفظ الجديد (آيات)</label>
-                            <input type="number" class="form-control" id="newMemorizationAmount" min="1" max="20"
-                                placeholder="مثال: 5">
-                            <small class="text-muted">عدد الآيات اليومية للحفظ الجديد</small>
+                            <label class="form-label">الحفظ الجديد</label>
+                            <div class="input-group dropup">
+                                <select class="form-select" id="newMemorizationAmount">
+                                    <option value="" selected disabled>اختر كمية الحفظ</option>
+                                </select>
+                            </div>
+                            <small class="text-muted">كمية الحفظ اليومية</small>
                         </div>
                         <div class="col-md-4 mb-2">
-                            <label class="form-label">المراجعة الصغرى (صفحات)</label>
-                            <input type="number" class="form-control" id="smallRevisionAmount" min="1" max="10"
-                                placeholder="مثال: 2">
-                            <small class="text-muted">عدد الصفحات اليومية للمراجعة</small>
+                            <label class="form-label">المراجعة الصغرى</label>
+                            <div class="input-group">
+                                <select class="form-select" id="smallRevisionAmount">
+                                    <option value="" selected disabled>اختر كمية المراجعة</option>
+                                </select>
+                            </div>
+                            <small class="text-muted">كمية المراجعة اليومية</small>
                         </div>
                         <div class="col-md-4 mb-2">
-                            <label class="form-label">المراجعة الكبرى (صفحات)</label>
-                            <input type="number" class="form-control" id="largeRevisionAmount" min="1" max="20"
-                                placeholder="مثال: 5">
-                            <small class="text-muted">عدد الصفحات اليومية للمراجعة</small>
+                            <label class="form-label">المراجعة الكبرى</label>
+                            <div class="input-group">
+                                <select class="form-select" id="largeRevisionAmount">
+                                    <option value="" selected disabled>اختر كمية المراجعة</option>
+                                </select>
+                            </div>
+                            <small class="text-muted">كمية المراجعة اليومية</small>
                         </div>
                     </div>
 
@@ -432,129 +397,281 @@
                 });
             });
         }
+        // ... the days initialization and add default selection:
+const weekDays = [
+    { name: "الأحد", default: true },
+    { name: "الاثنين", default: true },
+    { name: "الثلاثاء", default: true },
+    { name: "الأربعاء", default: true },
+    { name: "الخميس", default: true },
+    { name: "الجمعة", default: false },
+    { name: "السبت", default: false }
+];
+// Add this after the weekDays array
+const memorizationDirections = [
+    { id: 'baqara-nas', name: 'من سورة البقرة إلى الناس', default: false },
+    { id: 'nas-baqara', name: 'من سورة الناس إلى البقرة', default: true }
+];
 
-        // Handle day selection buttons
-        function setupDaySelection() {
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    this.classList.toggle('selected-day');
-                    this.classList.toggle('btn-outline-secondary');
-                    this.classList.toggle('btn-primary');
-                    updateSelectedDays();
-                });
-            });
-        }
+const revisionDirections = [
+    { id: 'baqara-nas', name: 'من سورة البقرة إلى الناس', default: true },
+    { id: 'nas-baqara', name: 'من سورة الناس إلى البقرة', default: false }
+];
 
-        function updateSelectedDays() {
-            const selectedDays = Array.from(document.querySelectorAll('.day-btn.selected-day')).map(btn => btn.dataset.day);
-            document.getElementById('selectedDays').value = selectedDays.join(',');
-        }
-        // Form submission
-        function setupFormSubmission() {
-            document.getElementById('addStudentForm').addEventListener('submit', function (event) {
-                event.preventDefault();
+// Add after the revisionDirections array
+const newMemorizationOptions = [
+    "ثمن صفحة (حوالي سطران)",
+    "سدس صفحة (سطران ونصف)",
+    "خمس صفحة (ثلاثة أسطر)",
+    "ربع صفحة (أربعة أسطر)",
+    "ثلث صفحة (خمسة أسطر)",
+    "نصف صفحة (سبعة أسطر)",
+    "ثلثي صفحة (عشرة أسطر)",
+    "صفحة",
+    "صفحة وربع",
+    "صفحة ونصف",
+    "صفحة وثلثي صفحة",
+    "صفحتان",
+    "صفحتان ونصف",
+    "ثلاث صفحات",
+    "ثلاث صفحات ونصف",
+    "أربع صفحات",
+    "أربع صفحات ونصف",
+    "خمس صفحات",
+    "ست صفحات",
+    "سبع صفحات",
+    "ثمان صفحات",
+    "تسع صفحات",
+    "عشر صفحات"
+];
 
-                // Collect form data
-                const formData = {
-                    personalInfo: {
-                        name: document.getElementById('studentName').value,
-                        age: document.getElementById('studentAge').value,
-                        gender: document.getElementById('studentGender').value,
-                        nationality: document.getElementById('nationality').value,
-                        registrationDate: document.getElementById('registrationDate').value,
-                        parentPhone: document.getElementById('parentPhone').value,
-                        attendanceDays: document.getElementById('selectedDays').value
-                    },
-                    previousMemorization: {
-                        hasMemorization: document.querySelector('input[name="hasMemorization"]:checked').value,
-                        fromSurah: document.getElementById('fromSurah').value,
-                        fromVerse: document.getElementById('fromVerse').value,
-                        toSurah: document.getElementById('toSurah').value,
-                        toVerse: document.getElementById('toVerse').value,
-                        proficiencyLevel: document.querySelector('input[name="proficiencyLevel"]:checked')?.value || ''
-                    },
-                    memorizationPlan: {
-                        newMemorizationAmount: document.getElementById('newMemorizationAmount').value,
-                        smallRevisionAmount: document.getElementById('smallRevisionAmount').value,
-                        largeRevisionAmount: document.getElementById('largeRevisionAmount').value,
-                        notes: document.getElementById('notes').value
-                    }
-                };
+const smallRevisionOptions = [
+    "نصف صفحة",
+    "صفحة",
+    "صفحة ونصف",
+    "صفحتان",
+    "صفحتان ونصف",
+    "ثلاث صفحات",
+    "ثلاث صفحات ونصف",
+    "أربع صفحات",
+    "أربع صفحات ونصف",
+    "خمس صفحات",
+    "ست صفحات",
+    "سبع صفحات",
+    "ثمان صفحات",
+    "تسع صفحات",
+    "عشر صفحات",
+    "١٥ صفحة",
+    "٢٠ صفحة",
+    "٢٥ صفحة",
+    "٣٠ صفحة"
+];
 
-                // Show success toast
-                const successToast = new bootstrap.Toast(document.getElementById('successToast'));
-                successToast.show();
+const largeRevisionOptions = [
+    "صفحة",
+    "صفحتان",
+    "ثلاث صفحات",
+    "أربع صفحات",
+    "خمس صفحات",
+    "ست صفحات",
+    "سبع صفحات",
+    "ثمان صفحات",
+    "تسع صفحات",
+    "نصف جزء (عشر صفحات)",
+    "١١ صفحة",
+    "١٢ صفحة",
+    "١٣ صفحة",
+    "١٤ صفحة",
+    "١٥ صفحة",
+    "١٦ صفحة",
+    "١٧ صفحة",
+    "١٨ صفحة",
+    "١٩ صفحة",
+    "جزء (٢٠ صفحة)",
+    "٢٥ صفحة",
+    "جزء ونصف (٣٠ صفحة)",
+    "٣٥ صفحة",
+    "جزءان (٤٠ صفحة)",
+    "جزءان ونصف (٥٠ صفحة)",
+    "ثلاثة أجزاء (٦٠ صفحة)",
+    "أربعة أجزاء (٨٠ صفحة)",
+    "خمسة أجزاء (١٠٠ صفحة)",
+    "ستة أجزاء (١٢٠ صفحة)",
+    "سبعة أجزاء (١٤٠ صفحة)",
+    "ثمانية أجزاء (١٦٠ صفحة)",
+    "تسعة أجزاء (١٨٠ صفحة)",
+    "عشرة أجزاء (٢٠٠ صفحة)"
+];
 
-                // Here you would typically send the form data to a server
-                console.log("Form submitted successfully", formData);
-            });
-            // Save and add another button
-            document.getElementById('saveAndAddAnother').addEventListener('click', function () {
-                // Trigger form validation
-                if (!document.getElementById('addStudentForm').checkValidity()) {
-                    document.getElementById('addStudentForm').reportValidity();
-                    return;
-                }
+function setupDaySelection() {
+    const daysContainer = document.querySelector('.d-flex.flex-wrap.gap-1');
+    daysContainer.innerHTML = ''; // Clear existing buttons
 
-                // Show success notification
-                const successToast = new bootstrap.Toast(document.getElementById('successToast'));
-                successToast.show();
+    weekDays.forEach(day => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `btn btn-sm ${day.default ? 'btn-primary selected-day' : 'btn-outline-secondary'} day-btn`;
+        button.setAttribute('data-day', day.name);
+        button.textContent = day.name;
 
-                // Reset form
-                document.getElementById('addStudentForm').reset();
-                document.querySelectorAll('.day-btn.selected-day').forEach(btn => {
-                    btn.classList.remove('selected-day');
-                    btn.classList.remove('btn-primary');
-                    btn.classList.add('btn-outline-secondary');
-                });
-
-                // Hide memorization details if they were visible
-                document.getElementById('memorizationDetailsContainer').classList.add('d-none');
-
-                // Reset hidden fields
-                document.getElementById('selectedDays').value = '';
-            });
-        }
-        // Validate verse numbers based on selected Surah
-        function setupVerseValidation() {
-            const fromSurahSelect = document.getElementById('fromSurah');
-            const fromVerseInput = document.getElementById('fromVerse');
-            const toSurahSelect = document.getElementById('toSurah');
-            const toVerseInput = document.getElementById('toVerse');
-
-            fromSurahSelect.addEventListener('change', function () {
-                const selectedSurah = surahs.find(s => s.name === this.value);
-                if (selectedSurah) {
-                    fromVerseInput.max = selectedSurah.verses;
-                    fromVerseInput.placeholder = `الآية (1-${selectedSurah.verses})`;
-                }
-            });
-
-            toSurahSelect.addEventListener('change', function () {
-                const selectedSurah = surahs.find(s => s.name === this.value);
-                if (selectedSurah) {
-                    toVerseInput.max = selectedSurah.verses;
-                    toVerseInput.placeholder = `الآية (1-${selectedSurah.verses})`;
-                }
-            });
-        }
-        // Setup progress steps navigation
-        function setupProgressSteps() {
-            const steps = document.querySelectorAll('.row.mb-3.text-center .col-md-4 div');
-            const sections = document.querySelectorAll('.form-section');
-
-            // Set default date to today
-            document.getElementById('registrationDate').valueAsDate = new Date();
-        }
-        // Initialize everything when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function () {
-            populateSurahs();
-            setupMemorizationToggle();
-            setupDaySelection();
-            setupFormSubmission();
-            setupVerseValidation();
-            setupProgressSteps();
+        button.addEventListener('click', function() {
+            this.classList.toggle('selected-day');
+            this.classList.toggle('btn-outline-secondary');
+            this.classList.toggle('btn-primary');
+            updateSelectedDays();
         });
+
+        daysContainer.appendChild(button);
+    });
+    updateSelectedDays();
+}
+
+// Add this helper function
+function updateSelectedDays() {
+    const selectedDays = Array.from(document.querySelectorAll('.day-btn.selected-day'))
+        .map(btn => btn.dataset.day);
+    document.getElementById('selectedDays').value = selectedDays.join(',');
+}
+
+
+// Add this new function
+function setupMemorizationAmounts() {
+    const newMemSelect = document.getElementById('newMemorizationAmount');
+    const smallRevSelect = document.getElementById('smallRevisionAmount');
+    const largeRevSelect = document.getElementById('largeRevisionAmount');
+
+    // Clear and populate new memorization select
+    newMemSelect.innerHTML = '<option value="" selected disabled>اختر كمية الحفظ</option>';
+    newMemorizationOptions.forEach(option => {
+        const el = document.createElement('option');
+        el.value = option;
+        el.textContent = option;
+        newMemSelect.appendChild(el);
+    });
+
+    // Clear and populate small revision select
+    smallRevSelect.innerHTML = '<option value="" selected disabled>اختر كمية المراجعة</option>';
+    smallRevisionOptions.forEach(option => {
+        const el = document.createElement('option');
+        el.value = option;
+        el.textContent = option;
+        smallRevSelect.appendChild(el);
+    });
+
+    // Clear and populate large revision select
+    largeRevSelect.innerHTML = '<option value="" selected disabled>اختر كمية المراجعة</option>';
+    largeRevisionOptions.forEach(option => {
+        const el = document.createElement('option');
+        el.value = option;
+        el.textContent = option;
+        largeRevSelect.appendChild(el);
+    });
+}
+
+// Replace the populateSurahs function with this new function
+function setupDirectionSelectors() {
+    const memDirectionSelect = document.querySelector('#memorizationDetailsContainer select');
+    const revDirectionSelect = document.querySelector('#RevDetailsContainer select');
+
+    // Clear existing options
+    memDirectionSelect.innerHTML = '';
+    revDirectionSelect.innerHTML = '';
+
+    // Add memorization directions
+    memorizationDirections.forEach(direction => {
+        const option = document.createElement('option');
+        option.value = direction.id;
+        option.textContent = direction.name;
+        if (direction.default) option.selected = true;
+        memDirectionSelect.appendChild(option);
+    });
+
+    // Add revision directions
+    revisionDirections.forEach(direction => {
+        const option = document.createElement('option');
+        option.value = direction.id;
+        option.textContent = direction.name;
+        if (direction.default) option.selected = true;
+        revDirectionSelect.appendChild(option);
+    });
+}
+
+function setupSurahSelection() {
+    const toSurahSelect = document.getElementById('toSurah');
+    const toVerseSelect = document.getElementById('toVerse');
+
+    toSurahSelect.innerHTML = '<option value="" selected disabled>اختر السورة</option>';
+
+    surahs.forEach(surah => {
+        const option = document.createElement('option');
+        option.value = surah.name;
+        option.textContent = surah.name;
+        toSurahSelect.appendChild(option);
+    });
+
+    toSurahSelect.addEventListener('change', function() {
+        const selectedSurah = surahs.find(s => s.name === this.value);
+        if (selectedSurah) {
+            const verseSelect = document.createElement('select');
+            verseSelect.className = 'form-select';
+            verseSelect.id = 'toVerse';
+            
+            verseSelect.innerHTML = '<option value="" selected disabled>اختر الآية</option>';
+            for (let i = 1; i <= selectedSurah.verses; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `الآية ${i}`;
+                verseSelect.appendChild(option);
+            }
+
+            const oldVerseInput = document.getElementById('toVerse');
+            oldVerseInput.parentNode.replaceChild(verseSelect, oldVerseInput);
+        }
+    });
+}
+
+function setupFormSubmission() {
+    document.getElementById('addStudentForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const formData = {
+            personalInfo: {
+                name: document.getElementById('studentName').value,
+                age: document.getElementById('studentAge').value,
+                gender: document.getElementById('studentGender').value,
+                nationality: document.getElementById('nationality').value,
+                parentPhone: document.getElementById('parentPhone').value,
+                attendanceDays: document.getElementById('selectedDays').value
+            },
+            memorization: {
+                memorizationDirection: document.getElementById('memDirection').value,
+                revisionDirection: document.getElementById('revDirection').value,
+                toSurah: document.getElementById('toSurah').value,
+                toVerse: document.getElementById('toVerse').value
+            },
+            memorizationPlan: {
+                newMemorizationAmount: document.getElementById('newMemorizationAmount').value,
+                smallRevisionAmount: document.getElementById('smallRevisionAmount').value,
+                largeRevisionAmount: document.getElementById('largeRevisionAmount').value,
+                notes: document.getElementById('notes').value
+            }
+        };
+
+        const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+        successToast.show();
+
+        console.log("Form submitted successfully", formData);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    setupDirectionSelectors();
+    setupSurahSelection();
+    setupMemorizationToggle();
+    setupDaySelection();
+    setupMemorizationAmounts();
+    setupFormSubmission();
+});
     </script>
 </body>
 
