@@ -1,6 +1,6 @@
 class StudentManager {
     constructor() {
-        this.students = [];
+        this.students = this.generateSampleStudents(20);
         this.currentPage = 1;
         this.itemsPerPage = 10;
         this.initializeTooltips();
@@ -9,6 +9,28 @@ class StudentManager {
         this.bindPaginationEvents();
         this.bindStudentActionEvents();
         this.loadStudents();
+    }
+
+    generateSampleStudents(count) {
+        const students = [];
+        const evaluations = ['ممتاز', 'جيد جدًا', 'جيد', 'مقبول', 'ضعيف'];
+        const lastUpdates = ['2023-06-15', '2023-06-14', '2023-06-13', '2023-06-12', '2023-06-11'];
+
+        for (let i = 1; i <= count; i++) {
+            const parts = Math.floor(Math.random() * 30) + 1;
+            const percentage = ((parts / 30) * 100).toFixed(0);
+
+            students.push({
+                id: i,
+                name: `طالب ${i}`,
+                age: Math.floor(Math.random() * 5) + 12,
+                memorizedParts: `${parts} أجزاء`,
+                percentage: `${percentage}%`,
+                lastUpdate: lastUpdates[Math.floor(Math.random() * lastUpdates.length)],
+                evaluation: evaluations[Math.floor(Math.random() * evaluations.length)]
+            });
+        }
+        return students;
     }
 
     initializeTooltips() {
@@ -93,7 +115,6 @@ class StudentManager {
     }
 
     getStudentIdFromButton(element) {
-        // Navigate up to the row and get the student ID from the first cell
         const button = element.closest('button') || element;
         const row = button.closest('tr');
         return row.querySelector('td:first-child').textContent;
@@ -101,27 +122,54 @@ class StudentManager {
 
     loadStudents() {
         const spinner = document.querySelector('.loading-spinner');
+        const tbody = document.querySelector('tbody');
         if (spinner) spinner.style.display = 'block';
 
+        tbody.innerHTML = '';
 
-        const tableRows = document.querySelectorAll('tbody tr');
-
-        this.students = Array.from(tableRows).map(row => {
-            const cells = row.querySelectorAll('td');
-            return {
-                id: cells[0].textContent,
-                name: cells[1].textContent,
-                age: cells[2].textContent,
-                memorizedParts: cells[3].querySelector('.progress-info').textContent.split('(')[0].trim(),
-                percentage: cells[3].querySelector('.progress-info').textContent.split('(')[1].replace(')', ''),
-                lastUpdate: cells[4].textContent,
-                evaluation: cells[5].querySelector('.badge').textContent
-            };
+        this.students.forEach(student => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${student.id}</td>
+                <td>${student.name}</td>
+                <td>${student.age}</td>
+                <td>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar" style="width: ${student.percentage}"></div>
+                    </div>
+                    <small class="progress-info">${student.memorizedParts} (${student.percentage})</small>
+                </td>
+                <td>${student.lastUpdate}</td>
+                <td><span class="badge ${this.getEvaluationBadgeClass(student.evaluation)}">${student.evaluation}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary btn-view-details" data-bs-toggle="tooltip" title="عرض التفاصيل">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning btn-edit-student" data-bs-toggle="tooltip" title="تعديل">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger btn-delete-student" data-bs-toggle="tooltip" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
         });
 
         if (spinner) spinner.style.display = 'none';
-
         this.updateStats();
+        this.initializeTooltips();
+    }
+
+    getEvaluationBadgeClass(evaluation) {
+        switch (evaluation) {
+            case 'ممتاز': return 'bg-success';
+            case 'جيد جدًا': return 'bg-primary';
+            case 'جيد': return 'bg-warning text-dark';
+            case 'مقبول': return 'bg-info';
+            case 'ضعيف': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
     }
 
     updateStats() {
@@ -228,12 +276,11 @@ class StudentManager {
         const pageItems = document.querySelectorAll('.pagination .page-item');
         pageItems[pageNumber].classList.add('active');
 
-
         console.log(`Changed to page ${pageNumber}`);
     }
 
     viewStudentDetails(studentId) {
-        const student = this.students.find(s => s.id === studentId);
+        const student = this.students.find(s => s.id == studentId);
 
         if (!student) return;
 
@@ -293,7 +340,7 @@ class StudentManager {
             const row = document.querySelector(`tbody tr td:first-child:contains('${studentId}')`).closest('tr');
             if (row) row.remove();
 
-            this.students = this.students.filter(s => s.id !== studentId);
+            this.students = this.students.filter(s => s.id != studentId);
 
             this.updateStats();
         }
