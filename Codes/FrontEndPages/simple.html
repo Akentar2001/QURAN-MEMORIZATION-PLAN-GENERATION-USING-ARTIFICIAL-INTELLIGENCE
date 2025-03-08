@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>نظام متابعة حفظ القرآن</title>
+
+  <!-- Google Font: Tajawal -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link href="css/simple.css" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-book-quran ms-2"></i>
+        نظام متابعة حفظ القرآن
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" href="index.html"><i class="fas fa-home ms-1"></i> الرئيسية</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="simple.html"><i class="fas fa-users ms-1"></i> الطلاب</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="reports.html"><i class="fas fa-chart-bar ms-1"></i> التقارير</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="settings.html"><i class="fas fa-cog ms-1"></i> الإعدادات</a>
+          </li>
+        </ul>
+        <div class="d-flex">
+          <a href="#" class="btn btn-outline-primary">
+            <i class="fas fa-sign-out-alt ms-1"></i> تسجيل الخروج
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container py-4">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3 mb-md-0">
+        <div class="card stats-card">
+          <div class="card-body text-center">
+            <i class="fas fa-users fa-2x text-primary mb-2"></i>
+            <h5 class="card-title">إجمالي الطلاب</h5>
+            <h2 class="mb-0">25</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3 mb-md-0">
+        <div class="card stats-card">
+          <div class="card-body text-center">
+            <i class="fas fa-book-open fa-2x text-primary mb-2"></i>
+            <h5 class="card-title">متوسط الحفظ</h5>
+            <h2 class="mb-0">5.2 أجزاء</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3 mb-md-0">
+        <div class="card stats-card">
+          <div class="card-body text-center">
+            <i class="fas fa-medal fa-2x text-primary mb-2"></i>
+            <h5 class="card-title">تقييم ممتاز</h5>
+            <h2 class="mb-0">12 طالب</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card stats-card">
+          <div class="card-body text-center">
+            <i class="fas fa-calendar-check fa-2x text-primary mb-2"></i>
+            <h5 class="card-title">نسبة الحضور</h5>
+            <h2 class="mb-0">92%</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+      <div class="container-header">
+        <h3 class="text-primary m-0"><i class="fas fa-users ms-2"></i>قائمة الطلاب</h3>
+        <button id="addStudentBtn" class="btn btn-primary">
+          <i class="fas fa-plus ms-1"></i> إضافة طالب جديد
+        </button>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="row mb-3">
+        <div class="col-md-6 mb-3 mb-md-0">
+          <div class="search-container">
+            <input type="text" class="form-control" placeholder="البحث عن طالب...">
+            <i class="fas fa-search search-icon"></i>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3 mb-md-0">
+          <select class="form-select">
+            <option selected>مستوى التقييم</option>
+            <option>ممتاز</option>
+            <option>جيد جدًا</option>
+            <option>جيد</option>
+            <option>مقبول</option>
+            <option>ضعيف</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-sort ms-1"></i> ترتيب حسب
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">أعلى تقييم</a></li>
+              <li><a class="dropdown-item" href="#">الأكثر حفظًا</a></li>
+              <li><a class="dropdown-item" href="#">الأحدث</a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="#">إعادة ضبط</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">جاري التحميل...</span>
+        </div>
+        <p class="mt-2">جاري تحميل بيانات الطلاب...</p>
+      </div>
+
+      <!-- Students Table -->
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>اسم الطالب</th>
+              <th>العمر</th>
+              <th>الحفظ</th>
+              <th>آخر متابعة</th>
+              <th>التقييم</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>أحمد محمد</td>
+              <td>14</td>
+              <td>
+                <div class="progress" style="height: 5px;">
+                  <div class="progress-bar" style="width: 20%"></div>
+                </div>
+                <small class="progress-info">6 أجزاء (20%)</small>
+              </td>
+              <td>2023-06-15</td>
+              <td><span class="badge bg-success">ممتاز</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary btn-view-details" data-bs-toggle="tooltip"
+                  title="عرض التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning btn-edit-student" data-bs-toggle="tooltip" title="تعديل">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete-student" data-bs-toggle="tooltip" title="حذف">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>محمد علي</td>
+              <td>13</td>
+              <td>
+                <div class="progress" style="height: 5px;">
+                  <div class="progress-bar" style="width: 10%"></div>
+                </div>
+                <small class="progress-info">3 أجزاء (10%)</small>
+              </td>
+              <td>2023-06-14</td>
+              <td><span class="badge bg-warning text-dark">جيد</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary btn-view-details" data-bs-toggle="tooltip"
+                  title="عرض التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning btn-edit-student" data-bs-toggle="tooltip" title="تعديل">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete-student" data-bs-toggle="tooltip" title="حذف">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>عبدالله خالد</td>
+              <td>15</td>
+              <td>
+                <div class="progress" style="height: 5px;">
+                  <div class="progress-bar" style="width: 30%"></div>
+                </div>
+                <small class="progress-info">9 أجزاء (30%)</small>
+              </td>
+              <td>2023-06-13</td>
+              <td><span class="badge bg-success">ممتاز</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary btn-view-details" data-bs-toggle="tooltip"
+                  title="عرض التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning btn-edit-student" data-bs-toggle="tooltip" title="تعديل">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete-student" data-bs-toggle="tooltip" title="حذف">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>سعيد أحمد</td>
+              <td>12</td>
+              <td>
+                <div class="progress" style="height: 5px;">
+                  <div class="progress-bar" style="width: 7%"></div>
+                </div>
+                <small class="progress-info">2 أجزاء (7%)</small>
+              </td>
+              <td>2023-06-12</td>
+              <td><span class="badge bg-warning text-dark">جيد</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary btn-view-details" data-bs-toggle="tooltip"
+                  title="عرض التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning btn-edit-student" data-bs-toggle="tooltip" title="تعديل">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete-student" data-bs-toggle="tooltip" title="حذف">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>عمر محمد</td>
+              <td>14</td>
+              <td>
+                <div class="progress" style="height: 5px;">
+                  <div class="progress-bar" style="width: 17%"></div>
+                </div>
+                <small class="progress-info">5 أجزاء (17%)</small>
+              </td>
+              <td>2023-06-11</td>
+              <td><span class="badge bg-primary">جيد جدًا</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary btn-view-details" data-bs-toggle="tooltip"
+                  title="عرض التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning btn-edit-student" data-bs-toggle="tooltip" title="تعديل">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger btn-delete-student" data-bs-toggle="tooltip" title="حذف">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination">
+          <li class="page-item">
+            <a class="page-link" href="#" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="py-3">
+    <div class="container">
+      <p class="mb-0"><strong>نظام متابعة حفظ القرآن © 2024</strong> - جميع الحقوق محفوظة</p>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/simple.js"></script>
+
+  <script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // Search functionality
+    document.querySelector('.search-container input').addEventListener('keyup', function () {
+      let searchTerm = this.value.toLowerCase();
+      let tableRows = document.querySelectorAll('tbody tr');
+
+      tableRows.forEach(row => {
+        let studentName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        if (studentName.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

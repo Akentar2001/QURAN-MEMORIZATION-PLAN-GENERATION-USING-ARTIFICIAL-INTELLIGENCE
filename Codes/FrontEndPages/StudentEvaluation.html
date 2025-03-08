@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام التقييمات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #f8f9fa;
+        }
+
+        .main-container {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .container-header {
+            border-bottom: 3px solid #4a90e2;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1000;
+        }
+
+        .student-card {
+            width: 100%;
+            margin: 0.5rem 0;
+            border-radius: 12px;
+            border-top: 4px solid #4a90e2;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #f8f9fa;
+        }
+
+        .student-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            cursor: pointer;
+            padding: 0.75rem;
+        }
+
+        .section-box {
+            padding: 0.7rem;
+            margin: 0.5rem 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .surah-control {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .surah-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 0.5rem;
+            background: white;
+            width: 60%;
+            font-size: 0.85rem;
+        }
+
+        .verse-input {
+            width: 35%;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 0.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .control-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.3rem;
+            display: block;
+            font-size: 0.85rem;
+        }
+
+        .evaluation-footer {
+            border-top: 1px solid #eee;
+            padding-top: 0.4rem;
+            margin-top: 0.4rem;
+        }
+
+        .from-to-container {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .surah-group {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.35rem 0.3rem 0.5rem 0.4rem;
+            background: #f8f9fa;
+            width: 50%;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .completed {
+            background: #28a745;
+        }
+
+        .pending {
+            background: #ffc107;
+        }
+
+        .action-toolbar {
+            position: sticky;
+            top: 60px;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            z-index: 999;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .progress {
+            height: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            background-color: #4a90e2;
+        }
+
+        .حفظ {
+            background: #e3f2fd;
+        }
+
+        .مراجعة_صغرى {
+            background: #fff3e0;
+        }
+
+        .مراجعة_كبرى {
+            background: #fbe9e7;
+        }
+
+        .card-minimized .card-body {
+            display: none;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            color: white;
+        }
+
+        .card-badge.completed {
+            background: #28a745;
+        }
+
+        .card-badge.partial {
+            background: #ffc107;
+        }
+
+        .card-badge.pending {
+            background: #dc3545;
+        }
+
+        .compact-view .student-card {
+            margin-bottom: 0.5rem !important;
+        }
+
+        .compact-view .section-box {
+            padding: 0.4rem;
+            margin: 0.3rem 0;
+        }
+
+        .compact-view .from-to-container {
+            gap: 0.3rem;
+        }
+
+        .compact-view .card-body {
+            padding: 0.5rem;
+        }
+
+        .compact-view h6 {
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .compact-view .control-label {
+            margin-bottom: 0.1rem;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #4a90e2;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1100;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+        }
+
+        .card-minimized .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+            color: #555;
+            border-top: 1px dashed #eee;
+            padding-top: 0.25rem;
+        }
+
+        .grade-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .grade-ممتاز {
+            background-color: #28a745;
+        }
+
+        .grade-جيد-جدا {
+            background-color: #4a90e2;
+        }
+
+        .grade-جيد {
+            background-color: #ffc107;
+        }
+
+        .grade-ضعيف {
+            background-color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .action-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-toolbar .btn-group {
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="container-header d-flex justify-content-between align-items-center">
+                <h2 class="text-primary m-0">التقييمات</h2>
+                <div>
+                    <button id="toggleView" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-compress"></i> عرض مختصر
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="action-toolbar">
+                <div class="btn-group btn-group-sm me-2">
+                    <button class="btn btn-outline-primary"><i class="fas fa-check-square"></i> تحديد الكل</button>
+                    <button class="btn btn-outline-success"><i class="fas fa-check"></i> تمييز المكتمل</button>
+                    <button class="btn btn-outline-danger"><i class="fas fa-trash"></i> حذف المحدد</button>
+                </div>
+
+                <div class="btn-group btn-group-sm me-2">
+                    <button class="btn btn-outline-secondary"><i class="fas fa-print"></i> طباعة</button>
+                    <button class="btn btn-outline-secondary"><i class="fas fa-file-export"></i> تصدير</button>
+                </div>
+
+                <span class="ms-auto badge bg-primary">إجمالي الطلاب: <span id="studentCount">0</span></span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0"
+                    aria-valuemax="100"></div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="row g-2 mb-3 mt-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="بحث بالاسم...">
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <select class="form-select form-select-sm" id="statusFilter">
+                        <option value="all">كل التقييمات</option>
+                        <option value="completed">المكتملة فقط</option>
+                        <option value="pending">غير المكتملة</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <select class="form-select form-select-sm" id="gradeFilter">
+                        <option value="all">كل المستويات</option>
+                        <option value="ممتاز">ممتاز</option>
+                        <option value="جيد جدا">جيد جدا</option>
+                        <option value="جيد">جيد</option>
+                        <option value="ضعيف">ضعيف</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <select class="form-select form-select-sm" id="sortOrder">
+                        <option value="name">ترتيب بالاسم</option>
+                        <option value="grade">ترتيب بالتقدير</option>
+                        <option value="status">ترتيب بالحالة</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Students Container -->
+            <div class="row g-2" id="studentsContainer">
+                <!-- Cards will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle me-2"></i>
+        <span id="notificationText">تم حفظ التقييم بنجاح</span>
+    </div>
+
+    <script>
+        // Mock data - Replace with actual database data
+        const students = [
+            {
+                id: 1,
+                name: "أحمد محمد",
+                sections: {
+                    حفظ: { fromS: "البقرة", fromV: 1, toS: "البقرة", toV: 5, done: false, grade: "جيد" },
+                    مراجعة_صغرى: { fromS: "الفاتحة", fromV: 1, toS: "الفاتحة", toV: 7, done: true, grade: "ممتاز" },
+                    مراجعة_كبرى: { fromS: "الناس", fromV: 1, toS: "الفلق", toV: 4, done: false, grade: "ضعيف" }
+                }
+            },
+            {
+                id: 2,
+                name: "محمد علي",
+                sections: {
+                    حفظ: { fromS: "آل عمران", fromV: 1, toS: "آل عمران", toV: 5, done: true, grade: "ممتاز" },
+                    مراجعة_صغرى: { fromS: "البقرة", fromV: 1, toS: "البقرة", toV: 7, done: false, grade: "جيد" },
+                    مراجعة_كبرى: { fromS: "الفاتحة", fromV: 1, toS: "الفاتحة", toV: 7, done: true, grade: "جيد جدا" }
+                }
+            },
+            {
+                id: 3,
+                name: "علي حسن",
+                sections: {
+                    حفظ: { fromS: "النساء", fromV: 1, toS: "النساء", toV: 5, done: false, grade: "ضعيف" },
+                    مراجعة_صغرى: { fromS: "المائدة", fromV: 1, toS: "المائدة", toV: 7, done: true, grade: "ممتاز" },
+                    مراجعة_كبرى: { fromS: "الأنعام", fromV: 1, toS: "الأنعام", toV: 4, done: false, grade: "جيد" }
+                }
+            },
+            {
+                id: 4,
+                name: "سارة أحمد",
+                sections: {
+                    حفظ: { fromS: "المائدة", fromV: 1, toS: "المائدة", toV: 10, done: true, grade: "ممتاز" },
+                    مراجعة_صغرى: { fromS: "النساء", fromV: 1, toS: "النساء", toV: 15, done: true, grade: "جيد جدا" },
+                    مراجعة_كبرى: { fromS: "البقرة", fromV: 1, toS: "البقرة", toV: 20, done: true, grade: "ممتاز" }
+                }
+            },
+            {
+                id: 5,
+                name: "فاطمة محمود",
+                sections: {
+                    حفظ: { fromS: "الأنعام", fromV: 1, toS: "الأنعام", toV: 8, done: false, grade: "جيد" },
+                    مراجعة_صغرى: { fromS: "النساء", fromV: 10, toS: "النساء", toV: 20, done: false, grade: "ضعيف" },
+                    مراجعة_كبرى: { fromS: "البقرة", fromV: 50, toS: "البقرة", toV: 60, done: false, grade: "جيد" }
+                }
+            },
+            {
+                id: 6,
+                name: "خالد إبراهيم",
+                sections: {
+                    حفظ: { fromS: "الأعراف", fromV: 1, toS: "الأعراف", toV: 5, done: true, grade: "جيد جدا" },
+                    مراجعة_صغرى: { fromS: "الأنعام", fromV: 1, toS: "الأنعام", toV: 10, done: false, grade: "جيد" },
+                    مراجعة_كبرى: { fromS: "المائدة", fromV: 1, toS: "المائدة", toV: 10, done: true, grade: "ممتاز" }
+                }
+            }
+        ];
+
+        // Surah list - Replace with complete list from database
+        const surahs = [
+            "الفاتحة", "البقرة", "آل عمران", "النساء", "المائدة", "الأنعام", "الأعراف", "الأنفال", "التوبة", "يونس",
+            "هود", "يوسف", "الرعد", "إبراهيم", "الحجر", "النحل", "الإسراء", "الكهف", "مريم", "طه",
+            "الأنبياء", "الحج", "المؤمنون", "النور", "الفرقان", "الشعراء", "النمل", "القصص", "العنكبوت", "الروم",
+            "لقمان", "السجدة", "الأحزاب", "سبأ", "فاطر", "يس", "الصافات", "ص", "الزمر", "غافر",
+            "فصلت", "الشورى", "الزخرف", "الدخان", "الجاثية", "الأحقاف", "محمد", "الفتح", "الحجرات", "ق",
+            "الذاريات", "الطور", "النجم", "القمر", "الرحمن", "الواقعة", "الحديد", "المجادلة", "الحشر", "الممتحنة",
+            "الصف", "الجمعة", "المنافقون", "التغابن", "الطلاق", "التحريم", "الملك", "القلم", "الحاقة", "المعارج",
+            "نوح", "الجن", "المزمل", "المدثر", "القيامة", "الإنسان", "المرسلات", "النبأ", "النازعات", "عبس",
+            "التكوير", "الانفطار", "المطففين", "الانشقاق", "البروج", "الطارق", "الأعلى", "الغاشية", "الفجر", "البلد",
+            "الشمس", "الليل", "الضحى", "الشرح", "التين", "العلق", "القدر", "البينة", "الزلزلة", "العاديات",
+            "القارعة", "التكاثر", "العصر", "الهمزة", "الفيل", "قريش", "الماعون", "الكوثر", "الكافرون", "النصر",
+            "المسد", "الإخلاص", "الفلق", "الناس"
+        ];
+
+        function getCompletionStatus(student) {
+            const sections = Object.values(student.sections);
+            const completed = sections.filter(s => s.done).length;
+            const total = sections.length;
+            const percentage = (completed / total) * 100;
+
+            if (percentage === 100) return { status: "completed", text: "مكتمل" };
+            if (percentage > 0) return { status: "partial", text: "جزئي" };
+            return { status: "pending", text: "معلق" };
+        }
+
+        function getAverageGrade(student) {
+            const gradeMap = {
+                "ممتاز": 4,
+                "جيد جدا": 3,
+                "جيد": 2,
+                "ضعيف": 1
+            };
+
+            const sections = Object.values(student.sections);
+            const gradeSum = sections.reduce((sum, section) => sum + gradeMap[section.grade], 0);
+            const avgGradeValue = gradeSum / sections.length;
+
+            // Convert back to text
+            if (avgGradeValue >= 3.5) return "ممتاز";
+            if (avgGradeValue >= 2.5) return "جيد جدا";
+            if (avgGradeValue >= 1.5) return "جيد";
+            return "ضعيف";
+        }
+
+        function createStudentCard(student) {
+            const status = getCompletionStatus(student);
+            const avgGrade = getAverageGrade(student);
+            const cardId = `card-${student.id}`;
+
+            return `
+                <div class="col-12 col-md-6 col-lg-4" data-status="${status.status}" data-grade="${avgGrade}">
+                    <div class="card student-card mb-2" id="${cardId}">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center p-2" onclick="toggleCard('${cardId}')">
+                            <h5 class="mb-0 text-primary">${student.name}</h5>
+                            <div class="d-flex align-items-center">
+                                <span class="badge me-2 bg-${status.status === 'completed' ? 'success' : status.status === 'partial' ? 'warning' : 'danger'}">${status.text}</span>
+                                <i class="fas fa-chevron-up toggle-icon"></i>
+                            </div>
+                        </div>
+                        <div class="card-body py-2">
+                            ${createSection('حفظ', student.sections.حفظ)}
+                            ${createSection('مراجعة_صغرى', student.sections.مراجعة_صغرى)}
+                            ${createSection('مراجعة_كبرى', student.sections.مراجعة_كبرى)}
+                            <div class="summary-row">
+                                <span><i class="fas fa-chart-bar me-1"></i> التقدير العام: 
+                                    <span class="grade-dot grade-${avgGrade.replace(' ', '-')}"></span>
+                                    ${avgGrade}
+                                </span>
+                                <span><i class="fas fa-tasks me-1"></i> الإنجاز: ${status.text}</span>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100 mt-2" onclick="saveEvaluation(${student.id})">حفظ التقييم</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function createSection(title, data) {
+            const displayTitle = title.replace('_', ' ');
+            return `
+                <div class="section-box ${title}">
+                    <h6 class="text-muted mb-2">${displayTitle}</h6>
+                    
+                    <div class="from-to-container">
+                        <div class="surah-group">
+                            <span class="control-label">من</span>
+                            <div class="surah-control">
+                                <select class="surah-select">
+                                    ${surahs.map(s => `<option ${s === data.fromS ? 'selected' : ''}>${s}</option>`).join('')}
+                                </select>
+                                <input type="number" class="verse-input" value="${data.fromV}">
+                            </div>
+                        </div>
+                        
+                        <div class="surah-group">
+                            <span class="control-label">إلى</span>
+                            <div class="surah-control">
+                                <select class="surah-select">
+                                    ${surahs.map(s => `<option ${s === data.toS ? 'selected' : ''}>${s}</option>`).join('')}
+                                </select>
+                                <input type="number" class="verse-input" value="${data.toV}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="evaluation-footer d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" ${data.done ? 'checked' : ''}>
+                            <label class="form-check-label">الإنجاز</label>
+                            <span class="status-dot ${data.done ? 'completed' : 'pending'}"></span>
+                        </div>
+                        <select class="form-select form-select-sm" style="width: 120px">
+                            <option ${data.grade === 'ممتاز' ? 'selected' : ''}>ممتاز</option>
+                            <option ${data.grade === 'جيد جدا' ? 'selected' : ''}>جيد جدا</option>
+                            <option ${data.grade === 'جيد' ? 'selected' : ''}>جيد</option>
+                            <option ${data.grade === 'ضعيف' ? 'selected' : ''}>ضعيف</option>
+                        </select>
+                    </div>
+                </div>`;
+        }
+
+        // Toggle card expand/collapse
+        function toggleCard(cardId) {
+            const card = document.getElementById(cardId);
+            card.classList.toggle('card-minimized');
+        }
+
+        // Save evaluation
+        function saveEvaluation(studentId) {
+            // Here you would save the data to your database
+            showNotification(`تم حفظ تقييم الطالب رقم ${studentId} بنجاح`);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            notificationText.textContent = message;
+
+            notification.style.display = 'block';
+            notification.style.opacity = '1';
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 300);
+            }, 3000);
+        }
+
+        // Toggle compact view
+        function toggleCompactView() {
+            const container = document.getElementById('studentsContainer');
+            container.classList.toggle('compact-view');
+
+            const toggleBtn = document.getElementById('toggleView');
+            if (container.classList.contains('compact-view')) {
+                toggleBtn.innerHTML = '<i class="fas fa-expand"></i> عرض مفصل';
+            } else {
+                toggleBtn.innerHTML = '<i class="fas fa-compress"></i> عرض مختصر';
+            }
+        }
+
+        // Filter students
+        function filterStudents() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const gradeFilter = document.getElementById('gradeFilter').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+
+            let filteredStudents = [...students];
+
+            // Apply search filter
+            if (searchTerm) {
+                filteredStudents = filteredStudents.filter(student =>
+                    student.name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Apply sorting
+            filteredStudents = sortStudents(filteredStudents, sortOrder);
+
+            // Render filtered students
+            renderStudents(filteredStudents);
+
+            // Apply status and grade filtering to rendered cards
+            const cards = document.querySelectorAll('#studentsContainer > div');
+            cards.forEach(card => {
+                let show = true;
+
+                // Status filtering
+                if (statusFilter !== 'all') {
+                    if (card.dataset.status !== statusFilter) show = false;
+                }
+
+                // Grade filtering
+                if (gradeFilter !== 'all' && show) {
+                    if (card.dataset.grade !== gradeFilter) show = false;
+                }
+
+                card.style.display = show ? '' : 'none';
+            });
+
+            // Count visible students
+            const visibleCount = Array.from(cards).filter(card =>
+                card.style.display !== 'none'
+            ).length;
+
+            document.getElementById('studentCount').textContent = visibleCount;
+        }
+
+        // Sort students based on selected criteria
+        function sortStudents(studentsToSort, sortOrder) {
+            switch (sortOrder) {
+                case 'name':
+                    return studentsToSort.sort((a, b) => a.name.localeCompare(b.name));
+                case 'grade':
+                    return studentsToSort.sort((a, b) => {
+                        const gradeValues = { "ممتاز": 4, "جيد جدا": 3, "جيد": 2, "ضعيف": 1 };
+                        return gradeValues[getAverageGrade(b)] - gradeValues[getAverageGrade(a)];
+                    });
+                case 'status':
+                    return studentsToSort.sort((a, b) => {
+                        const statusValues = { "completed": 3, "partial": 2, "pending": 1 };
+                        return statusValues[getCompletionStatus(b).status] - statusValues[getCompletionStatus(a).status];
+                    });
+                default:
+                    return studentsToSort;
+            }
+        }
+
+        // Render all students
+        function renderStudents(studentsToRender) {
+            const container = document.getElementById('studentsContainer');
+            container.innerHTML = '';
+
+            studentsToRender.forEach(student => {
+                container.innerHTML += createStudentCard(student);
+            });
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            renderStudents(students);
+            document.getElementById('studentCount').textContent = students.length;
+
+            // Event listeners
+            document.getElementById('toggleView').addEventListener('click', toggleCompactView);
+            document.getElementById('searchInput').addEventListener('input', filterStudents);
+            document.getElementById('statusFilter').addEventListener('change', filterStudents);
+            document.getElementById('gradeFilter').addEventListener('change', filterStudents);
+            document.getElementById('sortOrder').addEventListener('change', filterStudents);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,200 @@
+/* General Styles */
+body {
+    font-family: 'Tajawal', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    color: #4a90e2;
+}
+
+/* Main Container Styles */
+.main-container {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.container-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #4a90e2;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+/* Student Info Card */
+.student-info-card {
+    background: linear-gradient(135deg, #4a90e2 0%, #5a6cff 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+/* Time Period Selector */
+.time-period-selector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+/* Day Row Styles */
+.day-row {
+    margin-bottom: 1.5rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.day-icon {
+    background-color: #4a90e2;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.75rem;
+}
+
+/* Section Column Styles */
+.section-column {
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+    background-color: #f8f9fa;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    border-bottom: 1px solid #eee;
+}
+
+.section-content {
+    padding: 1rem;
+    background-color: white;
+    height: calc(100% - 40px);
+}
+
+.memorization-col .section-header {
+    color: #28a745;
+    border-top: 3px solid #28a745;
+}
+
+.revision-col .section-header {
+    color: #007bff;
+    border-top: 3px solid #007bff;
+}
+
+.minor-revision-col .section-header {
+    color: #ffc107;
+    border-top: 3px solid #ffc107;
+}
+
+/* Info Box Styles */
+.info-box {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    color: white;
+}
+
+.info-box-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    font-size: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.info-box-content {
+    padding: 1rem;
+    flex: 1;
+}
+
+.info-box-text {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.info-box-number {
+    display: block;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+/* Footer */
+footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #eee;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .print-section {
+        margin: 0;
+        padding: 0;
+    }
+
+    .main-container {
+        box-shadow: none;
+        border: none;
+    }
+
+    .day-row {
+        page-break-inside: avoid;
+    }
+}
+
+/* Edit Mode Styles */
+.editable {
+    border: 1px dashed #4a90e2;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: rgba(74, 144, 226, 0.05);
+    min-height: 24px;
+}
+
+.editable:focus {
+    outline: none;
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.edit-mode .section-content p,
+.edit-mode .section-content small {
+    cursor: text;
+}
