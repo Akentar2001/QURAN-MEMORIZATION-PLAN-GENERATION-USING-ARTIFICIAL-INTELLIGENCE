@@ -1,4 +1,3 @@
-// Student Management System JavaScript
 class StudentManager {
     constructor() {
         this.students = [];
@@ -38,7 +37,6 @@ class StudentManager {
             });
         });
 
-        // Evaluation level filter
         const evalSelect = document.querySelector('select.form-select');
         if (evalSelect) {
             evalSelect.addEventListener('change', (e) => {
@@ -65,7 +63,6 @@ class StudentManager {
     }
 
     bindStudentActionEvents() {
-        // View details buttons
         document.querySelectorAll('.btn-view-details').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const studentId = this.getStudentIdFromButton(e.target);
@@ -73,7 +70,6 @@ class StudentManager {
             });
         });
 
-        // Edit buttons
         document.querySelectorAll('.btn-edit-student').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const studentId = this.getStudentIdFromButton(e.target);
@@ -81,7 +77,6 @@ class StudentManager {
             });
         });
 
-        // Delete buttons
         document.querySelectorAll('.btn-delete-student').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const studentId = this.getStudentIdFromButton(e.target);
@@ -89,7 +84,6 @@ class StudentManager {
             });
         });
 
-        // Add student button
         const addStudentBtn = document.getElementById('addStudentBtn');
         if (addStudentBtn) {
             addStudentBtn.addEventListener('click', () => {
@@ -106,12 +100,10 @@ class StudentManager {
     }
 
     loadStudents() {
-        // Show loading spinner
         const spinner = document.querySelector('.loading-spinner');
         if (spinner) spinner.style.display = 'block';
 
-        // In a real application, this would be an API call
-        // For now, we'll use the existing table data
+
         const tableRows = document.querySelectorAll('tbody tr');
 
         this.students = Array.from(tableRows).map(row => {
@@ -127,10 +119,8 @@ class StudentManager {
             };
         });
 
-        // Hide loading spinner
         if (spinner) spinner.style.display = 'none';
 
-        // Update stats
         this.updateStats();
     }
 
@@ -139,7 +129,6 @@ class StudentManager {
         const totalStudentsElement = document.querySelector('.stats-card:nth-child(1) h2');
         if (totalStudentsElement) totalStudentsElement.textContent = totalStudents;
 
-        // Calculate average memorization
         const totalParts = this.students.reduce((sum, student) => {
             const parts = parseFloat(student.memorizedParts);
             return sum + (isNaN(parts) ? 0 : parts);
@@ -149,7 +138,6 @@ class StudentManager {
         const averagePartsElement = document.querySelector('.stats-card:nth-child(2) h2');
         if (averagePartsElement) averagePartsElement.textContent = `${averageParts.toFixed(1)} أجزاء`;
 
-        // Count excellent evaluations
         const excellentCount = this.students.filter(student => student.evaluation === 'ممتاز').length;
         const excellentCountElement = document.querySelector('.stats-card:nth-child(3) h2');
         if (excellentCountElement) excellentCountElement.textContent = `${excellentCount} طالب`;
@@ -175,10 +163,8 @@ class StudentManager {
 
         if (!tbody) return;
 
-        // Clear the table
         tbody.innerHTML = '';
 
-        // Sort based on filter type
         if (filterType === 'أعلى تقييم') {
             tableRows.sort((a, b) => {
                 const evalA = a.querySelector('td:nth-child(6) .badge').textContent;
@@ -205,13 +191,11 @@ class StudentManager {
             });
         }
 
-        // Re-add the sorted rows
         tableRows.forEach(row => tbody.appendChild(row));
     }
 
     filterByEvaluation(evaluation) {
         if (evaluation === 'مستوى التقييم') {
-            // Show all rows
             document.querySelectorAll('tbody tr').forEach(row => {
                 row.style.display = '';
             });
@@ -231,35 +215,28 @@ class StudentManager {
     changePage(pageNumber) {
         const totalPages = Math.ceil(this.students.length / this.itemsPerPage);
 
-        // Validate page number
         if (pageNumber < 1 || pageNumber > totalPages) {
             return;
         }
 
-        // Update current page
         this.currentPage = pageNumber;
 
-        // Update active page in pagination
         document.querySelectorAll('.pagination .page-item').forEach(item => {
             item.classList.remove('active');
         });
 
         const pageItems = document.querySelectorAll('.pagination .page-item');
-        // Skip first and last items (prev/next buttons)
         pageItems[pageNumber].classList.add('active');
 
-        // In a real app, this would load the appropriate page of students
-        // For now, we'll just log the page change
+
         console.log(`Changed to page ${pageNumber}`);
     }
 
     viewStudentDetails(studentId) {
-        // Find the student in our array
         const student = this.students.find(s => s.id === studentId);
 
         if (!student) return;
 
-        // Create and show modal
         const modalHtml = `
       <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -299,14 +276,11 @@ class StudentManager {
       </div>
     `;
 
-        // Add modal to body
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
         modal.show();
 
-        // Remove modal from DOM when hidden
         document.getElementById('studentDetailsModal').addEventListener('hidden.bs.modal', function () {
             this.remove();
         });
@@ -314,23 +288,18 @@ class StudentManager {
 
     confirmDeleteStudent(studentId) {
         if (confirm(`هل أنت متأكد من حذف الطالب رقم ${studentId}؟`)) {
-            // In a real app, this would be an API call
             console.log(`Deleting student ${studentId}`);
 
-            // Remove from DOM
             const row = document.querySelector(`tbody tr td:first-child:contains('${studentId}')`).closest('tr');
             if (row) row.remove();
 
-            // Remove from array
             this.students = this.students.filter(s => s.id !== studentId);
 
-            // Update stats
             this.updateStats();
         }
     }
 }
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new StudentManager();
 });
