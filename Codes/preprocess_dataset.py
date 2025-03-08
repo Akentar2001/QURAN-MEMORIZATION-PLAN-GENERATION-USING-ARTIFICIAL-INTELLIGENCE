@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy
 
 # Load the datasets
 student_lesson_history_df = pd.read_csv('student_lessons_history.csv')

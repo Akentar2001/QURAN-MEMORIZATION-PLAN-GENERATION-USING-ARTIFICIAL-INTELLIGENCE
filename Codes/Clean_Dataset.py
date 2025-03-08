@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 def merge_df(lessons_df):
     # Merge lessons with verses to get Surah IDs
@@ -10,16 +9,10 @@ def merge_df(lessons_df):
         right_on='verse_id',
         how='left'
     )
-    return clean_student_entries(lessons_df, verses_df, surahs_df, 9, 3000, 2, max_invalid=3)
+    return lessons_df
 
-def clean_student_entries(lessons_df, verses_df, surahs_df, max_pages, max_letters, pillar_id, max_invalid=7):
-    """
-    Clean the dataset by removing all recitations for students with:
-    - More than `max_invalid` invalid inputs (default: 7)
-    - Invalid inputs include: 
-        1. Exceeding daily memorization limits (pages/letters)
-        2. Illogical Surah jumps in new memorization
-    """
+def clean_student_entries(lessons_df, verses_df, surahs_df, max_pages, max_letters, pillar_id, max_invalid):
+
     # Define thresholds (adjust based on your standards)
     MAX_PAGES_PER_DAY = max_pages  # Maximum realistic pages/day
     MAX_LETTERS_PER_DAY = max_letters  # ~3000 letters/page * 9 pages
@@ -78,6 +71,8 @@ surahs_df = pd.read_excel('surahs.xlsx')
 
 # Clean the data
 cleaned_data = merge_df(lessons_df)
+cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 9, 3000, 2, max_invalid=3)
+
 cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 20, 15000, 2, max_invalid=0)
 
 cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 50, 30000, 4, max_invalid=0)

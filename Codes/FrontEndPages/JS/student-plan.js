@@ -1,4 +1,3 @@
-// Student Plan Manager Class
 class StudentPlanManager {
     constructor() {
         this.initializeData();
@@ -11,7 +10,6 @@ class StudentPlanManager {
         this.arabicMonths = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
         this.arabicDays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
-        // Sample data for two weeks and month plans
         this.twoWeeksPlanData = this.generatePlanData(14);
         this.monthPlanData = this.generatePlanData(30);
     }
@@ -25,30 +23,23 @@ class StudentPlanManager {
     }
 
     bindEvents() {
-        // Time period selector functionality
         this.periodButtons.forEach(button => {
             button.addEventListener('click', this.handlePeriodChange.bind(this));
         });
 
-        // Print functionality
         this.printButton.addEventListener('click', () => window.print());
     }
 
     handlePeriodChange(event) {
-        // Remove active class from all buttons
         this.periodButtons.forEach(btn => btn.classList.remove('active'));
 
-        // Add active class to clicked button
         event.currentTarget.classList.add('active');
 
-        // Hide all plan periods
         this.planPeriods.forEach(period => period.style.display = 'none');
 
-        // Show selected plan period
         const selectedPeriod = event.currentTarget.getAttribute('data-period');
         document.getElementById(`${selectedPeriod}Plan`).style.display = 'block';
 
-        // Load data for the selected period if not already loaded
         if (selectedPeriod === 'twoWeeks' && !this.twoWeeksPlanLoaded) {
             this.renderPlanPeriod(this.twoWeeksPlanData, this.twoWeeksPlan);
             this.twoWeeksPlanLoaded = true;
@@ -57,7 +48,6 @@ class StudentPlanManager {
             this.monthPlanLoaded = true;
         }
 
-        // Update progress summary based on selected period
         this.updateProgressSummary(selectedPeriod);
     }
 
@@ -99,19 +89,16 @@ class StudentPlanManager {
             const dayNumber = i + 1;
             const dateString = `${currentDate.getDate()} ${this.arabicMonths[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
-            // Generate memorization content based on day
             const memorizationContent = {
                 title: `سورة البقرة (آية ${i * 10 + 1}-${i * 10 + 10})`,
                 amount: 'صفحتان'
             };
 
-            // Generate major revision content
             const majorRevisionContent = {
                 title: `جزء ${i % 30 + 1}`,
                 amount: '1 جزء'
             };
 
-            // Generate minor revision content
             const minorRevisionContent = {
                 title: `الصفحات ${i * 5 + 1}-${i * 5 + 6} من سورة البقرة`,
                 amount: '6 صفحات'
@@ -131,10 +118,8 @@ class StudentPlanManager {
     }
 
     renderPlanPeriod(data, container) {
-        // Clear existing content
         container.innerHTML = '';
 
-        // Generate day rows
         data.forEach(day => {
             const dayRow = this.createDayRow(day);
             container.appendChild(dayRow);
@@ -145,7 +130,6 @@ class StudentPlanManager {
         const dayRow = document.createElement('div');
         dayRow.className = 'row day-row';
 
-        // Create day header
         const dayHeader = `
             <div class="col-12">
                 <div class="day-header">
@@ -287,46 +271,35 @@ class StudentPlanManager {
     }
 }
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new StudentPlanManager();
 });
 
-// Time period selector functionality
 document.addEventListener('DOMContentLoaded', function () {
-    // Handle time period selection
     const periodButtons = document.querySelectorAll('.time-period-selector .btn');
     periodButtons.forEach(button => {
         button.addEventListener('click', function () {
-            // Remove active class from all buttons
             periodButtons.forEach(btn => btn.classList.remove('active'));
-            // Add active class to clicked button
             this.classList.add('active');
 
-            // Hide all plan periods
             document.querySelectorAll('.plan-period').forEach(plan => {
                 plan.style.display = 'none';
             });
 
-            // Show selected plan period
             const period = this.getAttribute('data-period');
             document.getElementById(`${period}Plan`).style.display = 'block';
         });
     });
 
-    // Print functionality
     document.getElementById('printPlan').addEventListener('click', function () {
         window.print();
     });
 
-    // Initialize chart
     initializeChart();
 
-    // Edit plan functionality
     setupEditMode();
 });
 
-// Initialize progress chart
 function initializeChart() {
     const ctx = document.getElementById('progressChart').getContext('2d');
     const chart = new Chart(ctx, {
@@ -404,7 +377,6 @@ function initializeChart() {
     });
 }
 
-// Setup edit mode functionality
 function setupEditMode() {
     const editButton = document.querySelector('.btn-primary[href="#"]');
 
@@ -414,54 +386,43 @@ function setupEditMode() {
     });
 }
 
-// Toggle between view and edit modes
 function toggleEditMode() {
     const isEditMode = document.body.classList.toggle('edit-mode');
     const editButton = document.querySelector('.btn-primary[href="#"]');
 
     if (isEditMode) {
-        // Change to save button
         editButton.innerHTML = '<i class="fas fa-save ms-1"></i> حفظ التغييرات';
         editButton.classList.remove('btn-primary');
         editButton.classList.add('btn-success');
 
-        // Make content editable
         makeContentEditable(true);
 
-        // Add cancel button
         const cancelButton = document.createElement('button');
         cancelButton.className = 'btn btn-danger no-print';
         cancelButton.innerHTML = '<i class="fas fa-times ms-1"></i> إلغاء';
         cancelButton.id = 'cancelEdit';
         cancelButton.addEventListener('click', function () {
-            // Reload the page to discard changes
             location.reload();
         });
 
         editButton.parentNode.insertBefore(cancelButton, editButton);
     } else {
-        // Change back to edit button
         editButton.innerHTML = '<i class="fas fa-edit ms-1"></i> تعديل الخطة';
         editButton.classList.remove('btn-success');
         editButton.classList.add('btn-primary');
 
-        // Make content non-editable
         makeContentEditable(false);
 
-        // Remove cancel button
         const cancelButton = document.getElementById('cancelEdit');
         if (cancelButton) {
             cancelButton.remove();
         }
 
-        // Save changes (in a real app, this would send data to the server)
         savePlanChanges();
     }
 }
 
-// Make plan content editable or non-editable
 function makeContentEditable(editable) {
-    // Make section content editable
     const sectionContents = document.querySelectorAll('.section-content p, .section-content small');
     sectionContents.forEach(element => {
         element.contentEditable = editable;
@@ -473,12 +434,8 @@ function makeContentEditable(editable) {
     });
 }
 
-// Save plan changes
 function savePlanChanges() {
-    // In a real application, this function would collect all the edited content
-    // and send it to the server via an API call
 
-    // For demonstration, just show a success message
     const notification = document.createElement('div');
     notification.className = 'alert alert-success position-fixed';
     notification.style.bottom = '20px';
@@ -488,7 +445,6 @@ function savePlanChanges() {
 
     document.body.appendChild(notification);
 
-    // Remove notification after 3 seconds
     setTimeout(() => {
         notification.remove();
     }, 3000);
