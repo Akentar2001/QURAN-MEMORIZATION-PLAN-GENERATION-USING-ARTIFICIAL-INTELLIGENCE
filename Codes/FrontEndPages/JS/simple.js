@@ -10,7 +10,6 @@ class StudentManager {
         this.bindStudentActionEvents();
         this.loadStudents();
     }
-
     generateSampleStudents(count) {
         const students = [];
         const evaluations = ['ممتاز', 'جيد جدًا', 'جيد', 'مقبول', 'ضعيف'];
@@ -32,6 +31,7 @@ class StudentManager {
         }
         return students;
     }
+
 
     initializeTooltips() {
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -115,6 +115,7 @@ class StudentManager {
     }
 
     getStudentIdFromButton(element) {
+        // Navigate up to the row and get the student ID from the first cell
         const button = element.closest('button') || element;
         const row = button.closest('tr');
         return row.querySelector('td:first-child').textContent;
@@ -171,7 +172,6 @@ class StudentManager {
             default: return 'bg-secondary';
         }
     }
-
     updateStats() {
         const totalStudents = this.students.length;
         const totalStudentsElement = document.querySelector('.stats-card:nth-child(1) h2');
@@ -276,11 +276,12 @@ class StudentManager {
         const pageItems = document.querySelectorAll('.pagination .page-item');
         pageItems[pageNumber].classList.add('active');
 
+
         console.log(`Changed to page ${pageNumber}`);
     }
 
     viewStudentDetails(studentId) {
-        const student = this.students.find(s => s.id == studentId);
+        const student = this.students.find(s => s.id === studentId);
 
         if (!student) return;
 
@@ -340,7 +341,7 @@ class StudentManager {
             const row = document.querySelector(`tbody tr td:first-child:contains('${studentId}')`).closest('tr');
             if (row) row.remove();
 
-            this.students = this.students.filter(s => s.id != studentId);
+            this.students = this.students.filter(s => s.id !== studentId);
 
             this.updateStats();
         }
