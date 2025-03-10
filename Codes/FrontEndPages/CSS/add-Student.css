@@ -1,0 +1,50 @@
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: #f8f9fa;
+}
+
+.main-container {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.container-header {
+    border-bottom: 2px solid #4a90e2;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+}
+
+.form-section {
+    border-radius: 8px;
+    border-top: 4px solid #4a90e2;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+}
+
+.section-title {
+    color: #4a90e2;
+    margin-bottom: 0.8rem;
+    font-weight: 500;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #4a90e2; /**/
+    border-bottom-style: groove; /**/
+}
+
+.btn-primary {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+}
+
+.selected-day {
+    background: #4a90e2;
+    color: white;
+}
+
+.progress-bar {
+    background-color: #4a90e2;
+}

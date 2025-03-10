@@ -1,5 +1,6 @@
 // studentsData.js
-export const students = [
+// export 
+const students = [
     {
         id: 1,
         name: "أحمد محمد",
@@ -29,7 +30,7 @@ export const students = [
         memorizedParts: "3 أجزاء",
         percentage: "10%",
         lastUpdate: "2024-03-07",
-        evaluation: "جيد جداً",
+        evaluation: "جيد جدا",
 
     },
     {
@@ -59,7 +60,7 @@ export const students = [
         memorizedParts: "6 أجزاء",
         percentage: "20%",
         lastUpdate: "2024-03-06",
-        evaluation: "جيد جداً",
+        evaluation: "جيد جدا",
 
     },
     {
@@ -79,7 +80,7 @@ export const students = [
         memorizedParts: "8 أجزاء",
         percentage: "27%",
         lastUpdate: "2024-03-05",
-        evaluation: "ممتاز",
+        evaluation: "ضعيف",
 
     },
     {
@@ -89,7 +90,7 @@ export const students = [
         memorizedParts: "5 أجزاء",
         percentage: "17%",
         lastUpdate: "2024-03-04",
-        evaluation: "جيد جداً",
+        evaluation: "مقبول",
 
     },
     {
@@ -105,15 +106,19 @@ export const students = [
 ];
 
 // Simple data arrays for filters and selections
-export const evaluations = ['ممتاز', 'جيد جداً', 'جيد', 'مقبول', 'ضعيف'];
-export const lastUpdates = ['2024-03-08', '2024-03-07', '2024-03-06', '2024-03-05', '2024-03-04'];
+// export 
+const evaluations = ['ممتاز', 'جيد جداً', 'جيد', 'مقبول', 'ضعيف'];
+// export 
+const lastUpdates = ['2024-03-08', '2024-03-07', '2024-03-06', '2024-03-05', '2024-03-04'];
 
 // Helper function to get student by ID
-export const getStudentById = (id) => {
+// export 
+const getStudentById = (id) => {
     return students.find(student => student.id === id) || null;
 };
 
 // Helper function to filter students by evaluation
-export const filterStudentsByEvaluation = (evaluation) => {
+// export 
+const filterStudentsByEvaluation = (evaluation) => {
     return students.filter(student => student.evaluation === evaluation);
 };

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>خطة الحفظ - نظام متابعة حفظ القرآن</title>
+
+    <!-- Google Font: Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="../shared/nav.css">
+    <script src="../shared/loadNav.js"></script>
+
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Main Container Styles */
+        .main-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .container-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #4a90e2;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+        }
+
+        /* Student Info Card */
+        .student-info-card {
+            background: linear-gradient(135deg, #4a90e2 0%, #5a6cff 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        /* Time Period Selector */
+        .time-period-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Table Styles */
+        .plan-table {
+            width: 100%;
+            margin-bottom: 1.5rem;
+            border-collapse: collapse;
+        }
+
+        .plan-table th {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .plan-table td {
+            border: 1px solid #dee2e6;
+            padding: 0.5rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .plan-table .day-col {
+            min-width: 70px;
+            background-color: #f8f9fa;
+        }
+
+        .plan-table .date-col {
+            min-width: 90px;
+        }
+
+        .memorization-cell {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left: 3px solid #28a745;
+        }
+
+        .major-revision-cell {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-left: 3px solid #007bff;
+        }
+
+        .minor-revision-cell {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 3px solid #ffc107;
+        }
+
+        /* Info Box Styles */
+        .info-box {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+
+        .info-box-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            font-size: 1.5rem;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box-content {
+            padding: 1rem;
+            flex: 1;
+        }
+
+        .info-box-text {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-box-number {
+            display: block;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+
+        /* Edit Mode Styles */
+        .edit-mode .editable {
+            background-color: rgba(255, 255, 200, 0.3);
+            border: 1px dashed #ccc;
+            min-height: 22px;
+            cursor: text;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .edit-mode .editable:focus {
+            outline: none;
+            border-color: #4a90e2;
+            background-color: rgba(74, 144, 226, 0.1);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .print-section {
+                margin: 0;
+                padding: 0;
+            }
+
+            .main-container {
+                box-shadow: none;
+                border: none;
+                padding: 0.5rem;
+            }
+
+            body {
+                font-size: 10pt;
+            }
+
+            .plan-table {
+                font-size: 9pt;
+                page-break-inside: avoid;
+            }
+
+            .plan-table th,
+            .plan-table td {
+                padding: 4px;
+            }
+
+            .student-info-card {
+                padding: 0.5rem 1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .container-header {
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+
+            .info-box {
+                margin-bottom: 0.5rem;
+            }
+
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="nav-placeholder"></div>
+    <!-- Main Content -->
+    <div class="container py-4 print-section">
+        <!-- Student Info Card -->
+        <div class="student-info-card">
+            <h3>أحمد محمد</h3>
+            <p class="mb-0">العمر: 14 سنة | الأجزاء المحفوظة: 5</p>
+        </div>
+
+        <!-- Main Plan Container -->
+        <div class="main-container">
+            <div class="container-header">
+                <h3 class="text-primary m-0"><i class="fas fa-calendar-alt ms-2"></i>خطة الحفظ</h3>
+                <div class="d-flex gap-2">
+                    <button id="printPlan" class="btn btn-outline-primary no-print">
+                        <i class="fas fa-print ms-1"></i> طباعة الخطة
+                    </button>
+                    <button id="editPlan" class="btn btn-primary no-print">
+                        <i class="fas fa-edit ms-1"></i> تعديل الخطة
+                    </button>
+                    <button id="savePlan" class="btn btn-success no-print" style="display: none;">
+                        <i class="fas fa-save ms-1"></i> حفظ التغييرات
+                    </button>
+                    <button id="cancelEdit" class="btn btn-danger no-print" style="display: none;">
+                        <i class="fas fa-times ms-1"></i> إلغاء
+                    </button>
+                </div>
+            </div>
+
+            <!-- Time Period Selector -->
+            <div class="time-period-selector no-print">
+                <div class="btn-group" role="group" aria-label="فترة الخطة">
+                    <button type="button" class="btn btn-outline-primary active" data-period="week">أسبوع</button>
+                    <button type="button" class="btn btn-outline-primary" data-period="twoWeeks">أسبوعان</button>
+                    <button type="button" class="btn btn-outline-primary" data-period="month">شهر</button>
+                </div>
+            </div>
+
+            <!-- Plan Content -->
+            <div id="planContent">
+                <!-- Week Plan (default) -->
+                <div class="plan-period" id="weekPlan">
+                    <div class="table-responsive">
+                        <table class="plan-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اليوم</th>
+                                    <th>التاريخ</th>
+                                    <th class="memorization-cell">الحفظ الجديد (من)</th>
+                                    <th class="memorization-cell">الحفظ الجديد (إلى)</th>
+                                    <th class="major-revision-cell">المراجعة الكبرى</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (من)</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (إلى)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Day 1 -->
+                                <tr>
+                                    <td>1</td>
+                                    <td class="day-col">الأحد</td>
+                                    <td class="date-col">5 مارس 2025</td>
+                                    <td class="editable" data-field="memFrom">سورة البقرة (آية 1)</td>
+                                    <td class="editable" data-field="memTo">سورة البقرة (آية 10)</td>
+                                    <td class="editable" data-field="majorRev">جزء عم كامل</td>
+                                    <td class="editable" data-field="minorRevFrom">الصفحة 5</td>
+                                    <td class="editable" data-field="minorRevTo">الصفحة 10</td>
+                                </tr>
+                                <!-- Day 2 -->
+                                <tr>
+                                    <td>2</td>
+                                    <td class="day-col">الاثنين</td>
+                                    <td class="date-col">6 مارس 2025</td>
+                                    <td class="editable" data-field="memFrom">سورة البقرة (آية 11)</td>
+                                    <td class="editable" data-field="memTo">سورة البقرة (آية 20)</td>
+                                    <td class="editable" data-field="majorRev">جزء تبارك</td>
+                                    <td class="editable" data-field="minorRevFrom">الصفحة 15</td>
+                                    <td class="editable" data-field="minorRevTo">الصفحة 20</td>
+                                </tr>
+                                <!-- Day 3 -->
+                                <tr>
+                                    <td>3</td>
+                                    <td class="day-col">الثلاثاء</td>
+                                    <td class="date-col">7 مارس 2025</td>
+                                    <td class="editable" data-field="memFrom">سورة البقرة (آية 21)</td>
+                                    <td class="editable" data-field="memTo">سورة البقرة (آية 30)</td>
+                                    <td class="editable" data-field="majorRev">جزء قد سمع</td>
+                                    <td class="editable" data-field="minorRevFrom">الصفحة 25</td>
+                                    <td class="editable" data-field="minorRevTo">الصفحة 30</td>
+                                </tr>
+                                <!-- Day 4 -->
+                                <tr>
+                                    <td>4</td>
+                                    <td class="day-col">الأربعاء</td>
+                                    <td class="date-col">8 مارس 2025</td>
+                                    <td class="editable" data-field="memFrom">سورة البقرة (آية 31)</td>
+                                    <td class="editable" data-field="memTo">سورة البقرة (آية 40)</td>
+                                    <td class="editable" data-field="majorRev">جزء الذاريات</td>
+                                    <td class="editable" data-field="minorRevFrom">الصفحة 35</td>
+                                    <td class="editable" data-field="minorRevTo">الصفحة 40</td>
+                                </tr>
+                                <!-- Day 5 -->
+                                <tr>
+                                    <td>5</td>
+                                    <td class="day-col">الخميس</td>
+                                    <td class="date-col">9 مارس 2025</td>
+                                    <td class="editable" data-field="memFrom">سورة البقرة (آية 41)</td>
+                                    <td class="editable" data-field="memTo">سورة البقرة (آية 50)</td>
+                                    <td class="editable" data-field="majorRev">جزء الأحقاف</td>
+                                    <td class="editable" data-field="minorRevFrom">الصفحة 45</td>
+                                    <td class="editable" data-field="minorRevTo">الصفحة 50</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Two Weeks Plan (hidden by default) -->
+                <div class="plan-period" id="twoWeeksPlan" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="plan-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اليوم</th>
+                                    <th>التاريخ</th>
+                                    <th class="memorization-cell">الحفظ الجديد (من)</th>
+                                    <th class="memorization-cell">الحفظ الجديد (إلى)</th>
+                                    <th class="major-revision-cell">المراجعة الكبرى</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (من)</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (إلى)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="twoWeeksPlanBody">
+                                <!-- Content will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Month Plan (hidden by default) -->
+                <div class="plan-period" id="monthPlan" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="plan-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اليوم</th>
+                                    <th>التاريخ</th>
+                                    <th class="memorization-cell">الحفظ الجديد (من)</th>
+                                    <th class="memorization-cell">الحفظ الجديد (إلى)</th>
+                                    <th class="major-revision-cell">المراجعة الكبرى</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (من)</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (إلى)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthPlanBody">
+                                <!-- Content will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Summary -->
+            <div class="row mt-4">
+                <h4 class="mb-3 text-primary"><i class="fas fa-chart-bar ms-2"></i>ملخص التقدم</h4>
+                <div class="col-md-4 mb-3">
+                    <div class="info-box bg-success">
+                        <span class="info-box-icon"><i class="fas fa-book"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">إجمالي الحفظ</span>
+                            <span class="info-box-number">10 صفحات</span>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="info-box bg-primary">
+                        <span class="info-box-icon"><i class="fas fa-sync"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">المراجعات الكبرى</span>
+                            <span class="info-box-number">5 أجزاء</span>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="info-box bg-warning">
+                        <span class="info-box-icon"><i class="fas fa-redo"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">المراجعات الصغرى</span>
+                            <span class="info-box-number">30 صفحة</span>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        // Student Plan Manager Class
+        class StudentPlanManager {
+            constructor() {
+                this.initializeData();
+                this.bindElements();
+                this.bindEvents();
+                this.loadExtendedPlans();
+                this.setupPrintOptimization();
+            }
+
+            initializeData() {
+                this.arabicMonths = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+                this.arabicDays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+                this.editMode = false;
+                this.originalValues = {}; // Store original values for cancel functionality
+            }
+
+            bindElements() {
+                this.periodButtons = document.querySelectorAll('.time-period-selector .btn');
+                this.planPeriods = document.querySelectorAll('.plan-period');
+                this.printButton = document.getElementById('printPlan');
+                this.editButton = document.getElementById('editPlan');
+                this.saveButton = document.getElementById('savePlan');
+                this.cancelButton = document.getElementById('cancelEdit');
+                this.editableFields = document.querySelectorAll('.editable');
+                this.twoWeeksPlanBody = document.getElementById('twoWeeksPlanBody');
+                this.monthPlanBody = document.getElementById('monthPlanBody');
+            }
+
+            bindEvents() {
+                // Time period selector functionality
+                this.periodButtons.forEach(button => {
+                    button.addEventListener('click', this.handlePeriodChange.bind(this));
+                });
+
+                // Print functionality
+                this.printButton.addEventListener('click', () => {
+                    this.optimizeForPrint();
+                    window.print();
+                    this.resetAfterPrint();
+                });
+
+                // Edit functionality
+                this.editButton.addEventListener('click', this.enterEditMode.bind(this));
+                this.saveButton.addEventListener('click', this.saveChanges.bind(this));
+                this.cancelButton.addEventListener('click', this.cancelEdit.bind(this));
+            }
+
+            loadExtendedPlans() {
+                // Generate data for two weeks and month plans
+                this.generateTwoWeeksPlan();
+                this.generateMonthPlan();
+            }
+
+            generateTwoWeeksPlan() {
+                let html = '';
+                for (let i = 0; i < 14; i++) {
+                    const dayNum = i + 1;
+                    const dayIndex = i % 7;
+                    const dayName = this.arabicDays[dayIndex];
+                    const date = new Date(2025, 2, 5 + i); // March 5, 2025 + i days
+                    const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
+
+                    html += `
+            <tr>
+                <td>${dayNum}</td>
+                <td class="day-col">${dayName}</td>
+                <td class="date-col">${dateStr}</td>
+                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 10 + 1})</td>
+                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 10 + 10})</td>
+                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${(i % 30) + 1}</td>
+                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">الصفحة ${i * 5 + 1}</td>
+                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">الصفحة ${i * 5 + 6}</td>
+            </tr>
+            `;
+                }
+                this.twoWeeksPlanBody.innerHTML = html;
+
+                // Update editable fields after loading content
+                this.editableFields = document.querySelectorAll('.editable');
+            }
+
+            generateMonthPlan() {
+                let html = '';
+                for (let i = 0; i < 30; i++) {
+                    const dayNum = i + 1;
+                    const dayIndex = i % 7;
+                    const dayName = this.arabicDays[dayIndex];
+                    const date = new Date(2025, 2, 5 + i); // March 5, 2025 + i days
+                    const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
+
+                    html += `
+            <tr>
+                <td>${dayNum}</td>
+                <td class="day-col">${dayName}</td>
+                <td class="date-col">${dateStr}</td>
+                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 10 + 1})</td>
+                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 10 + 10})</td>
+                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${(i % 30) + 1}</td>
+                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">الصفحة ${i * 5 + 1}</td>
+                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">الصفحة ${i * 5 + 6}</td>
+            </tr>
+            `;
+                }
+                this.monthPlanBody.innerHTML = html;
+
+                // Update editable fields after loading content
+                this.editableFields = document.querySelectorAll('.editable');
+            }
+
+            handlePeriodChange(event) {
+                // If in edit mode, ask for confirmation before changing period
+                if (this.editMode) {
+                    if (!confirm("سيتم فقدان التغييرات إذا قمت بتغيير الفترة. هل تريد المتابعة؟")) {
+                        return;
+                    }
+                    // Exit edit mode if continuing
+                    this.cancelEdit();
+                }
+
+                // Remove active class from all buttons
+                this.periodButtons.forEach(btn => btn.classList.remove('active'));
+
+                // Add active class to clicked button
+                event.currentTarget.classList.add('active');
+
+                // Hide all plan periods
+                this.planPeriods.forEach(period => period.style.display = 'none');
+
+                // Show selected plan period
+                const selectedPeriod = event.currentTarget.getAttribute('data-period');
+                document.getElementById(`${selectedPeriod}Plan`).style.display = 'block';
+
+                // Refresh editable fields after changing period
+                this.editableFields = document.querySelectorAll('.editable');
+
+                // Update progress summary based on selected period
+                this.updateProgressSummary(selectedPeriod);
+            }
+
+            enterEditMode() {
+                this.editMode = true;
+                document.body.classList.add('edit-mode');
+                this.editButton.style.display = 'none';
+                this.saveButton.style.display = 'block';
+                this.cancelButton.style.display = 'block';
+
+                // Store original values and make fields editable
+                this.editableFields.forEach(field => {
+                    const fieldId = `${field.dataset.field}-${field.dataset.day || '0'}`;
+                    this.originalValues[fieldId] = field.textContent;
+                    field.contentEditable = true;
+
+                    // Add click listener to highlight entire content when clicked
+                    field.addEventListener('click', this.selectAllContent);
+                });
+            }
+
+            selectAllContent(e) {
+                if (document.body.classList.contains('edit-mode')) {
+                    const range = document.createRange();
+                    range.selectNodeContents(e.target);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+
+            saveChanges() {
+                this.editMode = false;
+                document.body.classList.remove('edit-mode');
+                this.editButton.style.display = 'block';
+                this.saveButton.style.display = 'none';
+                this.cancelButton.style.display = 'none';
+
+                // Make fields non-editable
+                this.editableFields.forEach(field => {
+                    field.contentEditable = false;
+                    field.removeEventListener('click', this.selectAllContent);
+                });
+
+                // Here you would typically save the changes to a database
+                console.log('Changes saved!');
+
+                // Show success message
+                this.showNotification('تم حفظ التغييرات بنجاح!', 'success');
+            }
+
+            cancelEdit() {
+                // Revert all changes and exit edit mode
+                this.editMode = false;
+                document.body.classList.remove('edit-mode');
+                this.editButton.style.display = 'block';
+                this.saveButton.style.display = 'none';
+                this.cancelButton.style.display = 'none';
+
+                // Restore original content
+                this.editableFields.forEach(field => {
+                    field.contentEditable = false;
+                    const fieldId = `${field.dataset.field}-${field.dataset.day || '0'}`;
+                    if (this.originalValues[fieldId]) {
+                        field.textContent = this.originalValues[fieldId];
+                    }
+                    field.removeEventListener('click', this.selectAllContent);
+                });
+
+                // Reset original values
+                this.originalValues = {};
+            }
+
+            updateProgressSummary(period) {
+                let memorization, majorRevision, minorRevision;
+
+                switch (period) {
+                    case 'week':
+                        memorization = '10 صفحات';
+                        majorRevision = '5 أجزاء';
+                        minorRevision = '30 صفحة';
+                        break;
+                    case 'twoWeeks':
+                        memorization = '20 صفحة';
+                        majorRevision = '10 أجزاء';
+                        minorRevision = '60 صفحة';
+                        break;
+                    case 'month':
+                        memorization = '40 صفحة';
+                        majorRevision = '20 جزء';
+                        minorRevision = '120 صفحة';
+                        break;
+                }
+
+                document.querySelector('.info-box.bg-success .info-box-number').textContent = memorization;
+                document.querySelector('.info-box.bg-primary .info-box-number').textContent = majorRevision;
+                document.querySelector('.info-box.bg-warning .info-box-number').textContent = minorRevision;
+            }
+
+            setupPrintOptimization() {
+                // Add print-specific styles dynamically
+                const printStyles = document.createElement('style');
+                printStyles.id = 'print-optimization-styles';
+                printStyles.textContent = `
+            @media print {
+                .plan-table { 
+                    font-size: 8pt !important; 
+                    width: 100% !important;
+                }
+                .plan-table th, .plan-table td {
+                    padding: 2px !important;
+                }
+                .main-container {
+                    padding: 0.5rem !important;
+                }
+                /* Ensure page breaks don't occur within rows */
+                .plan-table tr { 
+                    page-break-inside: avoid !important; 
+                }
+                /* Collapse all margins and paddings */
+                .container {
+                    width: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                .progress-summary-row {
+                    margin-top: 5px !important;
+                }
+                .student-info-card {
+                    padding: 5px !important;
+                    margin-bottom: 5px !important;
+                }
+                .container-header {
+                    margin-bottom: 5px !important;
+                    padding-bottom: 5px !important;
+                    border-bottom-width: 1px !important;
+                }
+                .info-box {
+                    margin-bottom: 0 !important;
+                }
+                body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+            }
+        `;
+                document.head.appendChild(printStyles);
+            }
+
+            optimizeForPrint() {
+                const currentPeriod = document.querySelector('.time-period-selector .btn.active').getAttribute('data-period');
+
+                // Show only the current period plan regardless of size
+                this.planPeriods.forEach(period => {
+                    if (period.id === `${currentPeriod}Plan`) {
+                        period.style.display = 'block';
+                    } else {
+                        period.style.display = 'none';
+                    }
+                });
+
+                // Add class to the body for print mode
+                document.body.classList.add('print-mode');
+            }
+
+            resetAfterPrint() {
+                // Remove print mode class after printing
+                setTimeout(() => {
+                    document.body.classList.remove('print-mode');
+                }, 1000);
+            }
+
+            showNotification(message, type = 'info') {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+                notification.style.zIndex = "9999";
+                notification.textContent = message;
+
+                // Add to body
+                document.body.appendChild(notification);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        }
+
+        // Initialize the plan manager when the document is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new StudentPlanManager();
+        });
+    </script>
+</body>
+
+</html>

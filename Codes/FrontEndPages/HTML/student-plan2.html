@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>خطة الحفظ - نظام متابعة حفظ القرآن</title>
+
+    <!-- Google Font: Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="../CSS/student-plan.css">
+
+    <link rel="stylesheet" href="../shared/nav.css">
+    <script src="../shared/loadNav.js"></script>
+
+</head>
+
+<body>
+    <div id="nav-placeholder"></div>
+    <!-- Main Content -->
+    <div class="container py-4 print-section">
+        <!-- Student Info Card -->
+        <div class="student-info-card">
+            <h3 id="studentName"></h3>
+            <p id="studentInfo" class="mb-0"></p>
+        </div>
+
+        <!-- Main Plan Container -->
+        <div class="main-container">
+            <div class="container-header">
+                <h3 class="text-primary m-0"><i class="fas fa-calendar-alt ms-2"></i>الخطة</h3>
+                <div class="d-flex gap-2">
+                    <button id="printPlan" class="btn btn-outline-primary no-print">
+                        <i class="fas fa-print ms-1"></i> طباعة الخطة
+                    </button>
+                    <button id="editPlan" class="btn btn-primary no-print">
+                        <i class="fas fa-edit ms-1"></i> تعديل الخطة
+                    </button>
+                    <button id="savePlan" class="btn btn-success no-print" style="display: none;">
+                        <i class="fas fa-save ms-1"></i> حفظ التغييرات
+                    </button>
+                    <button id="cancelEdit" class="btn btn-danger no-print" style="display: none;">
+                        <i class="fas fa-times ms-1"></i> إلغاء
+                    </button>
+                </div>
+            </div>
+
+            <!-- Time Period Selector -->
+            <div class="time-period-selector no-print">
+                <div class="btn-group" role="group" aria-label="فترة الخطة">
+                    <button type="button" class="btn btn-outline-primary active" data-period="week">أسبوع</button>
+                    <button type="button" class="btn btn-outline-primary" data-period="twoWeeks">أسبوعان</button>
+                    <button type="button" class="btn btn-outline-primary" data-period="month">شهر</button>
+                </div>
+            </div>
+
+            <!-- Plan Content -->
+            <div id="planContent">
+                <!-- Week Plan (default) -->
+                <div class="plan-period" id="weekPlan">
+                    <div class="table-responsive">
+                        <table class="plan-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اليوم</th>
+                                    <th>التاريخ</th>
+                                    <th class="memorization-cell">الحفظ الجديد (من)</th>
+                                    <th class="memorization-cell">الحفظ الجديد (إلى)</th>
+                                    <th class="major-revision-cell">المراجعة الكبرى</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (من)</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (إلى)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weekPlanBody">
+                                <!-- Content will be loaded by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Two Weeks Plan (hidden by default) -->
+                <div class="plan-period" id="twoWeeksPlan" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="plan-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اليوم</th>
+                                    <th>التاريخ</th>
+                                    <th class="memorization-cell">الحفظ الجديد (من)</th>
+                                    <th class="memorization-cell">الحفظ الجديد (إلى)</th>
+                                    <th class="major-revision-cell">المراجعة الكبرى</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (من)</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (إلى)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="twoWeeksPlanBody">
+                                <!-- Content will be loaded by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Month Plan (hidden by default) -->
+                <div class="plan-period" id="monthPlan" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="plan-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اليوم</th>
+                                    <th>التاريخ</th>
+                                    <th class="memorization-cell">الحفظ الجديد (من)</th>
+                                    <th class="memorization-cell">الحفظ الجديد (إلى)</th>
+                                    <th class="major-revision-cell">المراجعة الكبرى</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (من)</th>
+                                    <th class="minor-revision-cell">المراجعة الصغرى (إلى)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthPlanBody">
+                                <!-- Content will be loaded by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Summary -->
+            <div class="row mt-4">
+                <h4 class="mb-3 text-primary"><i class="fas fa-chart-bar ms-2"></i>ملخص التقدم</h4>
+                <div class="col-md-4 mb-3">
+                    <div class="info-box bg-success">
+                        <span class="info-box-icon"><i class="fas fa-book"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">إجمالي الحفظ</span>
+                            <span id="memorizationSummary" class="info-box-number"></span>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="info-box bg-primary">
+                        <span class="info-box-icon"><i class="fas fa-sync"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">المراجعات الكبرى</span>
+                            <span id="majorRevisionSummary" class="info-box-number"></span>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="info-box bg-warning">
+                        <span class="info-box-icon"><i class="fas fa-redo"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">المراجعات الصغرى</span>
+                            <span id="minorRevisionSummary" class="info-box-number"></span>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="../JS/Data/studentsData.js"></script>
+    <script src="../JS/student-plan2.js"></script>
+</body>
+</html>

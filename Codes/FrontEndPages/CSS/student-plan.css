@@ -1,190 +1,189 @@
-body {
-    font-family: 'Tajawal', sans-serif;
-    background-color: #f8f9fa;
-}
+        /* General Styles */
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8f9fa;
+        }
 
-.navbar {
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
+        /* Main Container Styles */
+        .main-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
 
-.navbar-brand {
-    font-weight: 700;
-    color: #4a90e2;
-}
+        .container-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #4a90e2;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+        }
 
-.main-container {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-    padding: 1.5rem;
-    margin-top: 1.5rem;
-}
+        /* Student Info Card */
+        .student-info-card {
+            background: linear-gradient(135deg, #4a90e2 0%, #5a6cff 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+        }
 
-.container-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #4a90e2;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-}
+        /* Time Period Selector */
+        .time-period-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
 
-.student-info-card {
-    background: linear-gradient(135deg, #4a90e2 0%, #5a6cff 100%);
-    color: white;
-    border-radius: 10px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-}
+        /* Table Styles */
+        .plan-table {
+            width: 100%;
+            margin-bottom: 1.5rem;
+            border-collapse: collapse;
+        }
 
-.time-period-selector {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-}
+        .plan-table th {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem;
+            text-align: center;
+            font-weight: 600;
+        }
 
-.day-row {
-    margin-bottom: 1.5rem;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    overflow: hidden;
-}
+        .plan-table td {
+            border: 1px solid #dee2e6;
+            padding: 0.5rem;
+            text-align: center;
+            vertical-align: middle;
+        }
 
-.day-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #f8f9fa;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #eee;
-}
+        .plan-table .day-col {
+            min-width: 70px;
+            background-color: #f8f9fa;
+        }
 
-.day-icon {
-    background-color: #4a90e2;
-    color: white;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 0.75rem;
-}
+        .plan-table .date-col {
+            min-width: 90px;
+        }
 
-.section-column {
-    height: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
+        .memorization-cell {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left: 3px solid #28a745;
+        }
 
-.section-header {
-    background-color: #f8f9fa;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    border-bottom: 1px solid #eee;
-}
+        .major-revision-cell {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-left: 3px solid #007bff;
+        }
 
-.section-content {
-    padding: 1rem;
-    background-color: white;
-    height: calc(100% - 40px);
-}
+        .minor-revision-cell {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 3px solid #ffc107;
+        }
 
-.memorization-col .section-header {
-    color: #28a745;
-    border-top: 3px solid #28a745;
-}
+        /* Info Box Styles */
+        .info-box {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
 
-.revision-col .section-header {
-    color: #007bff;
-    border-top: 3px solid #007bff;
-}
+        .info-box-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            font-size: 1.5rem;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
 
-.minor-revision-col .section-header {
-    color: #ffc107;
-    border-top: 3px solid #ffc107;
-}
+        .info-box-content {
+            padding: 1rem;
+            flex: 1;
+        }
 
-.info-box {
-    display: flex;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    color: white;
-}
+        .info-box-text {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
 
-.info-box-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 70px;
-    font-size: 1.5rem;
-    background-color: rgba(0, 0, 0, 0.1);
-}
+        .info-box-number {
+            display: block;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
 
-.info-box-content {
-    padding: 1rem;
-    flex: 1;
-}
+        /* Edit Mode Styles */
+        .edit-mode .editable {
+            background-color: rgba(255, 255, 200, 0.3);
+            border: 1px dashed #ccc;
+            min-height: 22px;
+            cursor: text;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
 
-.info-box-text {
-    display: block;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-}
+        .edit-mode .editable:focus {
+            outline: none;
+            border-color: #4a90e2;
+            background-color: rgba(74, 144, 226, 0.1);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
 
-.info-box-number {
-    display: block;
-    font-weight: 700;
-    font-size: 1.25rem;
-}
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
 
-footer {
-    background-color: #f8f9fa;
-    border-top: 1px solid #eee;
-    color: #6c757d;
-    text-align: center;
-}
+            .print-section {
+                margin: 0;
+                padding: 0;
+            }
 
-@media print {
-    .no-print {
-        display: none !important;
-    }
+            .main-container {
+                box-shadow: none;
+                border: none;
+                padding: 0.5rem;
+            }
 
-    .print-section {
-        margin: 0;
-        padding: 0;
-    }
+            body {
+                font-size: 10pt;
+            }
 
-    .main-container {
-        box-shadow: none;
-        border: none;
-    }
+            .plan-table {
+                font-size: 9pt;
+                page-break-inside: avoid;
+            }
 
-    .day-row {
-        page-break-inside: avoid;
-    }
-}
+            .plan-table th,
+            .plan-table td {
+                padding: 4px;
+            }
 
-.editable {
-    border: 1px dashed #4a90e2;
-    padding: 5px;
-    border-radius: 4px;
-    background-color: rgba(74, 144, 226, 0.05);
-    min-height: 24px;
-}
+            .student-info-card {
+                padding: 0.5rem 1rem;
+                margin-bottom: 0.5rem;
+            }
 
-.editable:focus {
-    outline: none;
-    border-color: #007bff;
-    background-color: rgba(0, 123, 255, 0.1);
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
+            .container-header {
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
 
-.edit-mode .section-content p,
-.edit-mode .section-content small {
-    cursor: text;
-}
+            .info-box {
+                margin-bottom: 0.5rem;
+            }
+
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+        }
