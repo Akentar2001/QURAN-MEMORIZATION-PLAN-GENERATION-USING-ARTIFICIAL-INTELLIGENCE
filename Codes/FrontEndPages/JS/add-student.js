@@ -219,7 +219,6 @@ const largeRevisionOptions = [
     "عشرة أجزاء (٢٠٠ صفحة)"
     ];
 
-// Populate Surah dropdowns
 function populateSurahs() {
     const fromSurahSelect = document.getElementById('fromSurah');
     const toSurahSelect = document.getElementById('toSurah');
@@ -269,21 +268,17 @@ function setupDaySelection() {
     updateSelectedDays();
 }
 
-// Add this helper function
 function updateSelectedDays() {
     const selectedDays = Array.from(document.querySelectorAll('.day-btn.selected-day'))
     .map(btn => btn.dataset.day);
     document.getElementById('selectedDays').value = selectedDays.join(',');
 }
 
-
-// Add this new function
 function setupMemorizationAmounts() {
     const newMemSelect = document.getElementById('newMemorizationAmount');
     const smallRevSelect = document.getElementById('smallRevisionAmount');
     const largeRevSelect = document.getElementById('largeRevisionAmount');
 
-    // Clear and populate new memorization select
     newMemSelect.innerHTML = '<option value="" selected disabled>اختر كمية الحفظ</option>';
     newMemorizationOptions.forEach(option => {
     const el = document.createElement('option');
@@ -292,7 +287,6 @@ function setupMemorizationAmounts() {
     newMemSelect.appendChild(el);
     });
 
-    // Clear and populate small revision select
     smallRevSelect.innerHTML = '<option value="" selected disabled>اختر كمية المراجعة</option>';
     smallRevisionOptions.forEach(option => {
     const el = document.createElement('option');
@@ -301,7 +295,6 @@ function setupMemorizationAmounts() {
     smallRevSelect.appendChild(el);
     });
 
-    // Clear and populate large revision select
     largeRevSelect.innerHTML = '<option value="" selected disabled>اختر كمية المراجعة</option>';
     largeRevisionOptions.forEach(option => {
     const el = document.createElement('option');
@@ -311,16 +304,13 @@ function setupMemorizationAmounts() {
 });
 }
 
-// Replace the populateSurahs function with this new function
 function setupDirectionSelectors() {
     const memDirectionSelect = document.querySelector('#memorizationDetailsContainer select');
     const revDirectionSelect = document.querySelector('#RevDetailsContainer select');
 
-    // Clear existing options
     memDirectionSelect.innerHTML = '';
     revDirectionSelect.innerHTML = '';
 
-    // Add memorization directions
     memorizationDirections.forEach(direction => {
     const option = document.createElement('option');
     option.value = direction.id;
@@ -329,7 +319,6 @@ function setupDirectionSelectors() {
     memDirectionSelect.appendChild(option);
     });
 
-    // Add revision directions
     revisionDirections.forEach(direction => {
     const option = document.createElement('option');
     option.value = direction.id;

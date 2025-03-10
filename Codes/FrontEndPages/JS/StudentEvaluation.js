@@ -1,4 +1,3 @@
-// Mock data - Replace with actual database data
 const students = [
     {
         id: 1,
@@ -259,11 +258,9 @@ function toggleCard(cardId) {
 }
 
 function saveEvaluation(studentId) {
-    // Get all evaluations for this student
     const card = document.getElementById(`card-${studentId}`);
     const sections = card.querySelectorAll('.section-box');
     
-    // Update the student's data
     const student = students.find(s => s.id === studentId);
     sections.forEach(section => {
         const sectionType = section.classList[1]; // memorization, minor_review, or major_review
@@ -271,14 +268,11 @@ function saveEvaluation(studentId) {
         student.sections[sectionType].grade = grade;
     });
 
-    // Update progress bar
     updateProgress();
 
-    // Show notification
     showNotification(`تم حفظ تقييم الطالب ${student.name} بنجاح`);
 }
 
-// Show notification
 function showNotification(message) {
     const notification = document.getElementById('notification');
     const notificationText = document.getElementById('notificationText');
@@ -301,20 +295,16 @@ function filterStudents() {
 
     let filteredStudents = [...students];
 
-    // Apply search filter
     if (searchTerm) {
         filteredStudents = filteredStudents.filter(student =>
             student.name.toLowerCase().includes(searchTerm)
         );
     }
 
-    // Apply sorting
     filteredStudents = sortStudents(filteredStudents, sortOrder);
 
-    // Render filtered students
     renderStudents(filteredStudents);
 
-    // Count visible students
     const visibleCount = document.querySelectorAll('#studentsContainer > div').length;
     document.getElementById('studentCount').textContent = visibleCount;
 }
@@ -330,7 +320,6 @@ function sortStudents(studentsToSort, sortOrder) {
     }
 }
 
-// Render all students
 function renderStudents(studentsToRender) {
     const container = document.getElementById('studentsContainer');
     container.innerHTML = '';
@@ -386,13 +375,11 @@ function updateProgress() {
     progressBar.setAttribute('aria-valuenow', progressPercentage);
 }
 
-// Initialize the page
 document.addEventListener('DOMContentLoaded', () => {
     renderStudents(students);
     document.getElementById('studentCount').textContent = students.length;
     updateProgress();
 
-    // Event listeners
     document.getElementById('searchInput').addEventListener('input', filterStudents);
     document.getElementById('sortOrder').addEventListener('change', filterStudents);
 });

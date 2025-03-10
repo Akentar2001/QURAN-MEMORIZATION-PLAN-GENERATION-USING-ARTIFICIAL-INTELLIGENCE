@@ -6,34 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>الصفحة الرئيسية - نظام متابعة حفظ القرآن</title>
 
-  <!-- Google Font: Tajawal -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Custom CSS -->
+
   <link href="../CSS/home.css" rel="stylesheet">
-  <!-- Navbar Placeholder -->
+
   <link rel="stylesheet" href="../shared/nav.css">
   <script src="../shared/loadNav.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- <script src="../JS/home.js"></script> -->
 
   <script src="../JS/Data/studentsData.js"></script>
   <script src="../JS/home.js"></script>
 </head>
 
 <body>
-  <!-- Navbar -->
   <div id="nav-placeholder"></div>
 
 
-  <!-- Main Content -->
   <div class="container py-4">
-    <!-- Stats Cards -->
     <div class="row mb-4">
       <div class="col-md-4 mb-3 mb-md-0">
         <div class="card stats-card">
@@ -64,7 +57,6 @@
       </div>
     </div>
 
-    <!-- Main Container -->
     <div class="main-container">
       <div class="container-header">
         <h3 class="text-primary m-0"><i class="fas fa-users ms-2"></i>قائمة الطلاب</h3>
@@ -73,7 +65,6 @@
         </button>
       </div>
 
-      <!-- Search and Filter -->
       <div class="row mb-3">
         <div class="col-md-6 mb-3 mb-md-0">
           <div class="search-container">
@@ -109,7 +100,6 @@
         </div>
       </div>
 
-      <!-- Loading Spinner -->
       <div class="loading-spinner">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">جاري التحميل...</span>
@@ -117,7 +107,6 @@
         <p class="mt-2">جاري تحميل بيانات الطلاب...</p>
       </div>
 
-      <!-- Students Table -->
       <div class="table-responsive">
         <table class="table table-hover">
           <thead>
@@ -132,12 +121,10 @@
             </tr>
           </thead>
           <tbody>
-            <!-- Student rows will be populated by JavaScript -->
           </tbody>
         </table>
       </div>
 
-      <!-- Pagination -->
       <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination">
           <li class="page-item">

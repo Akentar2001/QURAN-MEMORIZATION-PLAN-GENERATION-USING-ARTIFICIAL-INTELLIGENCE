@@ -1,4 +1,3 @@
-// studentsData.js
 // export 
 const students = [
     {
@@ -105,19 +104,16 @@ const students = [
     }
 ];
 
-// Simple data arrays for filters and selections
 // export 
 const evaluations = ['ممتاز', 'جيد جداً', 'جيد', 'مقبول', 'ضعيف'];
 // export 
 const lastUpdates = ['2024-03-08', '2024-03-07', '2024-03-06', '2024-03-05', '2024-03-04'];
 
-// Helper function to get student by ID
 // export 
 const getStudentById = (id) => {
     return students.find(student => student.id === id) || null;
 };
 
-// Helper function to filter students by evaluation
 // export 
 const filterStudentsByEvaluation = (evaluation) => {
     return students.filter(student => student.evaluation === evaluation);

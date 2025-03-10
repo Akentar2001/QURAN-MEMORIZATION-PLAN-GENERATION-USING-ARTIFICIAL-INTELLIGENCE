@@ -28,7 +28,6 @@ class StudentManager {
     }
 
     bindFilterEvents() {
-        // Filter dropdown items
         document.querySelectorAll('.dropdown-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -63,7 +62,6 @@ class StudentManager {
     }
 
     bindStudentActionEvents() {
-        // Use event delegation for dynamically created buttons
         document.querySelector('tbody').addEventListener('click', (e) => {
             const button = e.target.closest('.btn-view-details');
             if (button) {
@@ -80,7 +78,6 @@ class StudentManager {
             }
         });
 
-        // Update delete button event listener to use event delegation
         document.querySelector('tbody').addEventListener('click', (e) => {
             const button = e.target.closest('.btn-delete-student');
             if (button) {
@@ -98,7 +95,6 @@ class StudentManager {
     }
 
     getStudentIdFromButton(element) {
-        // Navigate up to the row and get the student ID from the first cell
         const button = element.closest('button') || element;
         const row = button.closest('tr');
         return row.querySelector('td:first-child').textContent;
@@ -278,7 +274,6 @@ class StudentManager {
         const student = this.students.find(s => s.id === studentId);
         if (!student) return;
 
-        // Create modal if it doesn't exist
         let deleteModal = document.getElementById('deleteStudentModal');
         if (!deleteModal) {
             const modalHtml = `
@@ -311,35 +306,27 @@ class StudentManager {
             deleteModal = document.getElementById('deleteStudentModal');
         }
 
-        // Set student name in modal
         deleteModal.querySelector('.student-name').textContent = `"${student.name}"`;
 
-        // Initialize modal
         const modal = new bootstrap.Modal(deleteModal);
         modal.show();
 
-        // Handle delete confirmation
         const confirmBtn = deleteModal.querySelector('.confirm-delete');
         const handleDelete = () => {
-            // Remove event listener
             confirmBtn.removeEventListener('click', handleDelete);
 
-            // Hide modal
             modal.hide();
 
-            // Find and remove the row with animation
             const row = document.querySelector(`tbody tr td:first-child[textContent="${studentId}"]`).parentElement;
             row.style.transition = 'all 0.3s ease-out';
             row.style.backgroundColor = '#ffebee';
             row.style.opacity = '0';
 
             setTimeout(() => {
-                // Remove from data and UI
                 this.students = this.students.filter(s => s.id !== studentId);
                 row.remove();
                 this.updateStats();
 
-                // Show success toast
                 const toast = new bootstrap.Toast(document.createElement('div'));
                 toast._element.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
                 toast._element.style.zIndex = '1050';
@@ -354,7 +341,6 @@ class StudentManager {
                 document.body.appendChild(toast._element);
                 toast.show();
 
-                // Remove toast element after it's hidden
                 toast._element.addEventListener('hidden.bs.toast', () => {
                     toast._element.remove();
                 });
