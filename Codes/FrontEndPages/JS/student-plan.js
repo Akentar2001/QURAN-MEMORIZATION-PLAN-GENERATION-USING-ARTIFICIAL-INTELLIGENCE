@@ -1,451 +1,388 @@
-// class StudentPlanManager {
-//     constructor() {
-//         this.initializeData();
-//         this.bindElements();
-//         this.bindEvents();
-//         this.initializeChart();
-//     }
+// Student data
+// const studentData = {
+//     name: 'أحمد محمد',
+//     age: 14,
+//     memorizedParts: 5
+// };
 
-//     initializeData() {
-//         this.arabicMonths = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-//         this.arabicDays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+// Initial progress summary data
+const progressSummary = {
+    week: {
+        memorization: '5 صفحات',
+        majorRevision: '5 أجزاء',
+        minorRevision: '15 صفحة'
+    },
+    twoWeeks: {
+        memorization: '10 صفحات',
+        majorRevision: '10 أجزاء',
+        minorRevision: '30 صفحة'
+    },
+    month: {
+        memorization: '30 صفحة',
+        majorRevision: '30 جزء',
+        minorRevision: '90 صفحة'
+    }
+};
 
-//         this.twoWeeksPlanData = this.generatePlanData(14);
-//         this.monthPlanData = this.generatePlanData(30);
-//     }
+// Student Plan Manager Class
+class StudentPlanManager {
+    constructor() {
+        this.initializeData();
+        this.loadStudentInfo();
+        this.bindElements();
+        this.bindEvents();
+        this.generateAllPlans();
+        this.setupPrintOptimization();
+        this.updateProgressSummary('week');
+    }
 
-//     bindElements() {
-//         this.periodButtons = document.querySelectorAll('.time-period-selector .btn');
-//         this.planPeriods = document.querySelectorAll('.plan-period');
-//         this.printButton = document.getElementById('printPlan');
-//         this.twoWeeksPlan = document.getElementById('twoWeeksPlan');
-//         this.monthPlan = document.getElementById('monthPlan');
-//     }
+    initializeData() {
+        this.arabicMonths = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+        this.arabicDays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        this.editMode = false;
+        this.originalValues = {}; // Store original values for cancel functionality
+    }
 
-//     bindEvents() {
-//         this.periodButtons.forEach(button => {
-//             button.addEventListener('click', this.handlePeriodChange.bind(this));
-//         });
+    loadStudentInfo() {
+        // Get student ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = parseInt(urlParams.get('id'));
+        
+        let studentInfo;
+        
+        if (studentId) {
+            // Try to find student data from students array
+            studentInfo = students.find(s => s.id === studentId);
+        }
+        
+        // If no student found or no ID provided, use default data
+        if (!studentInfo) {
+            studentInfo = {
+                name: 'طالب جديد',
+                age: 14,
+                memorizedParts: 5
+            };
+        }
+        
+        // Update student info
+        document.getElementById('studentName').textContent = studentInfo.name;
+        document.getElementById('studentInfo').textContent = 
+            `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.memorizedParts}`;
+    }
 
-//         this.printButton.addEventListener('click', () => window.print());
-//     }
+    bindElements() {
+        this.periodButtons = document.querySelectorAll('.time-period-selector .btn');
+        this.planPeriods = document.querySelectorAll('.plan-period');
+        this.printButton = document.getElementById('printPlan');
+        this.editButton = document.getElementById('editPlan');
+        this.saveButton = document.getElementById('savePlan');
+        this.cancelButton = document.getElementById('cancelEdit');
+        this.weekPlanBody = document.getElementById('weekPlanBody');
+        this.twoWeeksPlanBody = document.getElementById('twoWeeksPlanBody');
+        this.monthPlanBody = document.getElementById('monthPlanBody');
+        this.memorizationSummary = document.getElementById('memorizationSummary');
+        this.majorRevisionSummary = document.getElementById('majorRevisionSummary');
+        this.minorRevisionSummary = document.getElementById('minorRevisionSummary');
+    }
 
-//     handlePeriodChange(event) {
-//         this.periodButtons.forEach(btn => btn.classList.remove('active'));
+    bindEvents() {
+        // Time period selector functionality
+        this.periodButtons.forEach(button => {
+            button.addEventListener('click', this.handlePeriodChange.bind(this));
+        });
 
-//         event.currentTarget.classList.add('active');
+        // Print functionality
+        this.printButton.addEventListener('click', () => {
+            // this.optimizeForPrint();
+            window.print();
+            // this.resetAfterPrint();
+        });
 
-//         this.planPeriods.forEach(period => period.style.display = 'none');
+        // Edit functionality
+        this.editButton.addEventListener('click', this.enterEditMode.bind(this));
+        this.saveButton.addEventListener('click', this.saveChanges.bind(this));
+        this.cancelButton.addEventListener('click', this.cancelEdit.bind(this));
+    }
 
-//         const selectedPeriod = event.currentTarget.getAttribute('data-period');
-//         document.getElementById(`${selectedPeriod}Plan`).style.display = 'block';
+    generateAllPlans() {
+        this.generateWeekPlan();
+        this.generateTwoWeeksPlan();
+        this.generateMonthPlan();
+        
+        // Update editable fields after generating content
+        this.editableFields = document.querySelectorAll('.editable');
+    }
 
-//         if (selectedPeriod === 'twoWeeks' && !this.twoWeeksPlanLoaded) {
-//             this.renderPlanPeriod(this.twoWeeksPlanData, this.twoWeeksPlan);
-//             this.twoWeeksPlanLoaded = true;
-//         } else if (selectedPeriod === 'month' && !this.monthPlanLoaded) {
-//             this.renderPlanPeriod(this.monthPlanData, this.monthPlan);
-//             this.monthPlanLoaded = true;
-//         }
+    generateWeekPlan() {
+        let html = '';
+        for (let i = 0; i < 5; i++) { // 5 days for a week (Sunday to Thursday)
+            const dayNum = i + 1;
+            const dayName = this.arabicDays[i];
+            const date = new Date(2025, 2, 5 + i); // March 5, 2025 + i days
+            const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
 
-//         this.updateProgressSummary(selectedPeriod);
-//     }
+            html += `
+            <tr>
+                <td>${dayNum}</td>
+                <td class="day-col">${dayName}</td>
+                <td class="date-col">${dateStr}</td>
+                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 31})</td>
+                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 35})</td>
+                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${this.getPartName(i)}</td>
+                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 16})</td>
+                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 30})</td>
+            </tr>
+            `;
+        }
+        this.weekPlanBody.innerHTML = html;
+    }
 
-//     updateProgressSummary(period) {
-//         let memorization, majorRevision, minorRevision;
+    generateTwoWeeksPlan() {
+        let html = '';
+        for (let i = 0; i < 10; i++) { // 14 days for two weeks
+            const dayNum = i + 1;
+            const dayIndex = i % 5;
+            const dayName = this.arabicDays[dayIndex];
+            const date = new Date(2025, 2, 5 + i); // March 5, 2025 + i days
+            const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
 
-//         switch (period) {
-//             case 'week':
-//                 memorization = '10 صفحات';
-//                 majorRevision = '5 أجزاء';
-//                 minorRevision = '30 صفحة';
-//                 break;
-//             case 'twoWeeks':
-//                 memorization = '20 صفحة';
-//                 majorRevision = '10 أجزاء';
-//                 minorRevision = '60 صفحة';
-//                 break;
-//             case 'month':
-//                 memorization = '40 صفحة';
-//                 majorRevision = '20 جزء';
-//                 minorRevision = '120 صفحة';
-//                 break;
-//         }
+            html += `
+            <tr>
+                <td>${dayNum}</td>
+                <td class="day-col">${dayName}</td>
+                <td class="date-col">${dateStr}</td>
+                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 31})</td>
+                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 35})</td>
+                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${this.getPartName(i)}</td>
+                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 16})</td>
+                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 30})</td>
+            </tr>
+            `;
+        }
+        this.twoWeeksPlanBody.innerHTML = html;
+    }
 
-//         document.querySelector('.info-box.bg-success .info-box-number').textContent = memorization;
-//         document.querySelector('.info-box.bg-primary .info-box-number').textContent = majorRevision;
-//         document.querySelector('.info-box.bg-warning .info-box-number').textContent = minorRevision;
-//     }
+    generateMonthPlan() {
+        let html = '';
+        for (let i = 0; i < 30; i++) { // 30 days for a month
+            const dayNum = i + 1;
+            const dayIndex = i % 5;
+            const dayName = this.arabicDays[dayIndex];
+            const date = new Date(2025, 2, 5 + i); // March 5, 2025 + i days
+            const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
 
-//     generatePlanData(days) {
-//         const planData = [];
-//         const startDate = new Date();
+            html += `
+            <tr>
+                <td>${dayNum}</td>
+                <td class="day-col">${dayName}</td>
+                <td class="date-col">${dateStr}</td>
+                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 31})</td>
+                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 35})</td>
+                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${this.getPartName(i)}</td>
+                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 16})</td>
+                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 30})</td>
+            </tr>
+            `;
+        }
+        this.monthPlanBody.innerHTML = html;
+    }
 
-//         for (let i = 0; i < days; i++) {
-//             const currentDate = new Date(startDate);
-//             currentDate.setDate(startDate.getDate() + i);
+    // Helper function to get Quran part names for specific indices
+    getPartName(index) {
+        return (index % 30) + 1;
+    }
 
-//             const dayName = this.arabicDays[currentDate.getDay()];
-//             const dayNumber = i + 1;
-//             const dateString = `${currentDate.getDate()} ${this.arabicMonths[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    handlePeriodChange(event) {
+        // If in edit mode, ask for confirmation before changing period
+        if (this.editMode) {
+            if (!confirm("سيتم فقدان التغييرات إذا قمت بتغيير الفترة. هل تريد المتابعة؟")) {
+                return;
+            }
+            // Exit edit mode if continuing
+            this.cancelEdit();
+        }
 
-//             const memorizationContent = {
-//                 title: `سورة البقرة (آية ${i * 10 + 1}-${i * 10 + 10})`,
-//                 amount: 'صفحتان'
-//             };
+        // Remove active class from all buttons
+        this.periodButtons.forEach(btn => btn.classList.remove('active'));
 
-//             const majorRevisionContent = {
-//                 title: `جزء ${i % 30 + 1}`,
-//                 amount: '1 جزء'
-//             };
+        // Add active class to clicked button
+        event.currentTarget.classList.add('active');
 
-//             const minorRevisionContent = {
-//                 title: `الصفحات ${i * 5 + 1}-${i * 5 + 6} من سورة البقرة`,
-//                 amount: '6 صفحات'
-//             };
+        // Hide all plan periods
+        this.planPeriods.forEach(period => period.style.display = 'none');
 
-//             planData.push({
-//                 dayNumber,
-//                 dayName,
-//                 dateString,
-//                 memorization: memorizationContent,
-//                 majorRevision: majorRevisionContent,
-//                 minorRevision: minorRevisionContent
-//             });
-//         }
+        // Show selected plan period
+        const selectedPeriod = event.currentTarget.getAttribute('data-period');
+        document.getElementById(`${selectedPeriod}Plan`).style.display = 'block';
 
-//         return planData;
-//     }
+        // Refresh editable fields after changing period
+        this.editableFields = document.querySelectorAll('.editable');
 
-//     renderPlanPeriod(data, container) {
-//         container.innerHTML = '';
+        // Update progress summary based on selected period
+        this.updateProgressSummary(selectedPeriod);
+    }
 
-//         data.forEach(day => {
-//             const dayRow = this.createDayRow(day);
-//             container.appendChild(dayRow);
-//         });
-//     }
+    enterEditMode() {
+        this.editMode = true;
+        document.body.classList.add('edit-mode');
+        this.editButton.style.display = 'none';
+        this.saveButton.style.display = 'block';
+        this.cancelButton.style.display = 'block';
 
-//     createDayRow(day) {
-//         const dayRow = document.createElement('div');
-//         dayRow.className = 'row day-row';
+        // Store original values and make fields editable
+        this.editableFields.forEach(field => {
+            const fieldId = `${field.dataset.field}-${field.dataset.day || '0'}`;
+            this.originalValues[fieldId] = field.textContent;
+            field.contentEditable = true;
 
-//         const dayHeader = `
-//             <div class="col-12">
-//                 <div class="day-header">
-//                     <div class="d-flex align-items-center">
-//                         <div class="day-icon">
-//                             <i class="fas fa-calendar-day"></i>
-//                         </div>
-//                         <h5 class="mb-0">اليوم ${this.getArabicNumber(day.dayNumber)} - ${day.dayName}</h5>
-//                     </div>
-//                     <span class="badge bg-light text-dark">${day.dateString}</span>
-//                 </div>
-//             </div>
-//         `;
+            // Add click listener to highlight entire content when clicked
+            field.addEventListener('click', this.selectAllContent);
+        });
+    }
 
-//         // Create memorization column
-//         const memorizationColumn = `
-//             <div class="col-md-4 mb-3 mb-md-0">
-//                 <div class="section-column memorization-col">
-//                     <div class="section-header">
-//                         <i class="fas fa-book"></i> الحفظ الجديد
-//                     </div>
-//                     <div class="section-content">
-//                         <p>${day.memorization.title}</p>
-//                         <small class="text-muted">المقدار: ${day.memorization.amount}</small>
-//                     </div>
-//                 </div>
-//             </div>
-//         `;
+    selectAllContent(e) {
+        if (document.body.classList.contains('edit-mode')) {
+            const range = document.createRange();
+            range.selectNodeContents(e.target);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    }
 
-//         // Create major revision column
-//         const majorRevisionColumn = `
-//             <div class="col-md-4 mb-3 mb-md-0">
-//                 <div class="section-column revision-col">
-//                     <div class="section-header">
-//                         <i class="fas fa-sync"></i> المراجعة الكبرى
-//                     </div>
-//                     <div class="section-content">
-//                         <p>${day.majorRevision.title}</p>
-//                         <small class="text-muted">المقدار: ${day.majorRevision.amount}</small>
-//                     </div>
-//                 </div>
-//             </div>
-//         `;
+    saveChanges() {
+        this.editMode = false;
+        document.body.classList.remove('edit-mode');
+        this.editButton.style.display = 'block';
+        this.saveButton.style.display = 'none';
+        this.cancelButton.style.display = 'none';
 
-//         // Create minor revision column
-//         const minorRevisionColumn = `
-//             <div class="col-md-4">
-//                 <div class="section-column minor-revision-col">
-//                     <div class="section-header">
-//                         <i class="fas fa-redo"></i> المراجعة الصغرى
-//                     </div>
-//                     <div class="section-content">
-//                         <p>${day.minorRevision.title}</p>
-//                         <small class="text-muted">المقدار: ${day.minorRevision.amount}</small>
-//                     </div>
-//                 </div>
-//             </div>
-//         `;
+        // Make fields non-editable
+        this.editableFields.forEach(field => {
+            field.contentEditable = false;
+            field.removeEventListener('click', this.selectAllContent);
+        });
 
-//         // Combine all columns
-//         dayRow.innerHTML = dayHeader + memorizationColumn + majorRevisionColumn + minorRevisionColumn;
+        // Here you would typically save the changes to a database
+        console.log('Changes saved!');
 
-//         return dayRow;
-//     }
+        // Show success message
+        this.showNotification('تم حفظ التغييرات بنجاح!', 'success');
+    }
 
-//     getArabicNumber(number) {
-//         const arabicNumbers = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
-//         if (number <= 10) {
-//             return arabicNumbers[number - 1];
-//         }
-//         return number.toString();
-//     }
+    cancelEdit() {
+        // Revert all changes and exit edit mode
+        this.editMode = false;
+        document.body.classList.remove('edit-mode');
+        this.editButton.style.display = 'block';
+        this.saveButton.style.display = 'none';
+        this.cancelButton.style.display = 'none';
 
-//     initializeChart() {
-//         const ctx = document.getElementById('progressChart').getContext('2d');
-//         this.progressChart = new Chart(ctx, {
-//             type: 'line',
-//             data: {
-//                 labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
-//                 datasets: [{
-//                     label: 'الحفظ الجديد',
-//                     data: [10, 15, 12, 18, 20, 25],
-//                     borderColor: '#28a745',
-//                     tension: 0.4,
-//                     fill: false
-//                 }, {
-//                     label: 'المراجعة الكبرى',
-//                     data: [5, 8, 6, 10, 12, 15],
-//                     borderColor: '#4a90e2',
-//                     tension: 0.4,
-//                     fill: false
-//                 }, {
-//                     label: 'المراجعة الصغرى',
-//                     data: [30, 35, 32, 38, 40, 45],
-//                     borderColor: '#ffc107',
-//                     tension: 0.4,
-//                     fill: false
-//                 }]
-//             },
-//             options: {
-//                 responsive: true,
-//                 plugins: {
-//                     legend: {
-//                         position: 'top',
-//                         labels: {
-//                             font: {
-//                                 family: 'Tajawal'
-//                             }
-//                         }
-//                     },
-//                     title: {
-//                         display: true,
-//                         text: 'تقدم الحفظ والمراجعة',
-//                         font: {
-//                             family: 'Tajawal',
-//                             size: 16
-//                         }
-//                     }
-//                 },
-//                 scales: {
-//                     y: {
-//                         beginAtZero: true,
-//                         ticks: {
-//                             font: {
-//                                 family: 'Tajawal'
-//                             }
-//                         }
-//                     },
-//                     x: {
-//                         ticks: {
-//                             font: {
-//                                 family: 'Tajawal'
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         });
-//     }
-// }
+        // Restore original content
+        this.editableFields.forEach(field => {
+            field.contentEditable = false;
+            const fieldId = `${field.dataset.field}-${field.dataset.day || '0'}`;
+            if (this.originalValues[fieldId]) {
+                field.textContent = this.originalValues[fieldId];
+            }
+            field.removeEventListener('click', this.selectAllContent);
+        });
 
-// document.addEventListener('DOMContentLoaded', () => {
-//     new StudentPlanManager();
-// });
+        // Reset original values
+        this.originalValues = {};
+    }
 
-// document.addEventListener('DOMContentLoaded', function () {
-//     const periodButtons = document.querySelectorAll('.time-period-selector .btn');
-//     periodButtons.forEach(button => {
-//         button.addEventListener('click', function () {
-//             periodButtons.forEach(btn => btn.classList.remove('active'));
-//             this.classList.add('active');
+    updateProgressSummary(period) {
+        if (progressSummary[period]) {
+            this.memorizationSummary.textContent = progressSummary[period].memorization;
+            this.majorRevisionSummary.textContent = progressSummary[period].majorRevision;
+            this.minorRevisionSummary.textContent = progressSummary[period].minorRevision;
+        }
+    }
 
-//             document.querySelectorAll('.plan-period').forEach(plan => {
-//                 plan.style.display = 'none';
-//             });
+    setupPrintOptimization() {
+        // Add print-specific styles dynamically
+        const printStyles = document.createElement('style');
+        printStyles.id = 'print-optimization-styles';
+        printStyles.textContent = `
+            @media print {
+                .plan-table { 
+                    font-size: 8pt !important; 
+                    width: 100% !important;
+                }
+                .plan-table th, .plan-table td {
+                    padding: 2px !important;
+                }
+                .main-container {
+                    padding: 0.5rem !important;
+                }
+                .plan-table tr { 
+                    page-break-inside: avoid !important; 
+                }
+                .container {
+                    width: 100% !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                }
+                .progress-summary-row {
+                    margin-top: 5px !important;
+                }
+                .student-info-card {
+                    padding: 5px !important;
+                    margin-bottom: 5px !important;
+                }
+                .container-header {
+                    margin-bottom: 5px !important;
+                    padding-bottom: 5px !important;
+                    border-bottom-width: 1px !important;
+                }
+            }
+        `;
+        document.head.appendChild(printStyles);
+    }
 
-//             const period = this.getAttribute('data-period');
-//             document.getElementById(`${period}Plan`).style.display = 'block';
-//         });
-//     });
+    optimizeForPrint() {
+        document.body.classList.add('printing');
+        // Hide non-printable elements
+        document.querySelectorAll('.no-print').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
 
-//     document.getElementById('printPlan').addEventListener('click', function () {
-//         window.print();
-//     });
+    resetAfterPrint() {
+        document.body.classList.remove('printing');
+        // Restore non-printable elements
+        document.querySelectorAll('.no-print').forEach(el => {
+            el.style.display = '';
+        });
+    }
 
-//     initializeChart();
+    showNotification(message, type = 'success') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed top-0 start-50 translate-middle-x mt-3`;
+        notification.style.zIndex = '1050';
+        notification.textContent = message;
 
-//     setupEditMode();
-// });
+        // Add to document
+        document.body.appendChild(notification);
 
-// function initializeChart() {
-//     const ctx = document.getElementById('progressChart').getContext('2d');
-//     const chart = new Chart(ctx, {
-//         type: 'line',
-//         data: {
-//             labels: ['1 مارس', '5 مارس', '10 مارس', '15 مارس', '20 مارس', '25 مارس', '30 مارس'],
-//             datasets: [
-//                 {
-//                     label: 'الحفظ الجديد',
-//                     data: [0, 10, 20, 30, 40, 50, 60],
-//                     borderColor: '#28a745',
-//                     backgroundColor: 'rgba(40, 167, 69, 0.1)',
-//                     tension: 0.4
-//                 },
-//                 {
-//                     label: 'المراجعة الكبرى',
-//                     data: [0, 5, 10, 15, 20, 25, 30],
-//                     borderColor: '#007bff',
-//                     backgroundColor: 'rgba(0, 123, 255, 0.1)',
-//                     tension: 0.4
-//                 },
-//                 {
-//                     label: 'المراجعة الصغرى',
-//                     data: [0, 6, 12, 18, 24, 30, 36],
-//                     borderColor: '#ffc107',
-//                     backgroundColor: 'rgba(255, 193, 7, 0.1)',
-//                     tension: 0.4
-//                 }
-//             ]
-//         },
-//         options: {
-//             responsive: true,
-//             plugins: {
-//                 legend: {
-//                     position: 'top',
-//                     labels: {
-//                         font: {
-//                             family: 'Tajawal'
-//                         }
-//                     }
-//                 },
-//                 tooltip: {
-//                     bodyFont: {
-//                         family: 'Tajawal'
-//                     },
-//                     titleFont: {
-//                         family: 'Tajawal'
-//                     }
-//                 }
-//             },
-//             scales: {
-//                 y: {
-//                     beginAtZero: true,
-//                     title: {
-//                         display: true,
-//                         text: 'الصفحات',
-//                         font: {
-//                             family: 'Tajawal',
-//                             size: 14
-//                         }
-//                     }
-//                 },
-//                 x: {
-//                     title: {
-//                         display: true,
-//                         text: 'التاريخ',
-//                         font: {
-//                             family: 'Tajawal',
-//                             size: 14
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//     });
-// }
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
 
-// function setupEditMode() {
-//     const editButton = document.querySelector('.btn-primary[href="#"]');
+    confirmDeleteStudent(studentId) {
+        if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
+            // Here you would typically make an API call to delete the student
+            console.log(`Deleting student with ID: ${studentId}`);
+            this.showNotification('تم حذف الطالب بنجاح');
+        }
+    }
+}
 
-//     editButton.addEventListener('click', function (e) {
-//         e.preventDefault();
-//         toggleEditMode();
-//     });
-// }
-
-// function toggleEditMode() {
-//     const isEditMode = document.body.classList.toggle('edit-mode');
-//     const editButton = document.querySelector('.btn-primary[href="#"]');
-
-//     if (isEditMode) {
-//         editButton.innerHTML = '<i class="fas fa-save ms-1"></i> حفظ التغييرات';
-//         editButton.classList.remove('btn-primary');
-//         editButton.classList.add('btn-success');
-
-//         makeContentEditable(true);
-
-//         const cancelButton = document.createElement('button');
-//         cancelButton.className = 'btn btn-danger no-print';
-//         cancelButton.innerHTML = '<i class="fas fa-times ms-1"></i> إلغاء';
-//         cancelButton.id = 'cancelEdit';
-//         cancelButton.addEventListener('click', function () {
-//             location.reload();
-//         });
-
-//         editButton.parentNode.insertBefore(cancelButton, editButton);
-//     } else {
-//         editButton.innerHTML = '<i class="fas fa-edit ms-1"></i> تعديل الخطة';
-//         editButton.classList.remove('btn-success');
-//         editButton.classList.add('btn-primary');
-
-//         makeContentEditable(false);
-
-//         const cancelButton = document.getElementById('cancelEdit');
-//         if (cancelButton) {
-//             cancelButton.remove();
-//         }
-
-//         savePlanChanges();
-//     }
-// }
-
-// function makeContentEditable(editable) {
-//     const sectionContents = document.querySelectorAll('.section-content p, .section-content small');
-//     sectionContents.forEach(element => {
-//         element.contentEditable = editable;
-//         if (editable) {
-//             element.classList.add('editable');
-//         } else {
-//             element.classList.remove('editable');
-//         }
-//     });
-// }
-
-// function savePlanChanges() {
-
-//     const notification = document.createElement('div');
-//     notification.className = 'alert alert-success position-fixed';
-//     notification.style.bottom = '20px';
-//     notification.style.right = '20px';
-//     notification.style.zIndex = '1050';
-//     notification.innerHTML = '<i class="fas fa-check-circle ms-2"></i>تم حفظ التغييرات بنجاح';
-
-//     document.body.appendChild(notification);
-
-//     setTimeout(() => {
-//         notification.remove();
-//     }, 3000);
-// }
+// Initialize the StudentPlanManager when the document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    new StudentPlanManager();
+});

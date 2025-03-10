@@ -68,7 +68,7 @@ class StudentManager {
             const button = e.target.closest('.btn-view-details');
             if (button) {
                 const studentId = this.getStudentIdFromButton(button);
-                window.location.href = `student-plan2.html?id=${studentId}`;
+                window.location.href = `student-plan.html?id=${studentId}`;
             }
         });
 
@@ -271,7 +271,7 @@ class StudentManager {
     viewStudentDetails(studentId) {
         const student = this.students.find(s => s.id === parseInt(studentId));
         if (!student) return;
-        window.location.href = `student-plan2.html?id=${student.id}`;
+        window.location.href = `student-plan.html?id=${student.id}`;
     }
 
     confirmDeleteStudent(studentId) {
