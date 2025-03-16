@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-"""Generate Quran Memorization Plans (All Pillars, Save Excel Output)"""
 import pandas as pd
 import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.losses import MeanSquaredError
 import pickle
 
-# ========================
+# ------------------------
 # 1. Load Datasets
-# ========================
+# ------------------------
 # Load lessons dataset
 lessons_df = pd.read_csv('cleaned_student_data.csv', encoding='utf-8-sig')
 lessons_df['date_of'] = pd.to_datetime(lessons_df['date_of'])
@@ -16,16 +14,15 @@ lessons_df['date_of'] = pd.to_datetime(lessons_df['date_of'])
 # Load verses dataset
 verses_df = pd.read_excel('verses.xlsx')
 
-# ========================
-# 2. Load Models with MSE Fix
-# ========================
+# ------------------------
+# 2. Load Models
+# ------------------------
 models = {}
 scalers = {}
 
-# Fix: Load models with explicit MSE definition
-models[1] = load_model('model_pillar_1.h5', custom_objects={'mse': MeanSquaredError()})  # New memorization
-models[2] = load_model('model_pillar_2.h5', custom_objects={'mse': MeanSquaredError()})  # Minor revision
-models[3] = load_model('model_pillar_3.h5', custom_objects={'mse': MeanSquaredError()})  # Major revision
+models[1] = load_model('model_pillar_1.h5', custom_objects={'mse': MeanSquaredError()})
+models[2] = load_model('model_pillar_2.h5', custom_objects={'mse': MeanSquaredError()})
+models[3] = load_model('model_pillar_3.h5', custom_objects={'mse': MeanSquaredError()})
 
 # Load scalers
 with open('scaler_pillar_1.pkl', 'rb') as f:
@@ -35,24 +32,23 @@ with open('scaler_pillar_2.pkl', 'rb') as f:
 with open('scaler_pillar_3.pkl', 'rb') as f:
     scalers[3] = pickle.load(f)
 
-# ========================
+# ----------------------------------
 # 3. Generate Plans for All Pillars
-# ========================
+# ----------------------------------
 def generate_plan(student_id, pillar_id, target_letters):
-    """Generate a plan for a student based on target letters."""
     # Get last end_verse
     last_end_verse = lessons_df[(lessons_df['student_id'] == student_id) & (lessons_df['pillar_id'] == pillar_id)]['end_verse_id'].iloc[-1]
     
     # Find starting reverse_index
-    reverse_index = verses_df[verses_df['verse_id'] == last_end_verse]['reverse_index'].values[0]
-    current_index = reverse_index + 1
+    order_in_quraan = verses_df[verses_df['verse_id'] == last_end_verse]['order_in_quraan'].values[0]
+    current_index = order_in_quraan + 1
     
     # Accumulate verses
     accumulated_letters = 0
     accumulated_verses = []
     
     while accumulated_letters < target_letters:
-        verse = verses_df[verses_df['reverse_index'] == current_index]
+        verse = verses_df[verses_df['order_in_quraan'] == current_index]
         if verse.empty:
             break
         
@@ -81,9 +77,9 @@ def generate_plan(student_id, pillar_id, target_letters):
         "surah_ids": list(set(surah_ids))  # Unique surah IDs
     }
 
-# ========================
+# ---------------------------------------
 # 4. Generate All Plans for Each Student
-# ========================
+# ---------------------------------------
 all_plans = []
 for student_id in lessons_df['student_id'].unique():
     # Initialize student plan
@@ -92,7 +88,7 @@ for student_id in lessons_df['student_id'].unique():
     # Generate plans for all 3 pillars
     for pillar_id in [1, 2, 3]:  # 1=New, 2=Minor, 3=Major
         student_data = lessons_df[(lessons_df['student_id'] == student_id) & 
-                                 (lessons_df['pillar_id'] == pillar_id)]
+            (lessons_df['pillar_id'] == pillar_id)]
         
         if len(student_data) < 3:
             continue  # Skip students with insufficient data
@@ -110,9 +106,9 @@ for student_id in lessons_df['student_id'].unique():
     # Add student plan to the list
     all_plans.append(student_plan)
 
-# ========================
+# ------------------------
 # 5. Save Plans to Excel
-# ========================
+# ------------------------
 output_rows = []
 
 for plan in all_plans:
