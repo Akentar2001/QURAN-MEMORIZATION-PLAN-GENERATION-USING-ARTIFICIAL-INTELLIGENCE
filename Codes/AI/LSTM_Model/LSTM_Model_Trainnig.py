@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-"""LSTM Model Training for Quran Memorization Plans"""
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -92,9 +90,9 @@ if len(X_major) > 0:
 for pillar in models:
     save_model(models[pillar], f'model_pillar_{pillar}.h5')
     with open(f'scaler_pillar_{pillar}.pkl', 'wb') as f:
-        if pillar == 2:
+        if pillar == 1:
             pickle.dump(scaler_new, f)
-        elif pillar == 3:
+        elif pillar == 2:
             pickle.dump(scaler_major, f)
         else:
             pickle.dump(scaler_minor, f)
