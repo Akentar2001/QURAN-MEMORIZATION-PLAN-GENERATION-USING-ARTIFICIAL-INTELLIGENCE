@@ -22,7 +22,6 @@ class Student(db.Model):
     __table_args__ = (
     db.CheckConstraint("gender IN ('M', 'F')", name="students_gender_check"),
 )
-
     nationality = db.Column(db.String(50), nullable=False)
     student_phone = db.Column(db.String(15), nullable=True)
     parent_phone = db.Column(db.String(15), nullable=True)
