@@ -1,6 +1,6 @@
-from app.Models.Student import Student
-from app.Database.db import db
-from app.Models.StudentPlanInfo import StudentPlanInfo
+from app.models import students
+from app import db
+from app.models import students_plans_info
 from datetime import datetime
 
 class StudentService:
@@ -16,7 +16,7 @@ class StudentService:
                 raise ValueError(f'Missing required field: {field}')
         
         # Create new student
-        new_student = Student(
+        new_student = students(
             name=data['name'],
             age=data['age'],
             gender=data['gender'],
@@ -37,30 +37,24 @@ class StudentService:
         if 'user_id' in data:
             new_student.user_id = data['user_id']
         
+        #----------------------------------------------------------------
+        if 'memorization_direction' in data:
+            new_student.memorization_direction=data['memorization_direction']
+        if 'last_verse_recited' in data:
+            new_student.last_verse_recited=data['last_verse_recited']
+        if 'revision_direction' in data:
+            new_student.revision_direction=data['revision_direction']
+        if 'new_memorization_amount' in data:
+            new_student.new_memorization_amount=data['new_memorization_amount']
+        if'small_revision_amount' in data:
+            new_student.small_revision_amount=data['small_revision_amount']
+        if 'large_revision_amount' in data:
+            new_student.large_revision_amount=data['large_revision_amount']
+        if'memorization_days' in data:
+            new_student.memorization_days=data['memorization_days']
+
         # Add to database
         db.session.add(new_student)
-        db.session.flush()  # Flush to get the student_id
-        
-        # Create student plan info if plan data is provided
-        if 'plan_info' in data:
-            plan_data = data['plan_info']
-            
-            # Create new student plan info
-            new_plan_info = StudentPlanInfo(
-                student_id=new_student.student_id,
-                memorization_direction=plan_data.get('memorization_direction', True),
-                last_verse_recited=plan_data.get('last_verse_recited', 1),
-                revision_direction=plan_data.get('revision_direction', True),
-                new_memorization_amount=plan_data.get('new_memorization_amount'),
-                small_revision_amount=plan_data.get('small_revision_amount'),
-                large_revision_amount=plan_data.get('large_revision_amount'),
-                memorization_days=plan_data.get('memorization_days', 0),
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            )
-            
-            db.session.add(new_plan_info)
-        
         db.session.commit()
         
         return new_student
@@ -70,21 +64,21 @@ class StudentService:
         """
         Get all students from the database
         """
-        return Student.query.all()
+        return students.query.all()
     
     @staticmethod
     def get_student_by_id(student_id):
         """
         Get a student by ID
         """
-        return Student.query.get(student_id)
+        return students.query.get(student_id)
     
     @staticmethod
     def update_student(student_id, data):
         """
         Update a student's information
         """
-        student = Student.query.get(student_id)
+        student = students.query.get(student_id)
         if not student:
             raise ValueError(f'Student with ID {student_id} not found')
         
@@ -111,7 +105,7 @@ class StudentService:
         # Update student plan info if provided
         if 'plan_info' in data:
             plan_data = data['plan_info']
-            plan_info = StudentPlanInfo.query.get(student_id)
+            plan_info = students_plans_info.query.get(student_id)
             
             if plan_info:
                 # Update existing plan info
@@ -133,7 +127,7 @@ class StudentService:
                 plan_info.updated_at = datetime.utcnow()
             else:
                 # Create new plan info if it doesn't exist
-                new_plan_info = StudentPlanInfo(
+                new_plan_info = students_plans_info(
                     student_id=student_id,
                     memorization_direction=plan_data.get('memorization_direction', True),
                     last_verse_recited=plan_data.get('last_verse_recited', 1),
@@ -157,7 +151,7 @@ class StudentService:
         """
         Delete a student from the database
         """
-        student = Student.query.get(student_id)
+        student = students.query.get(student_id)
         if not student:
             raise ValueError(f'Student with ID {student_id} not found')
         
@@ -172,4 +166,4 @@ class StudentService:
         """
         Get a student's plan info
         """
-        return StudentPlanInfo.query.get(student_id)
+        return students_plans_info.query.get(student_id)

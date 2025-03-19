@@ -1,8 +1,17 @@
-from app import db
-from app.models import User, Student
+from app import create_app, db
+from app.models import users
 
-new_user = User(username="testuser", password_hash="hashedpassword", full_name="Test User")
-db.session.add(new_user)
-db.session.commit()
+# Create an app instance
+app = create_app()
 
-print(User.query.all())  # Should return the created user
+# Manually push the application context
+with app.app_context():
+    # Add a new user to the database
+    new_user = users(username="testuser", password_hash="hashedpassword", full_name="Test User", email="mm@gmail.com")
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Query and print all users to verify
+    users = users.query.all()
+    for user in users:
+        print(user.username)  # Should print the username of the created user
