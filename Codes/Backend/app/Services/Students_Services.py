@@ -36,7 +36,11 @@ class StudentService:
             new_student.memorized_parts = data['memorized_parts']
         if 'user_id' in data:
             new_student.user_id = data['user_id']
-        
+        def set_last_verse_recited(start_surah,no_verse_in_surah):
+            
+            verse_id = verses.query.filter_by(name = start_surah, order_in_surah = no_verse_in_surah).first()
+            return verse_id
+
         #----------------------------------------------------------------
         if 'memorization_direction' in data:
             new_student.memorization_direction=data['memorization_direction']
