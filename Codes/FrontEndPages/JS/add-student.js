@@ -131,8 +131,8 @@ const memorizationDirections = [
 ];
 
 const revisionDirections = [
-    { id: 'baqara-nas', name: 'من سورة البقرة إلى الناس', default: true },
-    { id: 'nas-baqara', name: 'من سورة الناس إلى البقرة', default: false }
+    { id: 'baqara-nas', name: 'من سورة البقرة إلى الناس', default: true, value: true },
+    { id: 'nas-baqara', name: 'من سورة الناس إلى البقرة', default: false, value: false }
 ];
 
 const newMemorizationOptions = [
@@ -322,7 +322,7 @@ function setupDirectionSelectors() {
 
     memorizationDirections.forEach(direction => {
         const option = document.createElement('option');
-        option.value = direction.id;
+        option.value = direction.value;
         option.textContent = direction.name;
         if (direction.default) option.selected = true;
         memDirectionSelect.appendChild(option);
@@ -330,7 +330,7 @@ function setupDirectionSelectors() {
 
     revisionDirections.forEach(direction => {
         const option = document.createElement('option');
-        option.value = direction.id;
+        option.value = direction.value;
         option.textContent = direction.name;
         if (direction.default) option.selected = true;
         revDirectionSelect.appendChild(option);
@@ -382,7 +382,7 @@ function setupFormSubmission() {
         const gender = document.getElementById('studentGender').value;
         const nationality = document.getElementById('nationality').value;
         const parentPhone = document.getElementById('parentPhone').value;
-        const studentPhone = document.getElementById('studentPhone') ? document.getElementById('studentPhone').value : '';
+        const studentPhone = document.getElementById('studentPhone').value;
         const notes = document.getElementById('notes').value;
 
         // Get memorization plan values
@@ -427,7 +427,10 @@ function setupFormSubmission() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
+            mode: 'cors', // Add this line
+            credentials: 'include', // Add this line
             body: JSON.stringify(studentData)
         })
             .then(response => {

@@ -2,6 +2,7 @@ from app.models import students
 from app import db
 from app.models import students_plans_info
 from datetime import datetime
+from app.models import verses
 
 class StudentService:
     @staticmethod
@@ -14,7 +15,6 @@ class StudentService:
         for field in required_fields:
             if field not in data:
                 raise ValueError(f'Missing required field: {field}')
-        
         # Create new student
         new_student = students(
             name=data['name'],
@@ -24,7 +24,6 @@ class StudentService:
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        
         # Add optional fields if present
         if 'student_phone' in data:
             new_student.student_phone = data['student_phone']
@@ -36,16 +35,13 @@ class StudentService:
             new_student.memorized_parts = data['memorized_parts']
         if 'user_id' in data:
             new_student.user_id = data['user_id']
-        def set_last_verse_recited(start_surah,no_verse_in_surah):
-            
-            verse_id = verses.query.filter_by(name = start_surah, order_in_surah = no_verse_in_surah).first()
-            return verse_id
-
+        print("5")
         #----------------------------------------------------------------
         if 'memorization_direction' in data:
             new_student.memorization_direction=data['memorization_direction']
-        if 'last_verse_recited' in data:
-            new_student.last_verse_recited=data['last_verse_recited']
+        if 'start_surah' in data:
+            new_student.last_verse_recited=data['start_surah']
+        #     new_student.last_verse_recited = verses.query.filter_by(name = data['start_surah'], order_in_surah = data['no_verse_in_surah']).first()
         if 'revision_direction' in data:
             new_student.revision_direction=data['revision_direction']
         if 'new_memorization_amount' in data:
@@ -56,11 +52,11 @@ class StudentService:
             new_student.large_revision_amount=data['large_revision_amount']
         if'memorization_days' in data:
             new_student.memorization_days=data['memorization_days']
-
+        print("6")
         # Add to database
         db.session.add(new_student)
         db.session.commit()
-        
+        print("7")
         return new_student
     
     @staticmethod
