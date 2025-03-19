@@ -7,15 +7,11 @@ from app.models import verses
 class StudentService:
     @staticmethod
     def create_student(data):
-        """
-        Create a new student in the database along with their plan info
-        """
-        # Validate required fields for student
+
         required_fields = ['name', 'age', 'gender', 'nationality']
         for field in required_fields:
             if field not in data:
                 raise ValueError(f'Missing required field: {field}')
-        # Create new student
         new_student = students(
             name=data['name'],
             age=data['age'],
@@ -24,7 +20,6 @@ class StudentService:
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        # Add optional fields if present
         if 'student_phone' in data:
             new_student.student_phone = data['student_phone']
         if 'parent_phone' in data:
@@ -35,25 +30,35 @@ class StudentService:
             new_student.memorized_parts = data['memorized_parts']
         if 'user_id' in data:
             new_student.user_id = data['user_id']
-        #----------------------------------------------------------------
-        if 'memorization_direction' in data:
-            new_student.memorization_direction=data['memorization_direction']
-        if 'start_surah' in data and 'no_verse_in_surah' in data: 
-            verse = verses.query.filter_by(surah_id=data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
-            if verse:
-                new_student.last_verse_recited = verse.verse_id
-        if 'revision_direction' in data:
-            new_student.revision_direction=data['revision_direction']
-        if 'new_memorization_amount' in data:
-            new_student.new_memorization_amount=data['new_memorization_amount']
-        if'small_revision_amount' in data:
-            new_student.small_revision_amount=data['small_revision_amount']
-        if 'large_revision_amount' in data:
-            new_student.large_revision_amount=data['large_revision_amount']
-        if'memorization_days' in data:
-            new_student.memorization_days=data['memorization_days']
-        # Add to database
+
         db.session.add(new_student)
+        db.session.flush() 
+
+        student_plan = students_plans_info(
+            student_id = new_student.student_id,
+            memorization_direction = data.get('memorization_direction') == "true",
+            revision_direction = data.get('revision_direction') == "true"
+        )
+  
+        if 'start_surah' in data and 'no_verse_in_surah' in data: 
+            verse = verses.query.filter_by(surah_id = data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
+            if verse:
+                student_plan.last_verse_recited = verse.verse_id
+            else:
+                student_plan.last_verse_recited = 6231
+        else:
+            student_plan.last_verse_recited = 6231
+
+        if 'new_memorization_amount' in data:
+            student_plan.new_memorization_amount=data['new_memorization_amount']
+        if 'small_revision_amount' in data:
+            student_plan.small_revision_amount=data['small_revision_amount']
+        if 'large_revision_amount' in data:
+            student_plan.large_revision_amount=data['large_revision_amount']
+        if 'memorization_days' in data:
+            student_plan.memorization_days=data['memorization_days']
+        
+        db.session.add(student_plan)
         db.session.commit()
         return new_student
     

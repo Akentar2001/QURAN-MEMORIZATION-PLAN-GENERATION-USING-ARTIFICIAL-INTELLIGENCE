@@ -8,36 +8,9 @@ students_bp = Blueprint('students', __name__)
 def add_student():
     try:
         data = request.get_json()
-        new_student = StudentService.create_student(data)
+        StudentService.create_student(data)
         
-        response = {
-            'message': 'Student added successfully',
-            'students': {
-                'student_id': new_student.student_id,
-                'name': new_student.name,
-                'age': new_student.age,
-                'gender': new_student.gender,
-                'nationality': new_student.nationality,
-                'student_phone': new_student.student_phone,
-                'parent_phone': new_student.parent_phone,
-                'notes': new_student.notes,
-                'memorized_parts': new_student.memorized_parts,
-                'user_id': new_student.user_id,
-                'created_at': new_student.created_at.isoformat() if new_student.created_at else None,
-                'updated_at': new_student.updated_at.isoformat() if new_student.updated_at else None
-            },
-            'students_plans_info': {
-                'memorization_direction': new_student.memorization_direction,
-                'last_verse_recited': new_student.last_verse_recited,
-                'revision_direction': new_student.revision_direction,
-                'new_memorization_amount': new_student.new_memorization_amount,
-                'small_revision_amount': new_student.small_revision_amount,
-                'large_revision_amount': new_student.large_revision_amount,
-                'memorization_days': new_student.memorization_days,
-                'created_at': new_student.created_at.isoformat() if new_student.created_at else None,
-                'updated_at': new_student.updated_at.isoformat() if new_student.updated_at else None
-            }
-        }
+        response = {'message': 'Student added successfully'}
         
         return jsonify(response), 201
         
@@ -46,7 +19,7 @@ def add_student():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@students_bp.route('/', methods=['GET'])
+@students_bp.route('/get', methods=['GET'])
 def get_students():
     try:
         students = StudentService.get_all_students()

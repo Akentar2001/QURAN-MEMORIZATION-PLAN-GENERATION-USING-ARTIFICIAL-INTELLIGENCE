@@ -346,8 +346,8 @@ function setupSurahSelection() {
     const toSurahSelect = document.getElementById('toSurah');
     const toVerseSelect = document.getElementById('toVerse');
 
-    toSurahSelect.innerHTML = '<option value="" selected disabled>اختر السورة</option>';
-
+    // Clear and populate surah select
+    toSurahSelect.innerHTML = '';
     surahs.forEach(surah => {
         const option = document.createElement('option');
         option.value = surah.id;
@@ -355,15 +355,17 @@ function setupSurahSelection() {
         toSurahSelect.appendChild(option);
     });
 
-    toSurahSelect.addEventListener('change', function () {
-        const selectedSurah = surahs.find(s => s.id === parseInt(this.value));
-        // alert(selectedSurah);
+    // Set default to Surah An-Nas (114)
+    toSurahSelect.value = '114';
+
+    // Function to populate verse select based on selected surah
+    function populateVerseSelect(surahId) {
+        const selectedSurah = surahs.find(s => s.id === parseInt(surahId));
         if (selectedSurah) {
             const verseSelect = document.createElement('select');
             verseSelect.className = 'form-select';
             verseSelect.id = 'toVerse';
 
-            verseSelect.innerHTML = '<option value="" selected disabled>اختر الآية</option>';
             for (let i = 1; i <= selectedSurah.verses; i++) {
                 const option = document.createElement('option');
                 option.value = i;
@@ -371,9 +373,21 @@ function setupSurahSelection() {
                 verseSelect.appendChild(option);
             }
 
-            const oldVerseInput = document.getElementById('toVerse');
-            oldVerseInput.parentNode.replaceChild(verseSelect, oldVerseInput);
+            // Replace old verse select with new one
+            const oldVerseSelect = document.getElementById('toVerse');
+            oldVerseSelect.parentNode.replaceChild(verseSelect, oldVerseSelect);
+            
+            // Set to verse 1 by default
+            verseSelect.value = '1';
         }
+    }
+
+    // Initialize verse select with An-Nas verses
+    populateVerseSelect('114');
+
+    // Handle surah changes
+    toSurahSelect.addEventListener('change', function() {
+        populateVerseSelect(this.value);
     });
 }
 
@@ -381,7 +395,6 @@ function setupFormSubmission() {
     document.getElementById('addStudentForm').addEventListener('submit', function (event) {
         event.preventDefault();
 
-        // Get form values
         const name = document.getElementById('studentName').value;
         const age = parseInt(document.getElementById('studentAge').value);
         const gender = document.getElementById('studentGender').value;
@@ -390,7 +403,6 @@ function setupFormSubmission() {
         const studentPhone = document.getElementById('studentPhone').value;
         const notes = document.getElementById('notes').value;
 
-        // Get memorization plan values
         const memorization_direction = document.getElementById('memDirection').value;
         const revision_direction = document.getElementById('revDirection').value;
         const start_surah = parseInt(document.getElementById('toSurah').value);
@@ -400,7 +412,6 @@ function setupFormSubmission() {
         const large_revision_amount = parseFloat(document.getElementById('largeRevisionAmount').value);
         const memorization_days = parseInt(document.getElementById('selectedDays').value);
 
-        // Create data object to send to backend
         const studentData = {
             name: name,
             age: age,
@@ -409,7 +420,7 @@ function setupFormSubmission() {
             parent_phone: parentPhone,
             student_phone: studentPhone,
             notes: notes,
-            // Add plan info directly to student data as per your backend implementation
+
             memorization_direction: memorization_direction,
             start_surah: start_surah,
             no_verse_in_surah: no_verse_in_surah,
@@ -420,22 +431,19 @@ function setupFormSubmission() {
             memorization_days: memorization_days
         };
 
-        // Show loading state
         const submitBtn = document.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
         submitBtn.disabled = true;
 
-        // Send data to backend API
-        // Update the fetch URL to use the correct backend URL
         fetch('http://localhost:5000/api/add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            mode: 'cors', // Add this line
-            credentials: 'include', // Add this line
+            mode: 'cors',
+            credentials: 'include',
             body: JSON.stringify(studentData)
         })
             .then(response => {
@@ -447,14 +455,12 @@ function setupFormSubmission() {
             .then(data => {
                 console.log('Success:', data);
 
-                // Show success toast
                 const successToast = new bootstrap.Toast(document.getElementById('successToast'));
                 successToast.show();
 
-                // Reset form if not "save and add another"
                 if (!event.submitter || event.submitter.id !== 'saveAndAddAnother') {
                     setTimeout(() => {
-                        window.location.href = '../HTML/index.html'; // Redirect to students list
+                        window.location.href = '../HTML/home.html'; // Redirect to students list
                     }, 1500);
                 } else {
                     document.getElementById('addStudentForm').reset();
@@ -462,19 +468,15 @@ function setupFormSubmission() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                // Show error message
                 alert('حدث خطأ أثناء حفظ بيانات الطالب. الرجاء المحاولة مرة أخرى.');
             })
             .finally(() => {
-                // Reset button state
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
             });
     });
 
-    // Handle "Save and Add Another" button
     document.getElementById('saveAndAddAnother').addEventListener('click', function (event) {
-        // Trigger form submission but mark this button as submitter
         const form = document.getElementById('addStudentForm');
         const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
         submitEvent.submitter = this;
