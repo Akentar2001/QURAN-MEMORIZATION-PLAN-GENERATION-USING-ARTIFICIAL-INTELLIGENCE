@@ -275,12 +275,17 @@ function setupDaySelection() {
 function updateSelectedDays() {
     const selectedDays = Array.from(document.querySelectorAll('.day-btn.selected-day'))
         .map(btn => btn.dataset.day);
-    // Calculate sum of selected day values
     const selectedDayValues = selectedDays
         .map(dayName => weekDays.find(day => day.name === dayName)?.value || 0)
-        .reduce((sum, value) => sum + value, 0);
+        .reduce((bitmask, value) => bitmask | value, 0);
 
     document.getElementById('selectedDays').value = selectedDayValues;
+}
+
+function getSelectedDays(bitmask) {
+    return weekDays
+        .filter(day => (bitmask & day.value) !== 0)
+        .map(day => day.name);
 }
 
 function setupMemorizationAmounts() {

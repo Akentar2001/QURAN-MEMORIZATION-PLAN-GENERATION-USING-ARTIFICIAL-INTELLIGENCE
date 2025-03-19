@@ -35,13 +35,13 @@ class StudentService:
             new_student.memorized_parts = data['memorized_parts']
         if 'user_id' in data:
             new_student.user_id = data['user_id']
-        print("5")
         #----------------------------------------------------------------
         if 'memorization_direction' in data:
             new_student.memorization_direction=data['memorization_direction']
-        if 'start_surah' in data:
-            new_student.last_verse_recited=data['start_surah']
-        #     new_student.last_verse_recited = verses.query.filter_by(name = data['start_surah'], order_in_surah = data['no_verse_in_surah']).first()
+        if 'start_surah' in data and 'no_verse_in_surah' in data: 
+            verse = verses.query.filter_by(surah_id=data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
+            if verse:
+                new_student.last_verse_recited = verse.verse_id
         if 'revision_direction' in data:
             new_student.revision_direction=data['revision_direction']
         if 'new_memorization_amount' in data:
@@ -52,11 +52,9 @@ class StudentService:
             new_student.large_revision_amount=data['large_revision_amount']
         if'memorization_days' in data:
             new_student.memorization_days=data['memorization_days']
-        print("6")
         # Add to database
         db.session.add(new_student)
         db.session.commit()
-        print("7")
         return new_student
     
     @staticmethod

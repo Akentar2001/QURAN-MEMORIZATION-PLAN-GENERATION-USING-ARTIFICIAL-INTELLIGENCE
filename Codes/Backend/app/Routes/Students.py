@@ -9,7 +9,6 @@ def add_student():
     try:
         data = request.get_json()
         new_student = StudentService.create_student(data)
-        print("1")
         
         response = {
             'message': 'Student added successfully',
@@ -22,8 +21,8 @@ def add_student():
                 'student_phone': new_student.student_phone,
                 'parent_phone': new_student.parent_phone,
                 'notes': new_student.notes,
-                # 'memorized_parts': new_student.memorized_parts,
-                # 'user_id': new_student.user_id,
+                'memorized_parts': new_student.memorized_parts,
+                'user_id': new_student.user_id,
                 'created_at': new_student.created_at.isoformat() if new_student.created_at else None,
                 'updated_at': new_student.updated_at.isoformat() if new_student.updated_at else None
             },
