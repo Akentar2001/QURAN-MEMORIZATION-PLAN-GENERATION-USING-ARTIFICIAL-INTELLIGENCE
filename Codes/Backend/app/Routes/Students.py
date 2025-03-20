@@ -19,7 +19,7 @@ def add_student():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@students_bp.route('/get', methods=['GET'])
+@students_bp.route('/getAll', methods=['GET'])
 def get_students():
     try:
         students = StudentService.get_all_students()
@@ -136,7 +136,7 @@ def update_student(student_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@students_bp.route('/<int:student_id>', methods=['DELETE'])
+@students_bp.route('deleteStudent/<int:student_id>', methods=['DELETE'])
 def delete_student(student_id):
     try:
         StudentService.delete_student(student_id)

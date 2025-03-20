@@ -64,9 +64,6 @@ class StudentService:
     
     @staticmethod
     def get_all_students():
-        """
-        Get all students from the database
-        """
         return students.query.all()
     
     @staticmethod
@@ -151,14 +148,10 @@ class StudentService:
     
     @staticmethod
     def delete_student(student_id):
-        """
-        Delete a student from the database
-        """
         student = students.query.get(student_id)
         if not student:
             raise ValueError(f'Student with ID {student_id} not found')
         
-        # StudentPlanInfo will be automatically deleted due to CASCADE
         db.session.delete(student)
         db.session.commit()
         

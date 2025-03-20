@@ -1,6 +1,6 @@
 class StudentManager {
     constructor() {
-        this.students = students;
+        this.students = [];
         this.currentPage = 1;
         this.itemsPerPage = 10;
         this.initializeTooltips();
@@ -8,7 +8,8 @@ class StudentManager {
         this.bindFilterEvents();
         this.bindPaginationEvents();
         this.bindStudentActionEvents();
-        this.loadStudents();
+        
+        this.fetchStudents();
     }
 
     initializeTooltips() {
@@ -48,11 +49,16 @@ class StudentManager {
         document.querySelectorAll('.pagination .page-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const pageText = e.target.textContent;
+                const pageItem = e.target.closest('.page-item');
+                if (pageItem.classList.contains('disabled')) return;
 
-                if (pageText === '«') {
+                const pageText = e.target.textContent.trim();
+                const isPrevious = pageItem.querySelector('[aria-label="Previous"]');
+                const isNext = pageItem.querySelector('[aria-label="Next"]');
+
+                if (isPrevious) {
                     this.changePage(this.currentPage - 1);
-                } else if (pageText === '»') {
+                } else if (isNext) {
                     this.changePage(this.currentPage + 1);
                 } else {
                     this.changePage(parseInt(pageText));
@@ -97,23 +103,110 @@ class StudentManager {
     getStudentIdFromButton(element) {
         const button = element.closest('button') || element;
         const row = button.closest('tr');
-        return row.querySelector('td:first-child').textContent;
+        const firstCell = row.querySelector('td:first-child');
+        return firstCell.getAttribute('data-student-id');
+    }
+
+    async fetchStudents() {
+        const spinner = document.querySelector('.loading-spinner');
+        if (spinner) spinner.style.display = 'block';
+
+        try {
+            const response = await fetch('http://localhost:5000/api/getAll', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                mode: 'cors',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch students');
+            }
+            
+            const data = await response.json();
+
+            const studentsArray = Array.isArray(data) ? data : (data.students || data.data || []);
+            
+            this.students = studentsArray.map((student, index) => ({
+                seqNumber: index + 1,
+                id: student.student_id,
+                name: student.name,
+                age: student.age,
+                memorizedParts: student.memorized_parts || 0,
+                percentage: `${((student.memorized_parts || 0) / 30 * 100).toFixed(1)}%`,
+                lastUpdate: new Date(student.updated_at).toLocaleDateString('ar-SA'),
+                evaluation: this.calculateEvaluation(student.recitations)
+            }));
+
+            this.updateStats(); 
+            this.initializeTooltips();
+            this.loadStudents();
+
+            this.initializeTooltips();
+            this.bindSearchEvent();
+            this.bindFilterEvents();
+            this.bindPaginationEvents();
+            this.bindStudentActionEvents();
+
+        } catch (error) {
+            console.error('Error fetching students:', error);
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        حدث خطأ أثناء تحميل بيانات الطلاب
+                    </td>
+                </tr>
+            `;
+        } finally {
+            if (spinner) spinner.style.display = 'none';
+        }
+    }
+
+    calculateEvaluation(recitations) {
+        if (!recitations || recitations.length === 0) return 'جديد';
+        
+        // Calculate average rating from last 5 recitations
+        const recentRecitations = recitations.slice(-5);
+        const avgRating = recentRecitations.reduce((sum, rec) => sum + (rec.rating || 0), 0) / recentRecitations.length;
+        
+        if (avgRating >= 90) return 'ممتاز';
+        if (avgRating >= 80) return 'جيد جداً';
+        if (avgRating >= 70) return 'جيد';
+        if (avgRating >= 60) return 'مقبول';
+        return 'ضعيف';
     }
 
     loadStudents() {
-        const spinner = document.querySelector('.loading-spinner');
         const tbody = document.querySelector('tbody');
-        if (spinner) spinner.style.display = 'block';
-
         tbody.innerHTML = '';
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
 
-        this.students.forEach(student => {
+        if (this.students.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        لا يوجد طلاب مسجلين حالياً
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const endIndex = startIndex + this.itemsPerPage;
+        const paginatedStudents = this.students.slice(startIndex, endIndex);
+
+        paginatedStudents.forEach((student, index) => {
             const row = document.createElement('tr');
             const memorizedParts = typeof student.memorizedParts === 'number' ? 
                 `${student.memorizedParts} أجزاء` : student.memorizedParts;
             
             row.innerHTML = `
-                <td>${student.id}</td>
+                <td data-student-id="${student.id}">${startIndex + index + 1}</td>
                 <td>${student.name}</td>
                 <td>${student.age}</td>
                 <td>
@@ -139,9 +232,62 @@ class StudentManager {
             tbody.appendChild(row);
         });
 
-        if (spinner) spinner.style.display = 'none';
+        // Update pagination UI
+        this.updatePagination();
         this.updateStats();
         this.initializeTooltips();
+    }
+
+    updatePagination() {
+        const totalPages = Math.ceil(this.students.length / this.itemsPerPage);
+        const paginationContainer = document.querySelector('.pagination');
+        
+        if (!paginationContainer) return;
+
+        let paginationHTML = `
+            <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHTML += `
+                <li class="page-item ${i === this.currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#">${i}</a>
+                </li>`;
+        }
+
+        paginationHTML += `
+            <li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>`;
+
+        paginationContainer.innerHTML = paginationHTML;
+        this.bindPaginationEvents();
+    }
+
+    bindPaginationEvents() {
+        document.querySelectorAll('.pagination .page-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageText = e.target.textContent.trim();
+                const arrowClicked = e.target.closest('.page-link').getAttribute('aria-label');
+    
+                if (arrowClicked === 'Previous' || pageText === '«') {
+                    this.changePage(this.currentPage - 1);
+                } else if (arrowClicked === 'Next' || pageText === '»') {
+                    this.changePage(this.currentPage + 1);
+                } else {
+                    const pageNumber = parseInt(pageText);
+                    if (!isNaN(pageNumber)) {
+                        this.changePage(pageNumber);
+                    }
+                }
+            });
+        });
     }
 
     getEvaluationBadgeClass(evaluation) {
@@ -252,16 +398,8 @@ class StudentManager {
         }
 
         this.currentPage = pageNumber;
+        this.loadStudents();
 
-        document.querySelectorAll('.pagination .page-item').forEach(item => {
-            item.classList.remove('active');
-        });
-
-        const pageItems = document.querySelectorAll('.pagination .page-item');
-        pageItems[pageNumber].classList.add('active');
-
-
-        console.log(`Changed to page ${pageNumber}`);
     }
 
     viewStudentDetails(studentId) {
@@ -272,7 +410,10 @@ class StudentManager {
 
     confirmDeleteStudent(studentId) {
         const student = this.students.find(s => s.id === studentId);
-        if (!student) return;
+        if (!student) {
+            this.showToast('الطالب غير موجود', 'error');
+            return;
+        }
 
         let deleteModal = document.getElementById('deleteStudentModal');
         if (!deleteModal) {
@@ -280,14 +421,6 @@ class StudentManager {
                 <div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
-                        <!-- 
-                            <div class="modal-header bg-danger text-white">
-                                <h5 class="modal-title" id="deleteStudentModalLabel">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>تأكيد الحذف
-                                </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            -->
                             <div class="modal-body text-center">
                                 <i class="fas fa-user-times fa-4x text-danger mb-3"></i>
                                 <p class="fs-5">هل أنت متأكد من حذف الطالب</p>
@@ -311,43 +444,59 @@ class StudentManager {
         const modal = new bootstrap.Modal(deleteModal);
         modal.show();
 
+        // Remove any existing event listeners
         const confirmBtn = deleteModal.querySelector('.confirm-delete');
-        const handleDelete = () => {
-            confirmBtn.removeEventListener('click', handleDelete);
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
 
-            modal.hide();
-
-            const row = document.querySelector(`tbody tr td:first-child[textContent="${studentId}"]`).parentElement;
-            row.style.transition = 'all 0.3s ease-out';
-            row.style.backgroundColor = '#ffebee';
-            row.style.opacity = '0';
-
-            setTimeout(() => {
-                this.students = this.students.filter(s => s.id !== studentId);
-                row.remove();
-                this.updateStats();
-
-                const toast = new bootstrap.Toast(document.createElement('div'));
-                toast._element.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
-                toast._element.style.zIndex = '1050';
-                toast._element.innerHTML = `
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            <i class="fas fa-check-circle me-2"></i>
-                            تم حذف الطالب "${student.name}" بنجاح
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                    </div>`;
-                document.body.appendChild(toast._element);
-                toast.show();
-
-                toast._element.addEventListener('hidden.bs.toast', () => {
-                    toast._element.remove();
+        newConfirmBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch(`http://localhost:5000/api/deleteStudent/${studentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
                 });
-            }, 300);
-        };
 
-        confirmBtn.addEventListener('click', handleDelete);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'فشل في حذف الطالب من قاعدة البيانات');
+                }
+
+                // Show success notification
+                this.showToast('تم حذف الطالب بنجاح', 'success');
+                
+                // Close the modal and refresh the page
+                modal.hide();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000); // Wait 1 second for the toast to be visible
+
+            } catch (error) {
+                console.error('Delete error:', error);
+                this.showToast(error.message || 'حدث خطأ أثناء محاولة الحذف', 'error');
+            }
+        });
+    }
+
+    // Add this new method
+    showToast(message, type) {
+        const toast = new bootstrap.Toast(document.createElement('div'));
+        toast._element.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0 position-fixed bottom-0 end-0 m-3`;
+        toast._element.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-times-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>`;
+        document.body.appendChild(toast._element);
+        toast.show();
+        
+        // Auto-remove toast after 5 seconds
+        setTimeout(() => toast._element.remove(), 5000);
     }
 }
 
