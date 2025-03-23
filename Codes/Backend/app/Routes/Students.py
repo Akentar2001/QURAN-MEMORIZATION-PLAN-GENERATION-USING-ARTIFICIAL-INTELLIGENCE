@@ -22,7 +22,7 @@ def add_student():
 @students_bp.route('/getAll', methods=['GET'])
 def get_students():
     try:
-        students = StudentService.get_all_students()
+        results = StudentService.get_all_students()
         return jsonify({
             'students': [
                 {
@@ -34,11 +34,23 @@ def get_students():
                     'student_phone': student.student_phone,
                     'parent_phone': student.parent_phone,
                     'notes': student.notes,
-                    'memorized_parts': student.memorized_parts,
                     'user_id': student.user_id,
                     'created_at': student.created_at.isoformat() if student.created_at else None,
-                    'updated_at': student.updated_at.isoformat() if student.updated_at else None
-                } for student in students
+                    'updated_at': student.updated_at.isoformat() if student.updated_at else None,
+                    'plan_info': {
+                        'memorization_direction': plan_info.memorization_direction if plan_info else None,
+                        'last_verse_recited': plan_info.last_verse_recited if plan_info else None,
+                        'revision_direction': plan_info.revision_direction if plan_info else None,
+                        'new_memorization_amount': plan_info.new_memorization_amount if plan_info else None,
+                        'small_revision_amount': plan_info.small_revision_amount if plan_info else None,
+                        'large_revision_amount': plan_info.large_revision_amount if plan_info else None,
+                        'memorization_days': plan_info.memorization_days if plan_info else None,
+                        'overall_rating': plan_info.memorized_parts if plan_info else None,
+                        'memorized_parts': plan_info.memorized_parts if plan_info else None,
+                        'created_at': plan_info.created_at.isoformat() if plan_info and plan_info.created_at else None,
+                        'updated_at': plan_info.updated_at.isoformat() if plan_info and plan_info.updated_at else None
+                    } if plan_info else None
+                } for student, plan_info in results
             ]
         })
     except Exception as e:
@@ -51,7 +63,6 @@ def get_student(student_id):
         if not student:
             return jsonify({'error': 'Student not found'}), 404
         
-        # Get the student's plan info if it exists
         plan_info = StudentService.get_student_plan_info(student_id)
         
         response = {
@@ -64,7 +75,6 @@ def get_student(student_id):
                 'student_phone': student.student_phone,
                 'parent_phone': student.parent_phone,
                 'notes': student.notes,
-                'memorized_parts': student.memorized_parts,
                 'user_id': student.user_id,
                 'created_at': student.created_at.isoformat() if student.created_at else None,
                 'updated_at': student.updated_at.isoformat() if student.updated_at else None
@@ -109,7 +119,6 @@ def update_student(student_id):
                 'student_phone': student.student_phone,
                 'parent_phone': student.parent_phone,
                 'notes': student.notes,
-                'memorized_parts': student.memorized_parts,
                 'user_id': student.user_id,
                 'created_at': student.created_at.isoformat() if student.created_at else None,
                 'updated_at': student.updated_at.isoformat() if student.updated_at else None

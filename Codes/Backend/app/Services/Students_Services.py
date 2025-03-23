@@ -26,8 +26,6 @@ class StudentService:
             new_student.parent_phone = data['parent_phone']
         if 'notes' in data:
             new_student.notes = data['notes']
-        if 'memorized_parts' in data:
-            new_student.memorized_parts = data['memorized_parts']
         if 'user_id' in data:
             new_student.user_id = data['user_id']
 
@@ -40,15 +38,14 @@ class StudentService:
             revision_direction = data.get('revision_direction') == "true"
         )
   
-        if 'start_surah' in data and 'no_verse_in_surah' in data: 
-            verse = verses.query.filter_by(surah_id = data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
-            if verse:
-                student_plan.last_verse_recited = verse.verse_id
-            else:
-                student_plan.last_verse_recited = 6231
-        else:
-            student_plan.last_verse_recited = 6231
+        verse = verses.query.filter_by(surah_id = data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
+        
+        student_plan.last_verse_recited = 6231
+        if verse:
+            student_plan.last_verse_recited = verse.verse_id
 
+        student_plan.memorized_parts = StudentService.calculate_memorized_parts(student_plan.last_verse_recited, student_plan.memorization_direction)
+        
         if 'new_memorization_amount' in data:
             student_plan.new_memorization_amount=data['new_memorization_amount']
         if 'small_revision_amount' in data:
@@ -64,7 +61,14 @@ class StudentService:
     
     @staticmethod
     def get_all_students():
-        return students.query.all()
+        return db.session.query(
+            students, 
+            students_plans_info
+        ).join(
+            students_plans_info, 
+            students.student_id == students_plans_info.student_id, 
+            isouter=True
+        ).all()
     
     @staticmethod
     def get_student_by_id(student_id):
@@ -97,8 +101,6 @@ class StudentService:
             student.parent_phone = data['parent_phone']
         if 'notes' in data:
             student.notes = data['notes']
-        if 'memorized_parts' in data:
-            student.memorized_parts = data['memorized_parts']
         if 'user_id' in data:
             student.user_id = data['user_id']
         
@@ -109,6 +111,9 @@ class StudentService:
             
             if plan_info:
                 # Update existing plan info
+                if 'last_verse_recited' in plan_data:
+                    plan_info.last_verse_recited = plan_data['last_verse_recited']
+                    plan_info.memorized_parts = StudentService.calculate_memorized_parts(plan_data['last_verse_recited'])
                 if 'memorization_direction' in plan_data:
                     plan_info.memorization_direction = plan_data['memorization_direction']
                 if 'last_verse_recited' in plan_data:
@@ -126,7 +131,6 @@ class StudentService:
                 
                 plan_info.updated_at = datetime.utcnow()
             else:
-                # Create new plan info if it doesn't exist
                 new_plan_info = students_plans_info(
                     student_id=student_id,
                     memorization_direction=plan_data.get('memorization_direction', True),
@@ -148,14 +152,24 @@ class StudentService:
     
     @staticmethod
     def delete_student(student_id):
-        student = students.query.get(student_id)
-        if not student:
-            raise ValueError(f'Student with ID {student_id} not found')
         
-        db.session.delete(student)
-        db.session.commit()
-        
-        return True
+        try:
+            plan_info = students_plans_info.query.get(student_id)
+            if plan_info:
+                db.session.delete(plan_info)
+                db.session.flush()
+
+            student = students.query.get(student_id)
+            if not student:
+                raise ValueError(f'Student with ID {student_id} not found')
+
+            db.session.delete(student)
+            db.session.commit()
+            
+            return True
+        except Exception as e:
+            db.session.rollback()
+            raise e
         
     @staticmethod
     def get_student_plan_info(student_id):
@@ -163,3 +177,31 @@ class StudentService:
         Get a student's plan info
         """
         return students_plans_info.query.get(student_id)
+
+
+    @staticmethod
+    def calculate_memorized_parts(last_verse_id, memorization_direction):
+        verse = verses.query.get(last_verse_id)
+        if not verse:
+            return 0.0
+        surah_id = verse.surah_id
+        current_page_no = verse.page_no
+        if memorization_direction:
+            memorized_parts = current_page_no / 20
+        else:
+            first_page_query = verses.query.filter_by(surah_id=surah_id).order_by(verses.verse_id.asc()).first()
+            if not first_page_query:
+                return 0.0
+            first_page_of_current_surah = first_page_query.page_no
+            
+            next_surah_query = verses.query.filter_by(surah_id=(surah_id + 1)).order_by(verses.verse_id.asc()).first()
+            if not next_surah_query:
+                memorized_parts = 0.01
+            else:
+                first_page_of_next_surah = next_surah_query.page_no
+                memorized_parts = ((602 - first_page_of_next_surah) + (current_page_no - first_page_of_current_surah + 1)) / 20
+            
+        if memorized_parts < 0:
+            memorized_parts = 0.05
+
+        return memorized_parts

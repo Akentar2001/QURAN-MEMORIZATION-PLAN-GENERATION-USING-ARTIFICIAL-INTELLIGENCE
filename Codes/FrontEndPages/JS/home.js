@@ -134,12 +134,11 @@ class StudentManager {
                 id: student.student_id,
                 name: student.name,
                 age: student.age,
-                memorizedParts: student.memorized_parts || 0,
-                percentage: `${((student.memorized_parts || 0) / 30 * 100).toFixed(1)}%`,
-                lastUpdate: new Date(student.updated_at).toLocaleDateString('ar-SA'),
+                memorizedParts: student.plan_info ? Math.round(student.plan_info.memorized_parts) : 0,
+                percentage: student.plan_info ? `${Math.round(student.plan_info.memorized_parts / 0.3)}%` : '0%',
+                lastUpdate: student.plan_info ? new Date(student.plan_info.updated_at).toLocaleDateString('ar-SA') : new Date(student.updated_at).toLocaleDateString('ar-SA'),
                 evaluation: this.calculateEvaluation(student.recitations)
             }));
-
             this.updateStats(); 
             this.initializeTooltips();
             this.loadStudents();
