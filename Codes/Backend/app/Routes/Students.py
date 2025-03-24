@@ -45,7 +45,7 @@ def get_students():
                         'small_revision_amount': plan_info.small_revision_amount if plan_info else None,
                         'large_revision_amount': plan_info.large_revision_amount if plan_info else None,
                         'memorization_days': plan_info.memorization_days if plan_info else None,
-                        'overall_rating': plan_info.memorized_parts if plan_info else None,
+                        'overall_rating': plan_info.overall_rating if plan_info else None,
                         'memorized_parts': plan_info.memorized_parts if plan_info else None,
                         'created_at': plan_info.created_at.isoformat() if plan_info and plan_info.created_at else None,
                         'updated_at': plan_info.updated_at.isoformat() if plan_info and plan_info.updated_at else None

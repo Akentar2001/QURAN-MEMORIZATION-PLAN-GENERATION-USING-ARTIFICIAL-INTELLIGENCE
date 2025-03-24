@@ -137,8 +137,10 @@ class StudentManager {
                 memorizedParts: student.plan_info ? Math.round(student.plan_info.memorized_parts) : 0,
                 percentage: student.plan_info ? `${Math.round(student.plan_info.memorized_parts / 0.3)}%` : '0%',
                 lastUpdate: student.plan_info ? new Date(student.plan_info.updated_at).toLocaleDateString('ar-SA') : new Date(student.updated_at).toLocaleDateString('ar-SA'),
-                evaluation: this.calculateEvaluation(student.recitations)
+                evaluation: this.calculateEvaluation(student.overall_rating),
+                m: student.overall_rating
             }));
+            
             this.updateStats(); 
             this.initializeTooltips();
             this.loadStudents();
@@ -165,17 +167,13 @@ class StudentManager {
         }
     }
 
-    calculateEvaluation(recitations) {
-        if (!recitations || recitations.length === 0) return 'جديد';
+    calculateEvaluation(overall_rating) {
+        if (!overall_rating) return 'جديد';
         
-        // Calculate average rating from last 5 recitations
-        const recentRecitations = recitations.slice(-5);
-        const avgRating = recentRecitations.reduce((sum, rec) => sum + (rec.rating || 0), 0) / recentRecitations.length;
-        
-        if (avgRating >= 90) return 'ممتاز';
-        if (avgRating >= 80) return 'جيد جداً';
-        if (avgRating >= 70) return 'جيد';
-        if (avgRating >= 60) return 'مقبول';
+        if (overall_rating >= 4) return 'ممتاز';
+        if (overall_rating >= 3) return 'جيد جداً';
+        if (overall_rating >= 2) return 'جيد';
+        if (overall_rating >= 1) return 'مقبول';
         return 'ضعيف';
     }
 
@@ -231,7 +229,6 @@ class StudentManager {
             tbody.appendChild(row);
         });
 
-        // Update pagination UI
         this.updatePagination();
         this.updateStats();
         this.initializeTooltips();
@@ -299,26 +296,49 @@ class StudentManager {
             default: return 'bg-secondary';
         }
     }
-    updateStats() {
-        const totalStudents = this.students.length;
-        const totalStudentsElement = document.querySelector('.stats-card:nth-child(1) h2');
-        if (totalStudentsElement) totalStudentsElement.textContent = totalStudents;
+updateStats() {
+    // Get stats card elements
+    const statsCards = {
+        totalStudents: document.querySelector('.stats-card:nth-child(1) h2'),
+        averageParts: document.querySelector('.stats-card:nth-child(2) h2'),
+        excellentStudents: document.querySelector('.stats-card:nth-child(3) h2')
+    };
 
-        const totalParts = this.students.reduce((sum, student) => {
-            const parts = typeof student.memorizedParts === 'number' ? 
-                student.memorizedParts : 
-                parseInt(student.memorizedParts);
-            return sum + (isNaN(parts) ? 0 : parts);
-        }, 0);
-
-        const averageParts = totalStudents > 0 ? totalParts / totalStudents : 0;
-        const averagePartsElement = document.querySelector('.stats-card:nth-child(2) h2');
-        if (averagePartsElement) averagePartsElement.textContent = `${averageParts.toFixed(1)} أجزاء`;
-
-        const excellentCount = this.students.filter(student => student.evaluation === 'ممتاز').length;
-        const excellentCountElement = document.querySelector('.stats-card:nth-child(3) h2');
-        if (excellentCountElement) excellentCountElement.textContent = `${excellentCount} طالب`;
+    // Calculate total students
+    const totalStudents = this.students.length;
+    if (statsCards.totalStudents) {
+        statsCards.totalStudents.textContent = totalStudents;
     }
+
+    // Calculate total memorized parts with validation
+    const totalParts = this.students.reduce((sum, student) => {
+        let parts = 0;
+        if (student.memorizedParts !== undefined && student.memorizedParts !== null) {
+            if (typeof student.memorizedParts === 'number') {
+                parts = Math.max(0, student.memorizedParts); // Ensure non-negative value
+            } else if (typeof student.memorizedParts === 'string') {
+                // Extract numeric value from string (e.g. "5 أجزاء" -> 5)
+                const matches = student.memorizedParts.match(/\d+/);
+                parts = matches ? Math.max(0, parseInt(matches[0])) : 0;
+            }
+        }
+        return sum + parts;
+    }, 0);
+
+    // Calculate and display average parts with proper rounding
+    const averageParts = totalStudents > 0 ? (totalParts / totalStudents) : 0;
+    if (statsCards.averageParts) {
+        // Round to 1 decimal place and ensure proper Arabic text formatting
+        const roundedAverage = Math.round(averageParts * 10) / 10;
+        statsCards.averageParts.textContent = `${roundedAverage} أجزاء`;
+    }
+
+    // Calculate and display excellent students count
+    const excellentCount = this.students.filter(student => student.evaluation === 'ممتاز').length;
+    if (statsCards.excellentStudents) {
+        statsCards.excellentStudents.textContent = `${excellentCount} طالب`;
+    }
+}
 
     filterStudents(searchTerm) {
         searchTerm = searchTerm.toLowerCase();
@@ -335,40 +355,29 @@ class StudentManager {
     }
 
     applyFilter(filterType) {
-        const tableRows = Array.from(document.querySelectorAll('tbody tr'));
-        const tbody = document.querySelector('tbody');
-
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
+        if (!this.students || !this.students.length) return;
 
         if (filterType === 'أعلى تقييم') {
-            tableRows.sort((a, b) => {
-                const evalA = a.querySelector('td:nth-child(6) .badge').textContent;
-                const evalB = b.querySelector('td:nth-child(6) .badge').textContent;
-                return evalA === 'ممتاز' ? -1 : 1;
+            this.students.sort((a, b) => {
+                if (a.evaluation === 'ممتاز' && b.evaluation !== 'ممتاز') return -1;
+                if (a.evaluation !== 'ممتاز' && b.evaluation === 'ممتاز') return 1;
+                return 0;
             });
         } else if (filterType === 'الأكثر حفظًا') {
-            tableRows.sort((a, b) => {
-                const partsA = parseFloat(a.querySelector('td:nth-child(4) .progress-info').textContent);
-                const partsB = parseFloat(b.querySelector('td:nth-child(4) .progress-info').textContent);
-                return partsB - partsA;
-            });
+            this.students.sort((a, b) => b.memorizedParts - a.memorizedParts);
         } else if (filterType === 'الأحدث') {
-            tableRows.sort((a, b) => {
-                const dateA = new Date(a.querySelector('td:nth-child(5)').textContent);
-                const dateB = new Date(b.querySelector('td:nth-child(5)').textContent);
+            this.students.sort((a, b) => {
+                const dateA = new Date(a.lastUpdate);
+                const dateB = new Date(b.lastUpdate);
                 return dateB - dateA;
             });
         } else if (filterType === 'إعادة ضبط') {
-            tableRows.sort((a, b) => {
-                const idA = parseInt(a.querySelector('td:first-child').textContent);
-                const idB = parseInt(b.querySelector('td:first-child').textContent);
-                return idA - idB;
-            });
+            this.students.sort((a, b) => a.id - b.id);
         }
 
-        tableRows.forEach(row => tbody.appendChild(row));
+        // Reset to first page and reload the table
+        this.currentPage = 1;
+        this.loadStudents();
     }
 
     filterByEvaluation(evaluation) {
