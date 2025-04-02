@@ -6,10 +6,8 @@ import logging
 
 app = create_app()
 
-# Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Configure CORS
 CORS(app, resources={
     r"/api/*": {
         "origins": ["http://127.0.0.1:5500", "http://localhost:5500", "null"],
@@ -21,7 +19,6 @@ CORS(app, resources={
 
 app.register_blueprint(students_bp, url_prefix="/api")
 
-# Add error handler for 500 errors
 @app.errorhandler(500)
 def handle_500_error(error):
     app.logger.error(f"500 error occurred: {str(error)}")
@@ -31,7 +28,6 @@ def handle_500_error(error):
         'status': 500
     }), 500
 
-# Add error handler for 400 errors
 @app.errorhandler(400)
 def handle_400_error(error):
     app.logger.error(f"400 error occurred: {str(error)}")
@@ -42,4 +38,4 @@ def handle_400_error(error):
     }), 400
 
 if __name__ == "__main__":
-    app.run(debug=True)  # Set to False in production
+    app.run(debug=True)

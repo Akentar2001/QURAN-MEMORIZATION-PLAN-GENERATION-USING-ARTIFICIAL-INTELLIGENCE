@@ -445,7 +445,6 @@ class StudentManager {
             return;
         }
 
-        // Remove any existing modal and backdrop
         const existingModal = document.getElementById('deleteStudentModal');
         if (existingModal) {
             existingModal.remove();
@@ -456,7 +455,6 @@ class StudentManager {
         }
         document.body.classList.remove('modal-open');
 
-        // Create new modal
         const modalHtml = `
             <div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
@@ -480,7 +478,6 @@ class StudentManager {
         const deleteModal = document.getElementById('deleteStudentModal');
         const modal = new bootstrap.Modal(deleteModal);
 
-        // Clean up when modal is hidden
         deleteModal.addEventListener('hidden.bs.modal', () => {
             document.body.classList.remove('modal-open');
             const backdrop = document.querySelector('.modal-backdrop');
@@ -488,7 +485,6 @@ class StudentManager {
             deleteModal.remove();
         });
 
-        // Handle delete confirmation
         const confirmBtn = deleteModal.querySelector('.confirm-delete');
         confirmBtn.addEventListener('click', async () => {
             try {
@@ -508,13 +504,11 @@ class StudentManager {
                 this.showToast('تم حذف الطالب بنجاح', 'success');
                 modal.hide();
                 
-                // Remove modal and backdrop immediately
                 deleteModal.remove();
                 const backdrop = document.querySelector('.modal-backdrop');
                 if (backdrop) backdrop.remove();
                 document.body.classList.remove('modal-open');
                 
-                // Reload page after successful deletion
                 setTimeout(() => window.location.reload(), 1000);
 
             } catch (error) {

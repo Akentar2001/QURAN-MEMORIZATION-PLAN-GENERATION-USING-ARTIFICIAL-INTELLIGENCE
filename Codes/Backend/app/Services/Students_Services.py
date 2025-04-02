@@ -42,7 +42,14 @@ class StudentService:
         
         student_plan.last_verse_recited = 6231
         if verse:
-            student_plan.last_verse_recited = verse.verse_id
+            if student_plan.memorization_direction:
+                student_plan.last_verse_recited = verse.verse_id - 1
+            else:
+                rev_verse = verses.query.filter_by(reverse_index=verse.reverse_index - 1).first()
+                if rev_verse:
+                    student_plan.last_verse_recited = rev_verse.verse_id
+                else:
+                    student_plan.last_verse_recited = 0
 
         student_plan.memorized_parts = StudentService.calculate_memorized_parts(student_plan.last_verse_recited, student_plan.memorization_direction)
         
