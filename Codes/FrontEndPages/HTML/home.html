@@ -29,29 +29,29 @@
   <div class="container py-4">
     <div class="row mb-4">
       <div class="col-md-4 mb-3 mb-md-0">
-        <div class="card stats-card">
+        <div class="stats-card card">
           <div class="card-body text-center">
             <i class="fas fa-users fa-2x text-primary mb-2"></i>
             <h5 class="card-title">إجمالي الطلاب</h5>
-            <h2 class="mb-0">25</h2>
+            <h2 class="mb-0">-</h2>
           </div>
         </div>
       </div>
       <div class="col-md-4 mb-3 mb-md-0">
-        <div class="card stats-card">
+        <div class="stats-card card">
           <div class="card-body text-center">
             <i class="fas fa-book-open fa-2x text-primary mb-2"></i>
             <h5 class="card-title">متوسط الحفظ</h5>
-            <h2 class="mb-0">5.2 أجزاء</h2>
+            <h2 class="mb-0">-</h2>
           </div>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card stats-card">
+        <div class="stats-card card">
           <div class="card-body text-center">
             <i class="fas fa-medal fa-2x text-primary mb-2"></i>
             <h5 class="card-title">تقييم ممتاز</h5>
-            <h2 class="mb-0">12 طالب</h2>
+            <h2 class="mb-0">-</h2>
           </div>
         </div>
       </div>
@@ -74,12 +74,13 @@
         </div>
         <div class="col-md-3 mb-3 mb-md-0">
           <select class="form-select">
-            <option selected>مستوى التقييم</option>
+            <option selected>الكل</option>
             <option>ممتاز</option>
             <option>جيد جدا</option>
             <option>جيد</option>
             <option>مقبول</option>
             <option>ضعيف</option>
+            <option>جديد</option>
           </select>
         </div>
         <div class="col-md-3">
@@ -113,13 +114,17 @@
               <th>الإجراءات</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody style="position: relative;">
             <tr class="loading-spinner">
-              <td colspan="7" class="text-center">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">جاري التحميل...</span>
+              <td colspan="7" style="height: 20vh; border: none;">
+                <div class="position-absolute" style="z-index: 1000; top: 40%; left: 50%; transform: translate(-50%, -50%);">
+                  <div class="d-flex flex-column align-items-center justify-content-center">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                      <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-3 fs-5 text-primary mb-0">جاري تحميل بيانات الطلاب...</p>
+                  </div>
                 </div>
-                <p class="mt-2">جاري تحميل بيانات الطلاب...</p>
               </td>
             </tr>
           </tbody>

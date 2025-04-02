@@ -1,16 +1,31 @@
 class StudentManager {
     constructor() {
         this.students = [];
+        this.originalStudents = [];
         this.currentPage = 1;
         this.itemsPerPage = 10;
         this.initializeTooltips();
         this.bindSearchEvent();
         this.bindFilterEvents();
-        this.bindPaginationEvents();
+        // this.bindPaginationEvents();
         this.bindStudentActionEvents();
         
+        const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
+        if (paginationNav) {
+            paginationNav.style.display = 'none';
+        }
+
         this.fetchStudents();
     }
+
+    static EVALUATION = {
+        NEW: 'جديد',
+        EXCELLENT: 'ممتاز',
+        VERY_GOOD: 'جيد جداً',
+        GOOD: 'جيد',
+        FAIR: 'مقبول',
+        WEAK: 'ضعيف'
+    };
 
     initializeTooltips() {
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -136,20 +151,18 @@ class StudentManager {
                 age: student.age,
                 memorizedParts: student.plan_info ? Math.round(student.plan_info.memorized_parts) : 0,
                 percentage: student.plan_info ? `${Math.round(student.plan_info.memorized_parts / 0.3)}%` : '0%',
+                rawDate: student.plan_info ? new Date(student.plan_info.updated_at) : new Date(student.updated_at),
                 lastUpdate: student.plan_info ? new Date(student.plan_info.updated_at).toLocaleDateString('ar-SA') : new Date(student.updated_at).toLocaleDateString('ar-SA'),
-                evaluation: this.calculateEvaluation(student.overall_rating),
-                m: student.overall_rating
+                overall_rating: student.plan_info ? student.plan_info.overall_rating : null,
+                evaluation: this.calculateEvaluation(student.plan_info ? student.plan_info.overall_rating : null)
             }));
             
+            this.originalStudents = [...this.students];
             this.updateStats(); 
-            this.initializeTooltips();
             this.loadStudents();
-
+            
             this.initializeTooltips();
-            this.bindSearchEvent();
-            this.bindFilterEvents();
-            this.bindPaginationEvents();
-            this.bindStudentActionEvents();
+            
 
         } catch (error) {
             console.error('Error fetching students:', error);
@@ -168,32 +181,36 @@ class StudentManager {
     }
 
     calculateEvaluation(overall_rating) {
-        if (!overall_rating) return 'جديد';
+        if (!overall_rating) return StudentManager.EVALUATION.NEW;
         
-        if (overall_rating >= 4) return 'ممتاز';
-        if (overall_rating >= 3) return 'جيد جداً';
-        if (overall_rating >= 2) return 'جيد';
-        if (overall_rating >= 1) return 'مقبول';
-        return 'ضعيف';
+        if (overall_rating >= 4) return StudentManager.EVALUATION.EXCELLENT;
+        if (overall_rating >= 3) return StudentManager.EVALUATION.VERY_GOOD;
+        if (overall_rating >= 2) return StudentManager.EVALUATION.GOOD;
+        if (overall_rating >= 1) return StudentManager.EVALUATION.FAIR;
+        return StudentManager.EVALUATION.WEAK;
     }
 
     loadStudents() {
         const tbody = document.querySelector('tbody');
         tbody.innerHTML = '';
         const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');  
 
         if (this.students.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="7" class="text-center">
                         <i class="fas fa-info-circle me-2"></i>
-                        لا يوجد طلاب مسجلين حالياً
+                        لا يوجد طلاب حالياً
                     </td>
                 </tr>
             `;
+            if (paginationNav) paginationNav.style.display = 'none';
             return;
-        }
+        }   
 
+        if (paginationNav) paginationNav.style.display = 'block';
+    
         const endIndex = startIndex + this.itemsPerPage;
         const paginatedStudents = this.students.slice(startIndex, endIndex);
 
@@ -230,7 +247,6 @@ class StudentManager {
         });
 
         this.updatePagination();
-        this.updateStats();
         this.initializeTooltips();
     }
 
@@ -239,6 +255,11 @@ class StudentManager {
         const paginationContainer = document.querySelector('.pagination');
         
         if (!paginationContainer) return;
+
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
 
         let paginationHTML = `
             <li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
@@ -262,6 +283,7 @@ class StudentManager {
             </li>`;
 
         paginationContainer.innerHTML = paginationHTML;
+        
         this.bindPaginationEvents();
     }
 
@@ -288,70 +310,70 @@ class StudentManager {
 
     getEvaluationBadgeClass(evaluation) {
         switch (evaluation) {
-            case 'ممتاز': return 'bg-success';
-            case 'جيد جدا': return 'bg-primary';
-            case 'جيد': return 'bg-warning text-dark';
-            case 'مقبول': return 'bg-info';
-            case 'ضعيف': return 'bg-danger';
+            case StudentManager.EVALUATION.EXCELLENT: return 'bg-success';
+            case StudentManager.EVALUATION.VERY_GOOD: return 'bg-primary';
+            case StudentManager.EVALUATION.GOOD: return 'bg-warning text-dark';
+            case StudentManager.EVALUATION.FAIR: return 'bg-info';
+            case StudentManager.EVALUATION.WEAK: return 'bg-danger';
             default: return 'bg-secondary';
         }
     }
-updateStats() {
-    // Get stats card elements
-    const statsCards = {
-        totalStudents: document.querySelector('.stats-card:nth-child(1) h2'),
-        averageParts: document.querySelector('.stats-card:nth-child(2) h2'),
-        excellentStudents: document.querySelector('.stats-card:nth-child(3) h2')
-    };
+    
+    updateStats() {
+        const statsCards = {
+            totalStudents: document.querySelector('.col-md-4:nth-child(1) .card-body h2'),
+            averageParts: document.querySelector('.col-md-4:nth-child(2) .card-body h2'),
+            excellentStudents: document.querySelector('.col-md-4:nth-child(3) .card-body h2')
+        };
 
-    // Calculate total students
-    const totalStudents = this.students.length;
-    if (statsCards.totalStudents) {
-        statsCards.totalStudents.textContent = totalStudents;
-    }
-
-    // Calculate total memorized parts with validation
-    const totalParts = this.students.reduce((sum, student) => {
-        let parts = 0;
-        if (student.memorizedParts !== undefined && student.memorizedParts !== null) {
-            if (typeof student.memorizedParts === 'number') {
-                parts = Math.max(0, student.memorizedParts); // Ensure non-negative value
-            } else if (typeof student.memorizedParts === 'string') {
-                // Extract numeric value from string (e.g. "5 أجزاء" -> 5)
-                const matches = student.memorizedParts.match(/\d+/);
-                parts = matches ? Math.max(0, parseInt(matches[0])) : 0;
-            }
+        const totalStudents = this.students.length;
+        if (statsCards.totalStudents) {
+            if(totalStudents === 0)
+                statsCards.totalStudents.textContent = 'لا يوجد طلاب';
+            else if(totalStudents === 1)
+                statsCards.totalStudents.textContent = `طالب واحد`;
+            else if(totalStudents === 2)
+                statsCards.totalStudents.textContent = `طالبان`;
+            else if(totalStudents >= 3 && totalStudents <= 10)
+                statsCards.totalStudents.textContent = `${totalStudents} طلاب`;
+            else
+                statsCards.totalStudents.textContent = `${totalStudents} طالب`;
         }
-        return sum + parts;
-    }, 0);
 
-    // Calculate and display average parts with proper rounding
-    const averageParts = totalStudents > 0 ? (totalParts / totalStudents) : 0;
-    if (statsCards.averageParts) {
-        // Round to 1 decimal place and ensure proper Arabic text formatting
-        const roundedAverage = Math.round(averageParts * 10) / 10;
-        statsCards.averageParts.textContent = `${roundedAverage} أجزاء`;
-    }
+        const totalParts = this.students.reduce((sum, student) => sum + student.memorizedParts, 0);
+        const averageParts = totalStudents > 0 ? (totalParts / totalStudents).toFixed(1) : 0;
+        
+        if (statsCards.averageParts) {
+            statsCards.averageParts.textContent = `${averageParts} أجزاء`;
+        }
 
-    // Calculate and display excellent students count
-    const excellentCount = this.students.filter(student => student.evaluation === 'ممتاز').length;
-    if (statsCards.excellentStudents) {
-        statsCards.excellentStudents.textContent = `${excellentCount} طالب`;
+        const excellentCount = this.students.filter(student => student.evaluation === StudentManager.EVALUATION.EXCELLENT).length;
+        if (statsCards.excellentStudents) {
+            if(excellentCount === 0)
+                statsCards.excellentStudents.textContent = 'لا يوجد';
+            else if(excellentCount === 1)
+                statsCards.excellentStudents.textContent = `طالب واحد`;
+            else if(excellentCount === 2)
+                statsCards.excellentStudents.textContent = `طالبان`;
+            else if(excellentCount >= 3 && excellentCount <= 10)
+                statsCards.excellentStudents.textContent = `${excellentCount} طلاب`;
+            else
+                statsCards.excellentStudents.textContent = `${excellentCount} طالب`;
+        }
     }
-}
 
     filterStudents(searchTerm) {
         searchTerm = searchTerm.toLowerCase();
-        const tableRows = document.querySelectorAll('tbody tr');
+        
+        const filteredStudents = this.originalStudents.filter(student => 
+            student.name.toLowerCase().includes(searchTerm)
+        );
 
-        tableRows.forEach(row => {
-            const studentName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            if (studentName.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+        this.students = filteredStudents;
+        
+        this.currentPage = 1;
+        this.loadStudents();
+        
     }
 
     applyFilter(filterType) {
@@ -359,43 +381,43 @@ updateStats() {
 
         if (filterType === 'أعلى تقييم') {
             this.students.sort((a, b) => {
-                if (a.evaluation === 'ممتاز' && b.evaluation !== 'ممتاز') return -1;
-                if (a.evaluation !== 'ممتاز' && b.evaluation === 'ممتاز') return 1;
-                return 0;
+                const evalOrder = [
+                    StudentManager.EVALUATION.EXCELLENT,
+                    StudentManager.EVALUATION.VERY_GOOD,
+                    StudentManager.EVALUATION.GOOD,
+                    StudentManager.EVALUATION.FAIR,
+                    StudentManager.EVALUATION.WEAK,
+                    StudentManager.EVALUATION.NEW
+                ];
+                const indexA = evalOrder.indexOf(a.evaluation);
+                const indexB = evalOrder.indexOf(b.evaluation);
+                
+                return indexA - indexB;
             });
         } else if (filterType === 'الأكثر حفظًا') {
             this.students.sort((a, b) => b.memorizedParts - a.memorizedParts);
         } else if (filterType === 'الأحدث') {
-            this.students.sort((a, b) => {
-                const dateA = new Date(a.lastUpdate);
-                const dateB = new Date(b.lastUpdate);
-                return dateB - dateA;
-            });
+            this.students.sort((a, b) => b.rawDate - a.rawDate); 
         } else if (filterType === 'إعادة ضبط') {
             this.students.sort((a, b) => a.id - b.id);
         }
 
-        // Reset to first page and reload the table
         this.currentPage = 1;
         this.loadStudents();
     }
 
     filterByEvaluation(evaluation) {
-        if (evaluation === 'مستوى التقييم') {
-            document.querySelectorAll('tbody tr').forEach(row => {
-                row.style.display = '';
-            });
+        if (evaluation === 'الكل') {
+            this.students = [...this.originalStudents];
+            this.loadStudents();
             return;
         }
 
-        document.querySelectorAll('tbody tr').forEach(row => {
-            const studentEval = row.querySelector('td:nth-child(6) .badge').textContent;
-            if (studentEval === evaluation) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+        const filteredStudents = this.originalStudents.filter(student => student.evaluation === evaluation);
+        this.students = filteredStudents;
+        
+        this.currentPage = 1;
+        this.loadStudents();
     }
 
     changePage(pageNumber) {
@@ -416,48 +438,59 @@ updateStats() {
         window.location.href = `student-plan.html?id=${student.id}`;
     }
 
-    confirmDeleteStudent(studentId) {
+    async confirmDeleteStudent(studentId) {
         const student = this.students.find(s => s.id === studentId);
         if (!student) {
             this.showToast('الطالب غير موجود', 'error');
             return;
         }
 
-        let deleteModal = document.getElementById('deleteStudentModal');
-        if (!deleteModal) {
-            const modalHtml = `
-                <div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-body text-center">
-                                <i class="fas fa-user-times fa-4x text-danger mb-3"></i>
-                                <p class="fs-5">هل أنت متأكد من حذف الطالب</p>
-                                <p class="fs-4 fw-bold text-danger student-name"></p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                <button type="button" class="btn btn-danger confirm-delete">
-                                    <i class="fas fa-trash me-2"></i>حذف
-                                </button>
-                            </div>
+        // Remove any existing modal and backdrop
+        const existingModal = document.getElementById('deleteStudentModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        const existingBackdrop = document.querySelector('.modal-backdrop');
+        if (existingBackdrop) {
+            existingBackdrop.remove();
+        }
+        document.body.classList.remove('modal-open');
+
+        // Create new modal
+        const modalHtml = `
+            <div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body text-center">
+                            <i class="fas fa-user-times fa-4x text-danger mb-3"></i>
+                            <p class="fs-5">هل أنت متأكد من حذف الطالب</p>
+                            <p class="fs-4 fw-bold text-danger student-name">"${student.name}"</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                            <button type="button" class="btn btn-danger confirm-delete">
+                                <i class="fas fa-trash me-2"></i>حذف
+                            </button>
                         </div>
                     </div>
-                </div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            deleteModal = document.getElementById('deleteStudentModal');
-        }
+                </div>
+            </div>`;
 
-        deleteModal.querySelector('.student-name').textContent = `"${student.name}"`;
-
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const deleteModal = document.getElementById('deleteStudentModal');
         const modal = new bootstrap.Modal(deleteModal);
-        modal.show();
 
-        // Remove any existing event listeners
+        // Clean up when modal is hidden
+        deleteModal.addEventListener('hidden.bs.modal', () => {
+            document.body.classList.remove('modal-open');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+            deleteModal.remove();
+        });
+
+        // Handle delete confirmation
         const confirmBtn = deleteModal.querySelector('.confirm-delete');
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-        newConfirmBtn.addEventListener('click', async () => {
+        confirmBtn.addEventListener('click', async () => {
             try {
                 const response = await fetch(`http://localhost:5000/api/deleteStudent/${studentId}`, {
                     method: 'DELETE',
@@ -472,23 +505,27 @@ updateStats() {
                     throw new Error(errorData.error || 'فشل في حذف الطالب من قاعدة البيانات');
                 }
 
-                // Show success notification
                 this.showToast('تم حذف الطالب بنجاح', 'success');
-                
-                // Close the modal and refresh the page
                 modal.hide();
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000); // Wait 1 second for the toast to be visible
+                
+                // Remove modal and backdrop immediately
+                deleteModal.remove();
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) backdrop.remove();
+                document.body.classList.remove('modal-open');
+                
+                // Reload page after successful deletion
+                setTimeout(() => window.location.reload(), 1000);
 
             } catch (error) {
                 console.error('Delete error:', error);
                 this.showToast(error.message || 'حدث خطأ أثناء محاولة الحذف', 'error');
             }
         });
+
+        modal.show();
     }
 
-    // Add this new method
     showToast(message, type) {
         const toast = new bootstrap.Toast(document.createElement('div'));
         toast._element.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0 position-fixed bottom-0 end-0 m-3`;
@@ -503,7 +540,6 @@ updateStats() {
         document.body.appendChild(toast._element);
         toast.show();
         
-        // Auto-remove toast after 5 seconds
         setTimeout(() => toast._element.remove(), 5000);
     }
 }
