@@ -20,12 +20,13 @@ const progressSummary = {
 class StudentPlanManager {
     constructor() {
         this.initializeData();
-        this.loadStudentInfo();
-        this.bindElements();
-        this.bindEvents();
-        this.generateAllPlans();
-        this.setupPrintOptimization();
-        this.updateProgressSummary('week');
+        this.loadStudentInfo().then(() => {
+            this.bindElements();
+            this.bindEvents();
+            this.generateAllPlans();
+            this.setupPrintOptimization();
+            this.updateProgressSummary('week');
+        });
     }
 
     initializeData() {
@@ -35,14 +36,32 @@ class StudentPlanManager {
         this.originalValues = {}; 
     }
 
-    loadStudentInfo() {
+    async loadStudentInfo() {
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = parseInt(urlParams.get('id'));
         
         let studentInfo;
         
         if (studentId) {
-            studentInfo = students.find(s => s.id === studentId);
+            try {
+                const response = await fetch(`http://localhost:5000/api/getStudent/${studentId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch student info');
+                }
+
+                studentInfo = await response.json();
+            } catch (error) {
+                console.error('Error fetching student:', error);
+                this.showNotification('حدث خطأ أثناء تحميل بيانات الطالب', 'danger');
+            }
         }
         
         if (!studentInfo) {
@@ -55,7 +74,7 @@ class StudentPlanManager {
         
         document.getElementById('studentName').textContent = studentInfo.name;
         document.getElementById('studentInfo').textContent = 
-            `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.memorizedParts}`;
+            `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.plan_info?.memorized_parts || 0}`;
     }
 
     bindElements() {

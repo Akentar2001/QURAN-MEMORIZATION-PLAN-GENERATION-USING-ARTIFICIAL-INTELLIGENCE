@@ -79,16 +79,17 @@ class StudentService:
     
     @staticmethod
     def get_student_by_id(student_id):
-        """
-        Get a student by ID
-        """
-        return students.query.get(student_id)
+        return db.session.query(
+            students,
+            students_plans_info
+        ).join(
+            students_plans_info,
+            students.student_id == students_plans_info.student_id,
+            isouter=True
+        ).filter(students.student_id == student_id).first()
     
     @staticmethod
     def update_student(student_id, data):
-        """
-        Update a student's information
-        """
         student = students.query.get(student_id)
         if not student:
             raise ValueError(f'Student with ID {student_id} not found')
