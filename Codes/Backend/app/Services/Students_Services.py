@@ -3,6 +3,7 @@ from app import db
 from app.models import students_plans_info
 from datetime import datetime
 from app.models import verses
+from app.Services.plan_generation_service import PlanGenerationService
 
 class StudentService:
     @staticmethod
@@ -64,6 +65,10 @@ class StudentService:
         
         db.session.add(student_plan)
         db.session.commit()
+        
+        serviceOfPlanGeneration = PlanGenerationService()
+        serviceOfPlanGeneration.generate_plan(new_student.student_id)
+
         return new_student
     
     @staticmethod

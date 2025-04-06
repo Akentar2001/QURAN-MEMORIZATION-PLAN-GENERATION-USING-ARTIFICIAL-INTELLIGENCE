@@ -7,7 +7,6 @@ class StudentManager {
         this.initializeTooltips();
         this.bindSearchEvent();
         this.bindFilterEvents();
-        // this.bindPaginationEvents();
         this.bindStudentActionEvents();
         
         const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
@@ -127,7 +126,7 @@ class StudentManager {
         if (spinner) spinner.style.display = 'block';
 
         try {
-            const response = await fetch('http://localhost:5000/api/getAll', {
+            const response = await fetch('http://localhost:5000/api/students/getAll', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json'
@@ -488,7 +487,7 @@ class StudentManager {
         const confirmBtn = deleteModal.querySelector('.confirm-delete');
         confirmBtn.addEventListener('click', async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/deleteStudent/${studentId}`, {
+                const response = await fetch(`http://localhost:5000/api/students/deleteStudent/${studentId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'

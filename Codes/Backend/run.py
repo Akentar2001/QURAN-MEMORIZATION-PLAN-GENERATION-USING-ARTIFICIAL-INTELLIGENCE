@@ -1,5 +1,6 @@
 from app import create_app
 from app.Routes.Students import students_bp
+from app.Routes.RecitationSession import recitation_session_bp
 from flask import jsonify
 from flask_cors import CORS
 import logging
@@ -17,7 +18,8 @@ CORS(app, resources={
     }
 })
 
-app.register_blueprint(students_bp, url_prefix="/api")
+app.register_blueprint(students_bp, url_prefix="/api/students")
+app.register_blueprint(recitation_session_bp, url_prefix="/api/recitation_session")
 
 @app.errorhandler(500)
 def handle_500_error(error):

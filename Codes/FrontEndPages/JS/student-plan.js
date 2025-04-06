@@ -1,18 +1,36 @@
+// const progressSummary = {
+//     week: {
+//         memorization: '5 صفحات',
+//         majorRevision: '5 أجزاء',
+//         minorRevision: '15 صفحة'
+//     },
+//     twoWeeks: {
+//         memorization: '10 صفحات',
+//         majorRevision: '10 أجزاء',
+//         minorRevision: '30 صفحة'
+//     },
+//     month: {
+//         memorization: '30 صفحة',
+//         majorRevision: '30 جزء',
+//         minorRevision: '90 صفحة'
+//     }
+// };
+
 const progressSummary = {
     week: {
-        memorization: '5 صفحات',
-        majorRevision: '5 أجزاء',
-        minorRevision: '15 صفحة'
+        memorization: 'البقرة: 1-25',
+        majorRevision: 'البقرة: 1-100',
+        minorRevision: 'البقرة: 1-50'
     },
     twoWeeks: {
-        memorization: '10 صفحات',
-        majorRevision: '10 أجزاء',
-        minorRevision: '30 صفحة'
+        memorization: 'البقرة: 1-50',
+        majorRevision: 'البقرة: 1-200',
+        minorRevision: 'البقرة: 1-100'
     },
     month: {
-        memorization: '30 صفحة',
-        majorRevision: '30 جزء',
-        minorRevision: '90 صفحة'
+        memorization: 'البقرة: 1-150',
+        majorRevision: 'البقرة-آل عمران',
+        minorRevision: 'البقرة: 1-286'
     }
 };
 
@@ -20,13 +38,17 @@ const progressSummary = {
 class StudentPlanManager {
     constructor() {
         this.initializeData();
-        this.loadStudentInfo().then(() => {
-            this.bindElements();
-            this.bindEvents();
-            this.generateAllPlans();
-            this.setupPrintOptimization();
-            this.updateProgressSummary('week');
-        });
+        this.initializeData();
+    Promise.all([
+        this.loadStudentInfo(),
+        this.loadStudentSessions()
+    ]).then(() => {
+        this.bindElements();
+        this.bindEvents();
+        this.generateAllPlans();
+        this.setupPrintOptimization();
+        this.updateProgressSummary('week');
+    });
     }
 
     initializeData() {
@@ -44,7 +66,7 @@ class StudentPlanManager {
         
         if (studentId) {
             try {
-                const response = await fetch(`http://localhost:5000/api/getStudent/${studentId}`, {
+                const response = await fetch(`http://localhost:5000/api/students/getStudent/${studentId}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
@@ -77,6 +99,39 @@ class StudentPlanManager {
             `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.plan_info?.memorized_parts || 0}`;
     }
 
+    async loadStudentSessions() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = parseInt(urlParams.get('id'));
+        
+        if (studentId) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/recitation_session/sessions/student/${studentId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to fetch sessions');
+                }
+                
+                const sessions = await response.json();
+                
+                this.memorizationSessions = sessions.filter(session => session.type === 'New_Memorization');
+                return this.memorizationSessions;
+    
+            } catch (error) {
+                console.error('Error fetching sessions:', error);
+                this.showNotification('حدث خطأ أثناء تحميل جلسات الحفظ', 'danger');
+                return [];
+            }
+        }
+        return [];
+    }
+
     bindElements() {
         this.periodButtons = document.querySelectorAll('.time-period-selector .btn');
         this.planPeriods = document.querySelectorAll('.plan-period');
@@ -98,9 +153,7 @@ class StudentPlanManager {
         });
 
         this.printButton.addEventListener('click', () => {
-            // this.optimizeForPrint();
             window.print();
-            // this.resetAfterPrint();
         });
 
         this.editButton.addEventListener('click', this.enterEditMode.bind(this));
@@ -121,19 +174,32 @@ class StudentPlanManager {
         for (let i = 0; i < 5; i++) {
             const dayNum = i + 1;
             const dayName = this.arabicDays[i];
-            const date = new Date(2025, 2, 5 + i); 
+            const date = new Date(2025, 2, 5 + i);
             const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
-
+            
+            // Try to get session data for this day, or use default values
+            const session = this.memorizationSessions?.[i] || {
+                start_verse: { surah_name: 'البقرة', order_in_surah: i * 5 + 1 },
+                end_verse: { surah_name: 'البقرة', order_in_surah: i * 5 + 5 }
+            };
+    
             html += `
             <tr>
                 <td>${dayNum}</td>
                 <td class="day-col">${dayName}</td>
                 <td class="date-col">${dateStr}</td>
-                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 31})</td>
-                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 35})</td>
-                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${this.getPartName(i)}</td>
-                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 16})</td>
-                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 30})</td>
+                <td class="editable memorization-cell" data-field="memFromSurah" data-day="${dayNum}">${session.start_verse.surah_name}</td>
+                <td class="editable memorization-cell" data-field="memFromVerse" data-day="${dayNum}">${session.start_verse.order_in_surah}</td>
+                <td class="editable memorization-cell" data-field="memToSurah" data-day="${dayNum}">${session.end_verse.surah_name}</td>
+                <td class="editable memorization-cell" data-field="memToVerse" data-day="${dayNum}">${session.end_verse.order_in_surah}</td>
+                <td class="editable minor-revision-cell" data-field="minRevFromSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable minor-revision-cell" data-field="minRevFromVerse" data-day="${dayNum}">${i * 5 + 6}</td>
+                <td class="editable minor-revision-cell" data-field="minRevToSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable minor-revision-cell" data-field="minRevToVerse" data-day="${dayNum}">${i * 5 + 10}</td>
+                <td class="editable major-revision-cell" data-field="majRevFromSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable major-revision-cell" data-field="majRevFromVerse" data-day="${dayNum}">${i * 10 + 1}</td>
+                <td class="editable major-revision-cell" data-field="majRevToSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable major-revision-cell" data-field="majRevToVerse" data-day="${dayNum}">${i * 10 + 20}</td>
             </tr>
             `;
         }
@@ -154,11 +220,18 @@ class StudentPlanManager {
                 <td>${dayNum}</td>
                 <td class="day-col">${dayName}</td>
                 <td class="date-col">${dateStr}</td>
-                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 31})</td>
-                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 35})</td>
-                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${this.getPartName(i)}</td>
-                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 16})</td>
-                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 30})</td>
+                <td class="editable memorization-cell" data-field="memFromSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable memorization-cell" data-field="memFromVerse" data-day="${dayNum}">${i * 5 + 1}</td>
+                <td class="editable memorization-cell" data-field="memToSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable memorization-cell" data-field="memToVerse" data-day="${dayNum}">${i * 5 + 5}</td>
+                <td class="editable minor-revision-cell" data-field="minRevFromSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable minor-revision-cell" data-field="minRevFromVerse" data-day="${dayNum}">${i * 5 + 6}</td>
+                <td class="editable minor-revision-cell" data-field="minRevToSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable minor-revision-cell" data-field="minRevToVerse" data-day="${dayNum}">${i * 5 + 10}</td>
+                <td class="editable major-revision-cell" data-field="majRevFromSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable major-revision-cell" data-field="majRevFromVerse" data-day="${dayNum}">${i * 10 + 1}</td>
+                <td class="editable major-revision-cell" data-field="majRevToSurah" data-day="${dayNum}">البقرة</td>
+                <td class="editable major-revision-cell" data-field="majRevToVerse" data-day="${dayNum}">${i * 10 + 20}</td>
             </tr>
             `;
         }

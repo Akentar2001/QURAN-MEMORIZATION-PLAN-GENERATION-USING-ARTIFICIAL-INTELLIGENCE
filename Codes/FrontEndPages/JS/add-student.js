@@ -425,9 +425,9 @@ function setupFormSubmission() {
             start_surah: start_surah,
             no_verse_in_surah: no_verse_in_surah,
             revision_direction: revision_direction,
-            new_memorization_amount: new_memorization_amount,
-            small_revision_amount: small_revision_amount,
-            large_revision_amount: large_revision_amount,
+            new_memorization_amount: (new_memorization_amount * 500),
+            small_revision_amount: (small_revision_amount * 500), 
+            large_revision_amount: (large_revision_amount * 500),
             memorization_days: memorization_days
         };
 
@@ -436,7 +436,7 @@ function setupFormSubmission() {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
         submitBtn.disabled = true;
 
-        fetch('http://localhost:5000/api/add', {
+        fetch('http://localhost:5000/api/students/add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
