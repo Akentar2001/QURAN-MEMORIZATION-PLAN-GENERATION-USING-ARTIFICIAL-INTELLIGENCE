@@ -16,7 +16,7 @@ class PlanGenerationService:
             start_verse = self.get_start_verse(plan_info)
             
             if start_verse:
-                plan = self.generate_memorization_plan(start_verse, plan_info)
+                plan = self.generate_memorization_plan(start_verse, plan_info.new_memorization_amount, plan_info.memorization_direction)
 
             if plan:
                 self.store_plan_in_database(student_id, plan, 'New_Memorization')
@@ -71,22 +71,22 @@ class PlanGenerationService:
         return start_verse
 
         
-    def generate_memorization_plan(self, start_verse, plan_info):
+    def generate_memorization_plan(self, start_verse, required_amount, direction):
         try:
             total_plan_letters = 0
             current_verse = start_verse
             end_verse = start_verse
             current_surah = start_verse.surah_id
-            index_column = Verse.order_in_quraan if plan_info.memorization_direction else Verse.reverse_index
+            index_column = Verse.order_in_quraan if direction else Verse.reverse_index
             verses_in_plan = []
 
-            while total_plan_letters < plan_info.new_memorization_amount:
+            while total_plan_letters < required_amount:
                 
                 potential_total = total_plan_letters + current_verse.letters_count
                 
-                if potential_total > plan_info.new_memorization_amount:
-                    diff_with = abs(potential_total - plan_info.new_memorization_amount)
-                    diff_without = abs(plan_info.new_memorization_amount - total_plan_letters)
+                if potential_total > required_amount:
+                    diff_with = abs(potential_total - required_amount)
+                    diff_without = abs(required_amount - total_plan_letters)
                     if diff_without < diff_with:
                         break
                 
@@ -103,8 +103,8 @@ class PlanGenerationService:
                     break
 
                 if next_verse.surah_id != current_surah:
-                    remaining_allowance = plan_info.new_memorization_amount - total_plan_letters
-                    if remaining_allowance < (plan_info.new_memorization_amount * 0.10):
+                    remaining_allowance = required_amount - total_plan_letters
+                    if remaining_allowance < (required_amount * 0.10):
                         break
                     current_surah = next_verse.surah_id
 
@@ -118,7 +118,7 @@ class PlanGenerationService:
             ).order_by(index_column.asc()).all()
 
             remaining_letters = sum(v.letters_count for v in remaining_verses)
-            if (total_plan_letters + remaining_letters) <= (plan_info.new_memorization_amount * 1.10):
+            if (total_plan_letters + remaining_letters) <= (required_amount * 1.10):
                 verses_in_plan.extend(remaining_verses)
                 total_plan_letters += remaining_letters
                 end_verse = remaining_verses[-1] if remaining_verses else end_verse
@@ -158,3 +158,4 @@ class PlanGenerationService:
             raise RuntimeError(f"Failed to store plan in database: {str(e)}")
 
 
+    
