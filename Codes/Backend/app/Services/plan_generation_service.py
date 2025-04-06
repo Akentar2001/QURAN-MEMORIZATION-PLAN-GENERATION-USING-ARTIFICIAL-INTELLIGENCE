@@ -16,7 +16,10 @@ class PlanGenerationService:
             start_verse = self.get_start_verse(plan_info)
             
             if start_verse:
-                plan = self.generate_memorization_plan(start_verse, plan_info.new_memorization_amount, plan_info.memorization_direction)
+                if plan_info.new_memorization_amount:
+                    plan = self.generate_memorization_plan(start_verse, plan_info.new_memorization_amount, plan_info.memorization_direction)
+                else:
+                    plan = self.generate_memorization_plan_using_difficulty(start_verse, plan_info.memorization_direction)
 
             if plan:
                 self.store_plan_in_database(student_id, plan, 'New_Memorization')
@@ -158,4 +161,62 @@ class PlanGenerationService:
             raise RuntimeError(f"Failed to store plan in database: {str(e)}")
 
 
-    
+    def generate_memorization_plan_using_difficulty(self, start_verse, direction):
+        try:
+            total_difficulty = 0
+            total_plan_letters = 0
+            current_verse = start_verse
+            end_verse = start_verse
+            current_surah = start_verse.surah_id
+            index_column = Verse.order_in_quraan if direction else Verse.reverse_index
+            verses_in_plan = []
+
+            while total_difficulty < 1:
+                
+                potential_total = total_difficulty + current_verse.verse_difficulty
+                
+                if potential_total > 1:
+                    diff_with = abs(potential_total - 1)
+                    diff_without = abs(1 - total_difficulty)
+                    if diff_without < diff_with:
+                        break
+                
+                verses_in_plan.append(current_verse)
+                total_difficulty += current_verse.verse_difficulty
+                total_plan_letters += current_verse.letters_count
+                end_verse = current_verse
+                
+                current_index = getattr(current_verse, index_column.key)
+                next_verse = db.session.query(Verse).filter(
+                    index_column == current_index + 1
+                ).first()
+
+                if not next_verse:
+                    break
+
+                if next_verse.surah_id != current_surah:
+                    remaining_allowance = 1 - total_difficulty
+                    if remaining_allowance < 0.7:
+                        break
+                    current_surah = next_verse.surah_id
+
+                current_verse = next_verse
+
+            remaining_verses = db.session.query(Verse).filter(
+                and_(
+                    Verse.surah_id == current_surah,
+                    index_column > getattr(end_verse, index_column.key)
+                )
+            ).order_by(index_column.asc()).all()
+
+            remaining_difficulty = sum(v.verse_difficulty for v in remaining_verses)
+            if (total_difficulty + remaining_difficulty) <= 1.07:
+                verses_in_plan.extend(remaining_verses)
+                total_difficulty += remaining_difficulty
+                end_verse = remaining_verses[-1] if remaining_verses else end_verse
+
+            return self.format_plan_response(start_verse, end_verse, total_plan_letters, verses_in_plan)
+
+        except Exception as e:
+            db.session.rollback()
+            raise RuntimeError(f"Plan generation failed: {str(e)}")

@@ -67,6 +67,7 @@ class StudentService:
         db.session.commit()
         
         serviceOfPlanGeneration = PlanGenerationService()
+
         serviceOfPlanGeneration.generate_plan(new_student.student_id)
 
         return new_student
