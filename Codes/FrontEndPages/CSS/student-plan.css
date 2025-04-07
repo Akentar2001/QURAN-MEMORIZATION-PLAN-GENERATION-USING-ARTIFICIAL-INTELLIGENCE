@@ -43,7 +43,7 @@ body {
 
 .plan-table th,
 .plan-table td {
-    border: 1px solid #dee2e6;
+    border: 1px solid #afc7e2;
     padding: 0.75rem;
     text-align: center;
     vertical-align: middle;
@@ -138,26 +138,29 @@ body {
 }
 
 @media print {
-    .no-print {
+
+    body > *:not(.print-section),
+    .no-print,
+    #nav-placeholder {
         display: none !important;
     }
 
-    .print-section {
-        margin: 0;
-        padding: 0;
+    .container {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     .main-container {
         box-shadow: none;
         border: none;
-        padding: 0.5rem;
-    }
-
-    body {
-        font-size: 10pt;
+        padding: 0;
+        margin: 0;
     }
 
     .plan-table {
+        width: 100% !important;
         font-size: 9pt;
         page-break-inside: avoid;
     }
@@ -165,24 +168,19 @@ body {
     .plan-table th,
     .plan-table td {
         padding: 4px;
+        border: 1px solid #000 !important;
     }
 
     .student-info-card {
-        padding: 0.5rem 1rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .container-header {
-        margin-bottom: 0.5rem;
-        padding-bottom: 0.5rem;
-    }
-
-    .info-box {
-        margin-bottom: 0.5rem;
+        background: none !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        padding: 0.5rem 0 !important;
+        margin-bottom: 0.5rem !important;
     }
 
     @page {
-        size: A4;
+        size: landscape;
         margin: 1cm;
     }
 }

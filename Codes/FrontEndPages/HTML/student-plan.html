@@ -27,145 +27,46 @@
                     <button id="printPlan" class="btn btn-outline-primary no-print">
                         <i class="fas fa-print ms-1"></i> طباعة الخطة
                     </button>
-                    <button id="editPlan" class="btn btn-primary no-print">
-                        <i class="fas fa-edit ms-1"></i> تعديل الخطة
-                    </button>
-                    <button id="savePlan" class="btn btn-success no-print" style="display: none;">
-                        <i class="fas fa-save ms-1"></i> حفظ التغييرات
-                    </button>
-                    <button id="cancelEdit" class="btn btn-danger no-print" style="display: none;">
-                        <i class="fas fa-times ms-1"></i> إلغاء
-                    </button>
-                </div>
-            </div>
-
-            <div class="time-period-selector no-print">
-                <div class="btn-group" role="group" aria-label="فترة الخطة">
-                    <button type="button" class="btn btn-outline-primary active" data-period="week">أسبوع</button>
-                    <button type="button" class="btn btn-outline-primary" data-period="twoWeeks">أسبوعان</button>
-                    <button type="button" class="btn btn-outline-primary" data-period="month">شهر</button>
                 </div>
             </div>
 
             <div id="planContent">
-                <div class="plan-period" id="weekPlan">
-                    <div class="table-responsive">
-                        <table class="plan-table">
-                            <thead>
-                                <tr>
-                                    <th rowspan="3">#</th>
-                                    <th rowspan="3">اليوم</th>
-                                    <th rowspan="3">التاريخ</th>
-                                    <th colspan="4" class="memorization-cell">الحفظ</th>
-                                    <th colspan="4" class="minor-revision-cell">المراجعة الصغرى</th>
-                                    <th colspan="4" class="major-revision-cell">المراجعة الكبرى</th>
-                                </tr>
-                                <tr>
-                                    <th colspan="2" class="memorization-cell">من</th>
-                                    <th colspan="2" class="memorization-cell">إلى</th>
-                                    <th colspan="2" class="minor-revision-cell">من</th>
-                                    <th colspan="2" class="minor-revision-cell">إلى</th>
-                                    <th colspan="2" class="major-revision-cell">من</th>
-                                    <th colspan="2" class="major-revision-cell">إلى</th>
-                                </tr>
-                                <tr>
-                                    <th class="memorization-cell">السورة</th>
-                                    <th class="memorization-cell">الآية</th>
-                                    <th class="memorization-cell">السورة</th>
-                                    <th class="memorization-cell">الآية</th>
-                                    <th class="minor-revision-cell">السورة</th>
-                                    <th class="minor-revision-cell">الآية</th>
-                                    <th class="minor-revision-cell">السورة</th>
-                                    <th class="minor-revision-cell">الآية</th>
-                                    <th class="major-revision-cell">السورة</th>
-                                    <th class="major-revision-cell">الآية</th>
-                                    <th class="major-revision-cell">السورة</th>
-                                    <th class="major-revision-cell">الآية</th>
-                                </tr>
-                            </thead>
-                            <tbody id="weekPlanBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="plan-period" id="twoWeeksPlan" style="display: none;">
-                    <div class="table-responsive">
-                        <table class="plan-table">
-                            <thead>
-                                <tr>
-                                    <th rowspan="3">#</th>
-                                    <th rowspan="3">اليوم</th>
-                                    <th rowspan="3">التاريخ</th>
-                                    <th colspan="4" class="memorization-cell">الحفظ</th>
-                                    <th colspan="4" class="minor-revision-cell">المراجعة الصغرى</th>
-                                    <th colspan="4" class="major-revision-cell">المراجعة الكبرى</th>
-                                </tr>
-                                <tr>
-                                    <th colspan="2" class="memorization-cell">من</th>
-                                    <th colspan="2" class="memorization-cell">إلى</th>
-                                    <th colspan="2" class="minor-revision-cell">من</th>
-                                    <th colspan="2" class="minor-revision-cell">إلى</th>
-                                    <th colspan="2" class="major-revision-cell">من</th>
-                                    <th colspan="2" class="major-revision-cell">إلى</th>
-                                </tr>
-                                <tr>
-                                    <th class="memorization-cell">السورة</th>
-                                    <th class="memorization-cell">الآية</th>
-                                    <th class="memorization-cell">السورة</th>
-                                    <th class="memorization-cell">الآية</th>
-                                    <th class="minor-revision-cell">السورة</th>
-                                    <th class="minor-revision-cell">الآية</th>
-                                    <th class="minor-revision-cell">السورة</th>
-                                    <th class="minor-revision-cell">الآية</th>
-                                    <th class="major-revision-cell">السورة</th>
-                                    <th class="major-revision-cell">الآية</th>
-                                    <th class="major-revision-cell">السورة</th>
-                                    <th class="major-revision-cell">الآية</th>
-                                </tr>
-                            </thead>
-                            <tbody id="twoWeeksPlanBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="plan-period" id="monthPlan" style="display: none;">
-                    <div class="table-responsive">
-                        <table class="plan-table">
-                            <thead>
-                                <tr>
-                                    <th rowspan="3">#</th>
-                                    <th rowspan="3">اليوم</th>
-                                    <th rowspan="3">التاريخ</th>
-                                    <th colspan="4" class="memorization-cell">الحفظ</th>
-                                    <th colspan="4" class="minor-revision-cell">المراجعة الصغرى</th>
-                                    <th colspan="4" class="major-revision-cell">المراجعة الكبرى</th>
-                                </tr>
-                                <tr>
-                                    <th colspan="2" class="memorization-cell">من</th>
-                                    <th colspan="2" class="memorization-cell">إلى</th>
-                                    <th colspan="2" class="minor-revision-cell">من</th>
-                                    <th colspan="2" class="minor-revision-cell">إلى</th>
-                                    <th colspan="2" class="major-revision-cell">من</th>
-                                    <th colspan="2" class="major-revision-cell">إلى</th>
-                                </tr>
-                                <tr>
-                                    <th class="memorization-cell">السورة</th>
-                                    <th class="memorization-cell">الآية</th>
-                                    <th class="memorization-cell">السورة</th>
-                                    <th class="memorization-cell">الآية</th>
-                                    <th class="minor-revision-cell">السورة</th>
-                                    <th class="minor-revision-cell">الآية</th>
-                                    <th class="minor-revision-cell">السورة</th>
-                                    <th class="minor-revision-cell">الآية</th>
-                                    <th class="major-revision-cell">السورة</th>
-                                    <th class="major-revision-cell">الآية</th>
-                                    <th class="major-revision-cell">السورة</th>
-                                    <th class="major-revision-cell">الآية</th>
-                                </tr>
-                            </thead>
-                            <tbody id="monthPlanBody"></tbody>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="plan-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="3">#</th>
+                                <th rowspan="3">اليوم</th>
+                                <th rowspan="3">التاريخ</th>
+                                <th colspan="4" class="memorization-cell">الحفظ</th>
+                                <th colspan="4" class="minor-revision-cell">المراجعة الصغرى</th>
+                                <th colspan="4" class="major-revision-cell">المراجعة الكبرى</th>
+                            </tr>
+                            <tr>
+                                <th colspan="2" class="memorization-cell">من</th>
+                                <th colspan="2" class="memorization-cell">إلى</th>
+                                <th colspan="2" class="minor-revision-cell">من</th>
+                                <th colspan="2" class="minor-revision-cell">إلى</th>
+                                <th colspan="2" class="major-revision-cell">من</th>
+                                <th colspan="2" class="major-revision-cell">إلى</th>
+                            </tr>
+                            <tr>
+                                <th class="memorization-cell">السورة</th>
+                                <th class="memorization-cell">الآية</th>
+                                <th class="memorization-cell">السورة</th>
+                                <th class="memorization-cell">الآية</th>
+                                <th class="minor-revision-cell">السورة</th>
+                                <th class="minor-revision-cell">الآية</th>
+                                <th class="minor-revision-cell">السورة</th>
+                                <th class="minor-revision-cell">الآية</th>
+                                <th class="major-revision-cell">السورة</th>
+                                <th class="major-revision-cell">الآية</th>
+                                <th class="major-revision-cell">السورة</th>
+                                <th class="major-revision-cell">الآية</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weekPlanBody"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -181,20 +82,20 @@
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <div class="info-box bg-primary">
-                        <span class="info-box-icon"><i class="fas fa-sync"></i></span>
-                        <div class="info-box-content">
-                            <span class="info-box-text">المراجعات الكبرى</span>
-                            <span id="majorRevisionSummary" class="info-box-number"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
                     <div class="info-box bg-warning">
                         <span class="info-box-icon"><i class="fas fa-redo"></i></span>
                         <div class="info-box-content">
                             <span class="info-box-text">المراجعات الصغرى</span>
                             <span id="minorRevisionSummary" class="info-box-number"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="info-box bg-primary">
+                        <span class="info-box-icon"><i class="fas fa-sync"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">المراجعات الكبرى</span>
+                            <span id="majorRevisionSummary" class="info-box-number"></span>
                         </div>
                     </div>
                 </div>

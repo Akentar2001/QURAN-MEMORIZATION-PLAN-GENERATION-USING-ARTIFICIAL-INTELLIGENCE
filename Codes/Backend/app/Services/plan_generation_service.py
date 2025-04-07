@@ -10,21 +10,32 @@ class PlanGenerationService:
         self.db = db
 
     def generate_plan(self, student_id):
-        """Main function to generate any type of recitation plan"""
         try:
             plan_info = self.get_student_plan(student_id)
-            start_verse = self.get_start_verse(plan_info)
+            last_verse = plan_info.last_verse_recited
+            days_info = self.get_memorization_days_info(plan_info.memorization_days)
+            days = days_info["days"]
+            required_amount = plan_info.new_memorization_amount
+            direction = plan_info.memorization_direction
+
+            for day in days:
+                start_verse = self.get_start_verse(last_verse, direction)
+                if start_verse:
+                    if required_amount:
+                        plan = self.generate_memorization_plan(start_verse, required_amount, direction)
+                    else:
+                        plan = self.generate_memorization_plan_using_difficulty(start_verse, direction)
+                    
+                    if not plan:
+                        break
+
+                    self.store_plan_in_database(student_id, plan, 'New_Memorization')
+                    last_verse = plan['end_verse_id']
             
-            if start_verse:
-                if plan_info.new_memorization_amount:
-                    plan = self.generate_memorization_plan(start_verse, plan_info.new_memorization_amount, plan_info.memorization_direction)
-                else:
-                    plan = self.generate_memorization_plan_using_difficulty(start_verse, plan_info.memorization_direction)
+        except Exception as e:
+            self.db.session.rollback()
+            raise RuntimeError(f"Plan generation failed: {str(e)}")
 
-            if plan:
-                self.store_plan_in_database(student_id, plan, 'New_Memorization')
-
-                
             # if recitation_type == "new_memorization":
             #     return self.generate_memorization_plan(start_verse, plan_info)
             # elif recitation_type == "minor_revision":
@@ -34,9 +45,6 @@ class PlanGenerationService:
             # else:
             #     raise ValueError("Invalid recitation type")
 
-        except Exception as e:
-            self.db.session.rollback()
-            raise RuntimeError(f"Plan generation failed: {str(e)}")
 
     def get_student_plan(self, student_id):
         """Helper method to get student plan info"""
@@ -47,12 +55,12 @@ class PlanGenerationService:
             raise ValueError("Student plan info not found")
         return plan_info
 
-    def get_start_verse(self, plan_info):
+    def get_start_verse(self, last_verse, direction):
         """Helper method to determine starting verse"""
-        index_column = Verse.order_in_quraan if plan_info.memorization_direction else Verse.reverse_index
-        
+        index_column = Verse.order_in_quraan if direction else Verse.reverse_index
+
         start_verse = self.db.session.query(Verse).filter(
-            Verse.verse_id == plan_info.last_verse_recited
+            Verse.verse_id == last_verse
         ).first()
 
         if not start_verse:
@@ -220,3 +228,26 @@ class PlanGenerationService:
         except Exception as e:
             db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
+
+    def get_memorization_days_info(self, memorization_days):
+        """Helper method to get information about memorization days"""
+        week_days = [
+            {"name": "الأحد", "value": 1},
+            {"name": "الاثنين", "value": 2},
+            {"name": "الثلاثاء", "value": 4},
+            {"name": "الأربعاء", "value": 8},
+            {"name": "الخميس", "value": 16},
+            {"name": "الجمعة", "value": 32},
+            {"name": "السبت", "value": 64}
+        ]
+        
+        active_days = []
+        for day in week_days:
+            if memorization_days & day["value"]:
+                active_days.append(day)
+        
+        return {
+            "days": active_days,
+            "count": len(active_days),
+            "names": [day["name"] for day in active_days]
+        }

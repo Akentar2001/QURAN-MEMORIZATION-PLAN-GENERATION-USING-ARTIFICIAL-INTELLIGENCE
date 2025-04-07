@@ -1,37 +1,9 @@
-// const progressSummary = {
-//     week: {
-//         memorization: '5 صفحات',
-//         majorRevision: '5 أجزاء',
-//         minorRevision: '15 صفحة'
-//     },
-//     twoWeeks: {
-//         memorization: '10 صفحات',
-//         majorRevision: '10 أجزاء',
-//         minorRevision: '30 صفحة'
-//     },
-//     month: {
-//         memorization: '30 صفحة',
-//         majorRevision: '30 جزء',
-//         minorRevision: '90 صفحة'
-//     }
-// };
-
 const progressSummary = {
     week: {
         memorization: 'البقرة: 1-25',
         majorRevision: 'البقرة: 1-100',
         minorRevision: 'البقرة: 1-50'
     },
-    twoWeeks: {
-        memorization: 'البقرة: 1-50',
-        majorRevision: 'البقرة: 1-200',
-        minorRevision: 'البقرة: 1-100'
-    },
-    month: {
-        memorization: 'البقرة: 1-150',
-        majorRevision: 'البقرة-آل عمران',
-        minorRevision: 'البقرة: 1-286'
-    }
 };
 
 // Student Plan Manager Class
@@ -45,7 +17,7 @@ class StudentPlanManager {
     ]).then(() => {
         this.bindElements();
         this.bindEvents();
-        this.generateAllPlans();
+        this.generatePlan();
         this.setupPrintOptimization();
         this.updateProgressSummary('week');
     });
@@ -54,8 +26,6 @@ class StudentPlanManager {
     initializeData() {
         this.arabicMonths = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
         this.arabicDays = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        this.editMode = false;
-        this.originalValues = {}; 
     }
 
     async loadStudentInfo() {
@@ -86,17 +56,15 @@ class StudentPlanManager {
             }
         }
         
-        if (!studentInfo) {
-            studentInfo = {
-                name: 'طالب جديد',
-                age: 14,
-                memorizedParts: 5
-            };
+        if (studentInfo) {
+            document.getElementById('studentName').textContent = studentInfo.name;
+            document.getElementById('studentInfo').textContent = 
+            `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.plan_info?.memorized_parts || 0}`;
+        } else {
+            document.getElementById('studentName').textContent = 'اسم الطالب';
+            this.showNotification('حدث خطأ أثناء تحميل بيانات الطالب', 'danger');
         }
         
-        document.getElementById('studentName').textContent = studentInfo.name;
-        document.getElementById('studentInfo').textContent = 
-            `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.plan_info?.memorized_parts || 0}`;
     }
 
     async loadStudentSessions() {
@@ -120,235 +88,103 @@ class StudentPlanManager {
                 
                 const sessions = await response.json();
                 
-                this.memorizationSessions = sessions.filter(session => session.type === 'New_Memorization');
-                return this.memorizationSessions;
+                this.sessions = {
+                    memorization: sessions.filter(session => session.type === 'New_Memorization'),
+                    minorRevision: sessions.filter(session => session.type === 'Minor_Revision'),
+                    majorRevision: sessions.filter(session => session.type === 'Major_Revision')
+                };
+                return this.sessions;
     
             } catch (error) {
                 console.error('Error fetching sessions:', error);
                 this.showNotification('حدث خطأ أثناء تحميل جلسات الحفظ', 'danger');
-                return [];
+                return { memorization: [], minorRevision: [], majorRevision: [] };
             }
         }
-        return [];
+        return { memorization: [], minorRevision: [], majorRevision: [] };
     }
 
     bindElements() {
-        this.periodButtons = document.querySelectorAll('.time-period-selector .btn');
-        this.planPeriods = document.querySelectorAll('.plan-period');
         this.printButton = document.getElementById('printPlan');
-        this.editButton = document.getElementById('editPlan');
-        this.saveButton = document.getElementById('savePlan');
-        this.cancelButton = document.getElementById('cancelEdit');
         this.weekPlanBody = document.getElementById('weekPlanBody');
-        this.twoWeeksPlanBody = document.getElementById('twoWeeksPlanBody');
-        this.monthPlanBody = document.getElementById('monthPlanBody');
         this.memorizationSummary = document.getElementById('memorizationSummary');
         this.majorRevisionSummary = document.getElementById('majorRevisionSummary');
         this.minorRevisionSummary = document.getElementById('minorRevisionSummary');
     }
 
     bindEvents() {
-        this.periodButtons.forEach(button => {
-            button.addEventListener('click', this.handlePeriodChange.bind(this));
-        });
-
         this.printButton.addEventListener('click', () => {
             window.print();
         });
-
-        this.editButton.addEventListener('click', this.enterEditMode.bind(this));
-        this.saveButton.addEventListener('click', this.saveChanges.bind(this));
-        this.cancelButton.addEventListener('click', this.cancelEdit.bind(this));
     }
 
-    generateAllPlans() {
-        this.generateWeekPlan();
-        this.generateTwoWeeksPlan();
-        this.generateMonthPlan();
-        
-        this.editableFields = document.querySelectorAll('.editable');
-    }
-
-    generateWeekPlan() {
+    generatePlan() {
         let html = '';
-        for (let i = 0; i < 5; i++) {
-            const dayNum = i + 1;
-            const dayName = this.arabicDays[i];
-            const date = new Date(2025, 2, 5 + i);
-            const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
-            
-            // Try to get session data for this day, or use default values
-            const session = this.memorizationSessions?.[i] || {
-                start_verse: { surah_name: 'البقرة', order_in_surah: i * 5 + 1 },
-                end_verse: { surah_name: 'البقرة', order_in_surah: i * 5 + 5 }
-            };
+        const defaultSession = {
+            start_verse: { surah_name: '-', order_in_surah: '-' },
+            end_verse: { surah_name: '-', order_in_surah: '-' }
+        };
     
+        const hasMemorization = this.sessions?.memorization?.length > 0;
+        const hasMinorRevision = this.sessions?.minorRevision?.length > 0;
+        const hasMajorRevision = this.sessions?.majorRevision?.length > 0;
+
+        const numDays = Math.max(
+            this.sessions?.memorization?.length || 0,
+            this.sessions?.minorRevision?.length || 0,
+            this.sessions?.majorRevision?.length || 0,
+            1
+        );
+    
+        if (!hasMemorization && !hasMinorRevision && !hasMajorRevision) {
             html += `
             <tr>
-                <td>${dayNum}</td>
-                <td class="day-col">${dayName}</td>
-                <td class="date-col">${dateStr}</td>
-                <td class="editable memorization-cell" data-field="memFromSurah" data-day="${dayNum}">${session.start_verse.surah_name}</td>
-                <td class="editable memorization-cell" data-field="memFromVerse" data-day="${dayNum}">${session.start_verse.order_in_surah}</td>
-                <td class="editable memorization-cell" data-field="memToSurah" data-day="${dayNum}">${session.end_verse.surah_name}</td>
-                <td class="editable memorization-cell" data-field="memToVerse" data-day="${dayNum}">${session.end_verse.order_in_surah}</td>
-                <td class="editable minor-revision-cell" data-field="minRevFromSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable minor-revision-cell" data-field="minRevFromVerse" data-day="${dayNum}">${i * 5 + 6}</td>
-                <td class="editable minor-revision-cell" data-field="minRevToSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable minor-revision-cell" data-field="minRevToVerse" data-day="${dayNum}">${i * 5 + 10}</td>
-                <td class="editable major-revision-cell" data-field="majRevFromSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable major-revision-cell" data-field="majRevFromVerse" data-day="${dayNum}">${i * 10 + 1}</td>
-                <td class="editable major-revision-cell" data-field="majRevToSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable major-revision-cell" data-field="majRevToVerse" data-day="${dayNum}">${i * 10 + 20}</td>
-            </tr>
-            `;
+                <td>1</td>
+                <td class="day-col">${this.arabicDays[0]}</td>
+                <td class="date-col">${this.formatDate(new Date())}</td>
+                <td colspan="4" class="memorization-cell text-center">لا يوجد حفظ جديد للطالب</td>
+                <td colspan="4" class="minor-revision-cell text-center">لا يوجد مراجعة صغرى للطالب</td>
+                <td colspan="4" class="major-revision-cell text-center">لا يوجد مراجعة كبرى للطالب</td>
+            </tr>`;
+        } else {
+            for (let i = 0; i < numDays; i++) {
+                const dayNum = i + 1;
+                const dayName = this.arabicDays[i];
+                const date = new Date();
+                date.setDate(date.getDate() + i);
+                const dateStr = this.formatDate(date);
+                
+                html += `
+                <tr>
+                    <td>${dayNum}</td>
+                    <td class="day-col">${dayName}</td>
+                    <td class="date-col">${dateStr}</td>
+                    ${hasMemorization ? `
+                        <td class="memorization-cell">${this.sessions.memorization[i]?.start_verse?.surah_name || '-'}</td>
+                        <td class="memorization-cell">${this.sessions.memorization[i]?.start_verse?.order_in_surah || '-'}</td>
+                        <td class="memorization-cell">${this.sessions.memorization[i]?.end_verse?.surah_name || '-'}</td>
+                        <td class="memorization-cell">${this.sessions.memorization[i]?.end_verse?.order_in_surah || '-'}</td>
+                    ` : '<td colspan="4" class="memorization-cell text-center">لا يوجد حفظ جديد للطالب</td>'}
+                    ${hasMinorRevision ? `
+                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.start_verse?.surah_name || '-'}</td>
+                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.start_verse?.order_in_surah || '-'}</td>
+                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.end_verse?.surah_name || '-'}</td>
+                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.end_verse?.order_in_surah || '-'}</td>
+                    ` : '<td colspan="4" class="minor-revision-cell text-center">لا يوجد مراجعة صغرى للطالب</td>'}
+                    ${hasMajorRevision ? `
+                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.start_verse?.surah_name || '-'}</td>
+                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.start_verse?.order_in_surah || '-'}</td>
+                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.end_verse?.surah_name || '-'}</td>
+                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.end_verse?.order_in_surah || '-'}</td>
+                    ` : '<td colspan="4" class="major-revision-cell text-center">لا يوجد مراجعة كبرى للطالب</td>'}
+                </tr>`;
+            }
         }
         this.weekPlanBody.innerHTML = html;
     }
-
-    generateTwoWeeksPlan() {
-        let html = '';
-        for (let i = 0; i < 10; i++) {
-            const dayNum = i + 1;
-            const dayIndex = i % 5;
-            const dayName = this.arabicDays[dayIndex];
-            const date = new Date(2025, 2, 5 + i); 
-            const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
-
-            html += `
-            <tr>
-                <td>${dayNum}</td>
-                <td class="day-col">${dayName}</td>
-                <td class="date-col">${dateStr}</td>
-                <td class="editable memorization-cell" data-field="memFromSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable memorization-cell" data-field="memFromVerse" data-day="${dayNum}">${i * 5 + 1}</td>
-                <td class="editable memorization-cell" data-field="memToSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable memorization-cell" data-field="memToVerse" data-day="${dayNum}">${i * 5 + 5}</td>
-                <td class="editable minor-revision-cell" data-field="minRevFromSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable minor-revision-cell" data-field="minRevFromVerse" data-day="${dayNum}">${i * 5 + 6}</td>
-                <td class="editable minor-revision-cell" data-field="minRevToSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable minor-revision-cell" data-field="minRevToVerse" data-day="${dayNum}">${i * 5 + 10}</td>
-                <td class="editable major-revision-cell" data-field="majRevFromSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable major-revision-cell" data-field="majRevFromVerse" data-day="${dayNum}">${i * 10 + 1}</td>
-                <td class="editable major-revision-cell" data-field="majRevToSurah" data-day="${dayNum}">البقرة</td>
-                <td class="editable major-revision-cell" data-field="majRevToVerse" data-day="${dayNum}">${i * 10 + 20}</td>
-            </tr>
-            `;
-        }
-        this.twoWeeksPlanBody.innerHTML = html;
-    }
-
-    generateMonthPlan() {
-        let html = '';
-        for (let i = 0; i < 30; i++) { 
-            const dayNum = i + 1;
-            const dayIndex = i % 5;
-            const dayName = this.arabicDays[dayIndex];
-            const date = new Date(2025, 2, 5 + i);
-            const dateStr = `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
-
-            html += `
-            <tr>
-                <td>${dayNum}</td>
-                <td class="day-col">${dayName}</td>
-                <td class="date-col">${dateStr}</td>
-                <td class="editable" data-field="memFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 31})</td>
-                <td class="editable" data-field="memTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 35})</td>
-                <td class="editable" data-field="majorRev" data-day="${dayNum}">جزء ${this.getPartName(i)}</td>
-                <td class="editable" data-field="minorRevFrom" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 16})</td>
-                <td class="editable" data-field="minorRevTo" data-day="${dayNum}">سورة البقرة (آية ${i * 5 + 30})</td>
-            </tr>
-            `;
-        }
-        this.monthPlanBody.innerHTML = html;
-    }
-
-    getPartName(index) {
-        return (index % 30) + 1;
-    }
-
-    handlePeriodChange(event) {
-        if (this.editMode) {
-            if (!confirm("سيتم فقدان التغييرات إذا قمت بتغيير الفترة. هل تريد المتابعة؟")) {
-                return;
-            }
-            this.cancelEdit();
-        }
-
-        this.periodButtons.forEach(btn => btn.classList.remove('active'));
-
-        event.currentTarget.classList.add('active');
-
-        this.planPeriods.forEach(period => period.style.display = 'none');
-
-        const selectedPeriod = event.currentTarget.getAttribute('data-period');
-        document.getElementById(`${selectedPeriod}Plan`).style.display = 'block';
-
-        this.editableFields = document.querySelectorAll('.editable');
-
-        this.updateProgressSummary(selectedPeriod);
-    }
-
-    enterEditMode() {
-        this.editMode = true;
-        document.body.classList.add('edit-mode');
-        this.editButton.style.display = 'none';
-        this.saveButton.style.display = 'block';
-        this.cancelButton.style.display = 'block';
-
-        this.editableFields.forEach(field => {
-            const fieldId = `${field.dataset.field}-${field.dataset.day || '0'}`;
-            this.originalValues[fieldId] = field.textContent;
-            field.contentEditable = true;
-
-            field.addEventListener('click', this.selectAllContent);
-        });
-    }
-
-    selectAllContent(e) {
-        if (document.body.classList.contains('edit-mode')) {
-            const range = document.createRange();
-            range.selectNodeContents(e.target);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    }
-
-    saveChanges() {
-        this.editMode = false;
-        document.body.classList.remove('edit-mode');
-        this.editButton.style.display = 'block';
-        this.saveButton.style.display = 'none';
-        this.cancelButton.style.display = 'none';
-
-        this.editableFields.forEach(field => {
-            field.contentEditable = false;
-            field.removeEventListener('click', this.selectAllContent);
-        });
-
-        console.log('Changes saved!');
-
-        this.showNotification('تم حفظ التغييرات بنجاح!', 'success');
-    }
-
-    cancelEdit() {
-        this.editMode = false;
-        document.body.classList.remove('edit-mode');
-        this.editButton.style.display = 'block';
-        this.saveButton.style.display = 'none';
-        this.cancelButton.style.display = 'none';
-
-        this.editableFields.forEach(field => {
-            field.contentEditable = false;
-            const fieldId = `${field.dataset.field}-${field.dataset.day || '0'}`;
-            if (this.originalValues[fieldId]) {
-                field.textContent = this.originalValues[fieldId];
-            }
-            field.removeEventListener('click', this.selectAllContent);
-        });
-
-        this.originalValues = {};
+    
+    formatDate(date) {
+        return `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
     }
 
     updateProgressSummary(period) {
@@ -426,12 +262,6 @@ class StudentPlanManager {
         }, 3000);
     }
 
-    confirmDeleteStudent(studentId) {
-        if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
-            console.log(`Deleting student with ID: ${studentId}`);
-            this.showNotification('تم حذف الطالب بنجاح');
-        }
-    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
