@@ -20,7 +20,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             // Store the token
             localStorage.setItem('token', data.token);
             // Redirect to home page
-            window.location.href = 'index.html';
+            window.location.href = '../HTML/home.html';
         } else {
             alert(data.message || 'خطأ في تسجيل الدخول');
         }

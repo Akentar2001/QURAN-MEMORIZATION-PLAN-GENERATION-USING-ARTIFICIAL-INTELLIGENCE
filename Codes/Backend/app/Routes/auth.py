@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from app.Models.users import users
-from app.Database.db import db
+from app.models import db
+from app.models import users
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -14,17 +14,25 @@ def login():
         return jsonify({'message': 'Missing username or password'}), 400
     
     user = users.query.filter_by(username=data['username']).first()
-    
-    if user and check_password_hash(user.password_hash, data['password']):
-        access_token = create_access_token(identity=user.id)
-        return jsonify({
-            'token': access_token,
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'full_name': user.full_name
-            }
-        }), 200
+
+    if user:
+        # Temporary fallback check for plain text passwords
+        if user.password_hash == data['password']:
+            print("Warning: Password stored in plain text - this is insecure!")
+            # Generate proper hash and update user
+            # user.password_hash = generate_password_hash(data['password'])
+            # db.session.commit()
+
+            # access_token = create_access_token(identity=user.user_id)
+
+            return jsonify({
+                # 'token': access_token,
+                'user': {
+                    'id': user.user_id,
+                    'username': user.username,
+                    'full_name': user.full_name
+                }
+            }), 200
     
     return jsonify({'message': 'Invalid username or password'}), 401
 

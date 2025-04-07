@@ -69,7 +69,7 @@ class PlanGenerationService:
                 return None
 
         if not start_verse:
-            raise ValueError("No verses found in database, (maybe the student has memorized the entire Quran)")
+            raise ValueError("No verses found in database")
             
         return start_verse
 
@@ -196,7 +196,7 @@ class PlanGenerationService:
 
                 if next_verse.surah_id != current_surah:
                     remaining_allowance = 1 - total_difficulty
-                    if remaining_allowance < 0.7:
+                    if remaining_allowance < 0.10:
                         break
                     current_surah = next_verse.surah_id
 
@@ -210,7 +210,7 @@ class PlanGenerationService:
             ).order_by(index_column.asc()).all()
 
             remaining_difficulty = sum(v.verse_difficulty for v in remaining_verses)
-            if (total_difficulty + remaining_difficulty) <= 1.07:
+            if (total_difficulty + remaining_difficulty) <= 1.10:
                 verses_in_plan.extend(remaining_verses)
                 total_difficulty += remaining_difficulty
                 end_verse = remaining_verses[-1] if remaining_verses else end_verse
