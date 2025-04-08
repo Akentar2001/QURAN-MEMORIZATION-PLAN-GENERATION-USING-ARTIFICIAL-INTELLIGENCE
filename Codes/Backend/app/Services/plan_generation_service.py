@@ -15,13 +15,17 @@ class PlanGenerationService:
             last_verse = plan_info.last_verse_recited_new_memorization
             days_info = self.get_memorization_days_info(plan_info.memorization_days)
             days = days_info["days"]
-            required_amount = plan_info.new_memorization_letters_amount
+            required_letters_amount = plan_info.new_memorization_letters_amount
+            required_pages_amount = plan_info.new_memorization_pages_amount
+
             direction = plan_info.memorization_direction
             for day in days:
                 start_verse = self.get_start_verse(last_verse, direction)
                 if start_verse:
-                    if required_amount:
-                        plan = self.generate_memorization_plan(start_verse, required_amount, direction)
+                    if required_letters_amount:
+                        plan = self.generate_memorization_plan(start_verse, required_letters_amount, direction)
+                    elif required_pages_amount:
+                        plan = self.generate_memorization_plan(start_verse, required_pages_amount, direction, amount_type='pages')
                     else:
                         plan = self.generate_memorization_plan_using_difficulty(start_verse, direction)
                     
@@ -81,27 +85,28 @@ class PlanGenerationService:
         return start_verse
 
         
-    def generate_memorization_plan(self, start_verse, required_amount, direction):
+    def generate_memorization_plan(self, start_verse, required_amount, direction, amount_type='letters'):
         try:
-            total_plan_letters = 0
+            total_plan_amount = 0
             current_verse = start_verse
             end_verse = start_verse
             current_surah = start_verse.surah_id
             index_column = Verse.order_in_quraan if direction else Verse.reverse_index
+            amount_attr = 'letters_count' if amount_type == 'letters' else 'weight_on_page'
             verses_in_plan = []
 
-            while total_plan_letters < required_amount:
-                
-                potential_total = total_plan_letters + current_verse.letters_count
+            while total_plan_amount <= required_amount:
+                current_amount = getattr(current_verse, amount_attr)
+                potential_total = total_plan_amount + current_amount
                 
                 if potential_total > required_amount:
                     diff_with = abs(potential_total - required_amount)
-                    diff_without = abs(required_amount - total_plan_letters)
+                    diff_without = abs(required_amount - total_plan_amount)
                     if diff_without < diff_with:
                         break
                 
                 verses_in_plan.append(current_verse)
-                total_plan_letters += current_verse.letters_count
+                total_plan_amount += current_amount
                 end_verse = current_verse
                 
                 current_index = getattr(current_verse, index_column.key)
@@ -113,7 +118,7 @@ class PlanGenerationService:
                     break
 
                 if next_verse.surah_id != current_surah:
-                    remaining_allowance = required_amount - total_plan_letters
+                    remaining_allowance = required_amount - total_plan_amount
                     if remaining_allowance < (required_amount * 0.10):
                         break
                     current_surah = next_verse.surah_id
@@ -127,13 +132,13 @@ class PlanGenerationService:
                 )
             ).order_by(index_column.asc()).all()
 
-            remaining_letters = sum(v.letters_count for v in remaining_verses)
-            if (total_plan_letters + remaining_letters) <= (required_amount * 1.10):
+            remaining_amount = sum(getattr(v, amount_attr) for v in remaining_verses)
+            if (total_plan_amount + remaining_amount) <= (required_amount * 1.10):
                 verses_in_plan.extend(remaining_verses)
-                total_plan_letters += remaining_letters
+                total_plan_amount += remaining_amount
                 end_verse = remaining_verses[-1] if remaining_verses else end_verse
 
-            return self.format_plan_response(start_verse, end_verse, total_plan_letters, verses_in_plan)
+            return self.format_plan_response(start_verse, end_verse, total_plan_amount, verses_in_plan)
 
         except Exception as e:
             db.session.rollback()
