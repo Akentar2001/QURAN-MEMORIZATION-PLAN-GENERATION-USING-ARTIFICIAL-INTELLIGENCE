@@ -94,7 +94,7 @@ class StudentManager {
             const button = e.target.closest('.btn-edit-student');
             if (button) {
                 const studentId = this.getStudentIdFromButton(button);
-                window.location.href = `edit-Student.html`;
+                window.location.href = `edit-Student.html?id=${studentId}`;
             }
         });
 
@@ -487,7 +487,7 @@ class StudentManager {
         const confirmBtn = deleteModal.querySelector('.confirm-delete');
         confirmBtn.addEventListener('click', async () => {
             try {
-                const response = await fetch(`http://localhost:5000/api/students/deleteStudent/${studentId}`, {
+                const response = await fetch(`http://localhost:5000/api/students/delete/${studentId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'

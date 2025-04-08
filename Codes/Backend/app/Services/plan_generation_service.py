@@ -12,12 +12,11 @@ class PlanGenerationService:
     def generate_plan(self, student_id):
         try:
             plan_info = self.get_student_plan(student_id)
-            last_verse = plan_info.last_verse_recited
+            last_verse = plan_info.last_verse_recited_new_memorization
             days_info = self.get_memorization_days_info(plan_info.memorization_days)
             days = days_info["days"]
-            required_amount = plan_info.new_memorization_amount
+            required_amount = plan_info.new_memorization_letters_amount
             direction = plan_info.memorization_direction
-
             for day in days:
                 start_verse = self.get_start_verse(last_verse, direction)
                 if start_verse:

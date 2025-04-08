@@ -82,14 +82,26 @@ class recitation_session(db.Model):
 
 class students_plans_info(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('students.student_id', ondelete="CASCADE"), primary_key=True)
-    memorization_direction = db.Column(db.Boolean, nullable=False)
-    last_verse_recited = db.Column(db.Integer, nullable=False)
-    revision_direction = db.Column(db.Boolean, nullable=False)
-    new_memorization_amount = db.Column(db.Float, nullable=True)
-    small_revision_amount = db.Column(db.Float, nullable=True)
-    large_revision_amount = db.Column(db.Float, nullable=True)
-    memorization_days = db.Column(db.SmallInteger, server_default="0", nullable=False)
-    overall_rating = db.Column(db.Float, nullable=True)
+    
     memorized_parts = db.Column(db.Float, nullable=True)
+    overall_rating = db.Column(db.Float, nullable=True)
+    memorization_days = db.Column(db.SmallInteger, server_default="5", nullable=False)
+
+    new_memorization_letters_amount = db.Column(db.Integer, nullable=True)
+    new_memorization_pages_amount = db.Column(db.Float, nullable=True)
+    memorization_direction = db.Column(db.Boolean, nullable=False)
+    last_verse_recited_new_memorization = db.Column(db.Integer, nullable=False)
+    overall_rating_new_memorization = db.Column(db.Float, nullable=True)
+
+    small_revision_letters_amount = db.Column(db.Integer, nullable=True)
+    small_revision_pages_amount = db.Column(db.Float, nullable=True)
+    overall_rating_small_revision = db.Column(db.Float, nullable=True)
+
+    large_revision_letters_amount = db.Column(db.Integer, nullable=True)
+    large_revision_pages_amount = db.Column(db.Float, nullable=True)
+    revision_direction = db.Column(db.Boolean, nullable=False)
+    last_verse_recited_large_revision = db.Column(db.Integer, nullable=True)
+    overall_rating_large_revision = db.Column(db.Float, nullable=True)
+
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())

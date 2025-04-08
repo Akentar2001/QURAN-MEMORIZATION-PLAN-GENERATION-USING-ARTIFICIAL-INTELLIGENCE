@@ -346,7 +346,6 @@ function setupSurahSelection() {
     const toSurahSelect = document.getElementById('toSurah');
     const toVerseSelect = document.getElementById('toVerse');
 
-    // Clear and populate surah select
     toSurahSelect.innerHTML = '';
     surahs.forEach(surah => {
         const option = document.createElement('option');
@@ -355,10 +354,8 @@ function setupSurahSelection() {
         toSurahSelect.appendChild(option);
     });
 
-    // Set default to Surah An-Nas (114)
     toSurahSelect.value = '114';
 
-    // Function to populate verse select based on selected surah
     function populateVerseSelect(surahId) {
         const selectedSurah = surahs.find(s => s.id === parseInt(surahId));
         if (selectedSurah) {
@@ -373,22 +370,78 @@ function setupSurahSelection() {
                 verseSelect.appendChild(option);
             }
 
-            // Replace old verse select with new one
             const oldVerseSelect = document.getElementById('toVerse');
             oldVerseSelect.parentNode.replaceChild(verseSelect, oldVerseSelect);
             
-            // Set to verse 1 by default
             verseSelect.value = '1';
         }
     }
 
-    // Initialize verse select with An-Nas verses
     populateVerseSelect('114');
 
-    // Handle surah changes
     toSurahSelect.addEventListener('change', function() {
         populateVerseSelect(this.value);
     });
+}
+
+function getStudentIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('id');
+}
+
+async function fetchAndPopulateStudentData() {
+    const studentId = getStudentIdFromUrl();
+    if (!studentId) {
+        alert('No student ID provided');
+        window.location.href = '../HTML/home.html';
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/students/getStudent/${studentId}`, {
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Failed to fetch student data');
+        
+        const data = await response.json();
+        populateFormFields(data);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to load student data');
+        // window.location.href = '../HTML/home.html';
+    }
+}
+
+function populateFormFields(data) {
+    document.getElementById('studentName').value = data.name;
+    document.getElementById('studentAge').value = data.age;
+    document.getElementById('studentGender').value = data.gender;
+    document.getElementById('nationality').value = data.nationality;
+    document.getElementById('parentPhone').value = data.parent_phone;
+    document.getElementById('studentPhone').value = data.student_phone;
+    document.getElementById('notes').value = data.notes;
+
+    if (data.plan_info) {
+        document.getElementById('memDirection').value = data.plan_info.memorization_direction;
+        document.getElementById('revDirection').value = data.plan_info.revision_direction;
+        document.getElementById('toSurah').value = data.plan_info.start_surah;
+        document.getElementById('toVerse').value = data.plan_info.no_verse_in_surah;
+        document.getElementById('newMemorizationAmount').value = data.plan_info.new_memorization_pages_amount;
+        document.getElementById('smallRevisionAmount').value = data.plan_info.small_revision_pages_amount;
+        document.getElementById('largeRevisionAmount').value = data.plan_info.large_revision_pages_amount;
+
+        const selectedDays = getSelectedDays(data.plan_info.memorization_days);
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            if (selectedDays.includes(btn.dataset.day)) {
+                btn.classList.add('selected-day', 'btn-primary');
+                btn.classList.remove('btn-outline-secondary');
+            } else {
+                btn.classList.remove('selected-day', 'btn-primary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        });
+        document.getElementById('selectedDays').value = data.plan_info.memorization_days;
+    }
 }
 
 function setupFormSubmission() {
@@ -433,13 +486,14 @@ function setupFormSubmission() {
             }
         };
 
+        const studentId = getStudentIdFromUrl();
         const submitBtn = document.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
         submitBtn.disabled = true;
 
-        fetch('http://localhost:5000/api/students/add', {
-            method: 'POST',
+        fetch(`http://localhost:5000/api/students/update/${studentId}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -449,49 +503,38 @@ function setupFormSubmission() {
             body: JSON.stringify(studentData)
         })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
+                if (!response.ok) throw new Error('Network response was not ok');
                 return response.json();
             })
             .then(data => {
                 console.log('Success:', data);
-
                 const successToast = new bootstrap.Toast(document.getElementById('successToast'));
                 successToast.show();
-
-                if (!event.submitter || event.submitter.id !== 'saveAndAddAnother') {
-                    setTimeout(() => {
-                        window.location.href = '../HTML/home.html'; 
-                    }, 1500);
-                } else {
-                    document.getElementById('addStudentForm').reset();
-                }
+                setTimeout(() => {
+                    window.location.href = '../HTML/home.html';
+                }, 1500);
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('حدث خطأ أثناء حفظ بيانات الطالب. الرجاء المحاولة مرة أخرى.');
+                alert('حدث خطأ أثناء تحديث بيانات الطالب. الرجاء المحاولة مرة أخرى.');
             })
             .finally(() => {
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
             });
     });
-
-    document.getElementById('saveAndAddAnother').addEventListener('click', function (event) {
-        const form = document.getElementById('addStudentForm');
-        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-        submitEvent.submitter = this;
-        form.dispatchEvent(submitEvent);
-    });
 }
 
-
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
     setupDirectionSelectors();
     setupSurahSelection();
     setupMemorizationToggle();
     setupDaySelection();
     setupMemorizationAmounts();
     setupFormSubmission();
+    try {
+        await fetchAndPopulateStudentData();
+    } catch (error) {
+        console.error('Error loading student data:', error);
+    }
 });
