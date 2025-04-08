@@ -12,13 +12,14 @@ class PlanGenerationService:
     def generate_plan(self, student_id):
         try:
             plan_info = self.get_student_plan(student_id)
-            last_verse = plan_info.last_verse_recited_new_memorization
             days_info = self.get_memorization_days_info(plan_info.memorization_days)
             days = days_info["days"]
+
+            last_verse = plan_info.last_verse_recited_new_memorization
             required_letters_amount = plan_info.new_memorization_letters_amount
             required_pages_amount = plan_info.new_memorization_pages_amount
-
             direction = plan_info.memorization_direction
+
             for day in days:
                 start_verse = self.get_start_verse(last_verse, direction)
                 if start_verse:
@@ -34,19 +35,11 @@ class PlanGenerationService:
 
                     self.store_plan_in_database(student_id, plan, 'New_Memorization')
                     last_verse = plan['end_verse_id']
+                    
             
         except Exception as e:
             self.db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
-
-            # if recitation_type == "new_memorization":
-            #     return self.generate_memorization_plan(start_verse, plan_info)
-            # elif recitation_type == "minor_revision":
-            #     return self.generate_minor_revision_plan(start_verse, plan_info)
-            # elif recitation_type == "major_revision":
-            #     return self.generate_major_revision_plan(start_verse, plan_info)
-            # else:
-            #     raise ValueError("Invalid recitation type")
 
 
     def get_student_plan(self, student_id):
