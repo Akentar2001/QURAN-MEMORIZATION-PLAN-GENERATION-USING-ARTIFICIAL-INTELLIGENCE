@@ -31,10 +31,11 @@ class PlanGenerationService:
                     minor_revision_plan = self.generate_minor_revision_plan(student_id, required_minorRev_letters_amount)
                 elif required_minorRev_pages_amount:
                     minor_revision_plan = self.generate_minor_revision_plan(student_id, required_minorRev_pages_amount, amount_type='pages')
+                else:
+                    minor_revision_plan = self.generate_minor_revision_plan(student_id, required_minorRev_pages_amount, amount_type='default')
                 
                 if minor_revision_plan:
                     self.store_plan_in_database(student_id, minor_revision_plan, 'Minor_Revision', current_date)
-
 
                 start_verse = self.get_start_verse(last_verse, direction)
                 if start_verse:
@@ -48,6 +49,7 @@ class PlanGenerationService:
                     if memo_plan:
                         self.store_plan_in_database(student_id, memo_plan, 'New_Memorization', current_date)
                         last_verse = memo_plan['end_verse_id']
+                    
             
         except Exception as e:
             self.db.session.rollback()
@@ -163,6 +165,16 @@ class PlanGenerationService:
             if not new_memo_sessions:
                 return None
 
+            if amount_type == 'default':
+                included_sessions = new_memo_sessions[:3]
+                if included_sessions:
+                    total_letters = sum(s.letters_count for s in included_sessions)
+                    total_pages = sum(s.pages_count for s in included_sessions)
+                    start_verse = included_sessions[-1].start_verse_id
+                    end_verse = included_sessions[0].end_verse_id
+                    return self.format_plan_response(start_verse, end_verse, total_letters, total_pages)
+                return None
+
             latest_session = new_memo_sessions[0]
             total_plan_amount = latest_session.letters_count if amount_type == 'letters' else latest_session.pages_count
             total_letters = latest_session.letters_count
@@ -198,6 +210,7 @@ class PlanGenerationService:
             raise RuntimeError(f"Minor revision plan generation failed: {str(e)}")
 
     def format_plan_response(self, start_verse, end_verse, total_letters, total_pages):
+        print("start_verse", start_verse, "end_verse", end_verse, "total_letters", total_letters, "total_pages", total_pages)
         return {
             "start_verse_id": start_verse,
             "end_verse_id": end_verse,
@@ -216,7 +229,6 @@ class PlanGenerationService:
                 'pages_count': plan_data['total_pages'],
                 'date': plan_date if plan_date else date.today()
             }
-            
             return RecitationSessionService.create_session(session_data)
         except Exception as e:
             self.db.session.rollback()
@@ -226,6 +238,7 @@ class PlanGenerationService:
         try:
             total_difficulty = 0
             total_plan_letters = 0
+            total_pages = 0
             current_verse = start_verse
             end_verse = start_verse
             current_surah = start_verse.surah_id
@@ -245,6 +258,7 @@ class PlanGenerationService:
                 verses_in_plan.append(current_verse)
                 total_difficulty += current_verse.verse_difficulty
                 total_plan_letters += current_verse.letters_count
+                total_pages += current_verse.weight_on_page
                 end_verse = current_verse
                 
                 current_index = getattr(current_verse, index_column.key)
@@ -275,8 +289,8 @@ class PlanGenerationService:
                 verses_in_plan.extend(remaining_verses)
                 total_difficulty += remaining_difficulty
                 end_verse = remaining_verses[-1] if remaining_verses else end_verse
-
-            return self.format_plan_response(start_verse, end_verse, total_plan_letters, verses_in_plan)
+    
+            return self.format_plan_response(start_verse.verse_id, end_verse.verse_id, total_plan_letters, total_pages)
 
         except Exception as e:
             db.session.rollback()
