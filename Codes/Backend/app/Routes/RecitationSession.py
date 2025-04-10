@@ -63,7 +63,7 @@ def get_student_sessions(student_id):
         sessions = RecitationSessionService.get_student_sessions(student_id)
 
         if not sessions:
-            return jsonify({'message': 'No sessions found for this student'}), 200
+            return jsonify({'message': 'No sessions found for this student'})
 
         return jsonify([{
             'session_id': session[0].session_id,

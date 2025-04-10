@@ -1,15 +1,5 @@
-const progressSummary = {
-    week: {
-        memorization: 'البقرة: 1-25',
-        majorRevision: 'البقرة: 1-100',
-        minorRevision: 'البقرة: 1-50'
-    },
-};
-
-// Student Plan Manager Class
 class StudentPlanManager {
     constructor() {
-        this.initializeData();
         this.initializeData();
     Promise.all([
         this.loadStudentInfo(),
@@ -19,7 +9,7 @@ class StudentPlanManager {
         this.bindEvents();
         this.generatePlan();
         this.setupPrintOptimization();
-        this.updateProgressSummary('week');
+        this.updateProgressSummary();
     });
     }
 
@@ -86,22 +76,47 @@ class StudentPlanManager {
                     throw new Error('Failed to fetch sessions');
                 }
                 
-                const sessions = await response.json();
+                const data = await response.json();
+                const sessions = Array.isArray(data) ? data : [];
+
+                const sessionsByDate = {};
+                sessions.forEach(session => {
+                    if (!session.date) return;
+                    
+                    const dateObj = new Date(session.date);
+                    const dateStr = dateObj.toISOString().split('T')[0];
+
+                    if (!sessionsByDate[dateStr]) {
+                        sessionsByDate[dateStr] = {
+                            memorization: null,
+                            minorRevision: null,
+                            majorRevision: null
+                        };
+                    }
+                    
+                    switch (session.type) {
+                        case 'New_Memorization':
+                            sessionsByDate[dateStr].memorization = session;
+                            break;
+                        case 'Minor_Revision':
+                            sessionsByDate[dateStr].minorRevision = session;
+                            break;
+                        case 'Major_Revision':
+                            sessionsByDate[dateStr].majorRevision = session;
+                            break;
+                    }
+                });
                 
-                this.sessions = {
-                    memorization: sessions.filter(session => session.type === 'New_Memorization'),
-                    minorRevision: sessions.filter(session => session.type === 'Minor_Revision'),
-                    majorRevision: sessions.filter(session => session.type === 'Major_Revision')
-                };
+                this.sessions = sessionsByDate;
                 return this.sessions;
     
             } catch (error) {
                 console.error('Error fetching sessions:', error);
                 this.showNotification('حدث خطأ أثناء تحميل جلسات الحفظ', 'danger');
-                return { memorization: [], minorRevision: [], majorRevision: [] };
+                return {};
             }
         }
-        return { memorization: [], minorRevision: [], majorRevision: [] };
+        return {};
     }
 
     bindElements() {
@@ -120,66 +135,47 @@ class StudentPlanManager {
 
     generatePlan() {
         let html = '';
-        const defaultSession = {
-            start_verse: { surah_name: '-', order_in_surah: '-' },
-            end_verse: { surah_name: '-', order_in_surah: '-' }
-        };
-    
-        const hasMemorization = this.sessions?.memorization?.length > 0;
-        const hasMinorRevision = this.sessions?.minorRevision?.length > 0;
-        const hasMajorRevision = this.sessions?.majorRevision?.length > 0;
-
-        const numDays = Math.max(
-            this.sessions?.memorization?.length || 0,
-            this.sessions?.minorRevision?.length || 0,
-            this.sessions?.majorRevision?.length || 0,
-            1
-        );
-    
-        if (!hasMemorization && !hasMinorRevision && !hasMajorRevision) {
-            html += `
+        const dates = Object.keys(this.sessions || {}).sort();
+        
+        if (!this.sessions || Object.keys(this.sessions).length === 0) {
+            html = `
             <tr>
-                <td>1</td>
-                <td class="day-col">${this.arabicDays[0]}</td>
-                <td class="date-col">${this.formatDate(new Date())}</td>
-                <td colspan="4" class="memorization-cell text-center">لا يوجد حفظ جديد للطالب</td>
-                <td colspan="4" class="minor-revision-cell text-center">لا يوجد مراجعة صغرى للطالب</td>
-                <td colspan="4" class="major-revision-cell text-center">لا يوجد مراجعة كبرى للطالب</td>
+                <td colspan="15" class="text-center" style="font-size: 1.1rem; padding: 20px; font-weight: bold;">لا توجد خطة للطالب لهذا الأسبوع</td>
             </tr>`;
         } else {
-            for (let i = 0; i < numDays; i++) {
-                const dayNum = i + 1;
-                const dayName = this.arabicDays[i];
-                const date = new Date();
-                date.setDate(date.getDate() + i);
-                const dateStr = this.formatDate(date);
+            dates.forEach((date, index) => {
+                const currentDate = new Date(date);
+                const dayName = this.arabicDays[currentDate.getDay()];
+                const dateStr = this.formatDate(currentDate);
+                const daySession = this.sessions[date];
                 
                 html += `
                 <tr>
-                    <td>${dayNum}</td>
+                    <td>${index + 1}</td>
                     <td class="day-col">${dayName}</td>
                     <td class="date-col">${dateStr}</td>
-                    ${hasMemorization ? `
-                        <td class="memorization-cell">${this.sessions.memorization[i]?.start_verse?.surah_name || '-'}</td>
-                        <td class="memorization-cell">${this.sessions.memorization[i]?.start_verse?.order_in_surah || '-'}</td>
-                        <td class="memorization-cell">${this.sessions.memorization[i]?.end_verse?.surah_name || '-'}</td>
-                        <td class="memorization-cell">${this.sessions.memorization[i]?.end_verse?.order_in_surah || '-'}</td>
+                    ${daySession?.memorization ? `
+                        <td class="memorization-cell">${daySession.memorization.start_verse?.surah_name || '-'}</td>
+                        <td class="memorization-cell">${daySession.memorization.start_verse?.order_in_surah || '-'}</td>
+                        <td class="memorization-cell">${daySession.memorization.end_verse?.surah_name || '-'}</td>
+                        <td class="memorization-cell">${daySession.memorization.end_verse?.order_in_surah || '-'}</td>
                     ` : '<td colspan="4" class="memorization-cell text-center">لا يوجد حفظ جديد للطالب</td>'}
-                    ${hasMinorRevision ? `
-                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.start_verse?.surah_name || '-'}</td>
-                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.start_verse?.order_in_surah || '-'}</td>
-                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.end_verse?.surah_name || '-'}</td>
-                        <td class="minor-revision-cell">${this.sessions.minorRevision[i]?.end_verse?.order_in_surah || '-'}</td>
+                    ${daySession.minorRevision ? `
+                        <td class="minor-revision-cell">${daySession.minorRevision.start_verse.surah_name}</td>
+                        <td class="minor-revision-cell">${daySession.minorRevision.start_verse.order_in_surah}</td>
+                        <td class="minor-revision-cell">${daySession.minorRevision.end_verse.surah_name}</td>
+                        <td class="minor-revision-cell">${daySession.minorRevision.end_verse.order_in_surah}</td>
                     ` : '<td colspan="4" class="minor-revision-cell text-center">لا يوجد مراجعة صغرى للطالب</td>'}
-                    ${hasMajorRevision ? `
-                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.start_verse?.surah_name || '-'}</td>
-                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.start_verse?.order_in_surah || '-'}</td>
-                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.end_verse?.surah_name || '-'}</td>
-                        <td class="major-revision-cell">${this.sessions.majorRevision[i]?.end_verse?.order_in_surah || '-'}</td>
+                    ${daySession.majorRevision ? `
+                        <td class="major-revision-cell">${daySession.majorRevision.start_verse.surah_name}</td>
+                        <td class="major-revision-cell">${daySession.majorRevision.start_verse.order_in_surah}</td>
+                        <td class="major-revision-cell">${daySession.majorRevision.end_verse.surah_name}</td>
+                        <td class="major-revision-cell">${daySession.majorRevision.end_verse.order_in_surah}</td>
                     ` : '<td colspan="4" class="major-revision-cell text-center">لا يوجد مراجعة كبرى للطالب</td>'}
                 </tr>`;
-            }
+            });
         }
+        
         this.weekPlanBody.innerHTML = html;
     }
     
@@ -187,12 +183,40 @@ class StudentPlanManager {
         return `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
     }
 
-    updateProgressSummary(period) {
-        if (progressSummary[period]) {
-            this.memorizationSummary.textContent = progressSummary[period].memorization;
-            this.majorRevisionSummary.textContent = progressSummary[period].majorRevision;
-            this.minorRevisionSummary.textContent = progressSummary[period].minorRevision;
-        }
+    calculateSessionTotals() {
+        const totals = {
+            memorization: 0,
+            minorRevision: 0,
+            majorRevision: 0
+        };
+
+        Object.values(this.sessions || {}).forEach(daySession => {
+            if (daySession.memorization) {
+                totals.memorization += daySession.memorization.pages_count || 0;
+            }
+            if (daySession.minorRevision) {
+                totals.minorRevision += daySession.minorRevision.pages_count || 0;
+            }
+            if (daySession.majorRevision) {
+                totals.majorRevision += daySession.majorRevision.pages_count || 0;
+            }
+        });
+
+        Object.keys(totals).forEach(key => {
+            totals[key] = Number(totals[key].toFixed(1));
+            if (totals[key] % 1 === 0) {
+                totals[key] = Math.floor(totals[key]);
+            }
+        });
+
+        return totals;
+    }
+
+    updateProgressSummary() {
+        const totals = this.calculateSessionTotals();
+        this.memorizationSummary.textContent = `${totals.memorization} صفحة`;
+        this.minorRevisionSummary.textContent = `${totals.minorRevision} صفحة`;
+        this.majorRevisionSummary.textContent = `${totals.majorRevision} صفحة`;
     }
 
     setupPrintOptimization() {

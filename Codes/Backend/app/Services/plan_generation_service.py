@@ -4,6 +4,7 @@ from app.models import students_plans_info as StudentsPlansInfo
 from app.models import verses as Verse
 from app.models import db
 from app.Services.recitation_session_Service import RecitationSessionService
+from datetime import date
 
 class PlanGenerationService:
     def __init__(self):
@@ -12,30 +13,41 @@ class PlanGenerationService:
     def generate_plan(self, student_id):
         try:
             plan_info = self.get_student_plan(student_id)
-            days_info = self.get_memorization_days_info(plan_info.memorization_days)
+            test_date = "2025-04-13"
+            days_info = self.get_memorization_days_info(plan_info.memorization_days, test_date)
             days = days_info["days"]
 
             last_verse = plan_info.last_verse_recited_new_memorization
-            required_letters_amount = plan_info.new_memorization_letters_amount
-            required_pages_amount = plan_info.new_memorization_pages_amount
+            required_memo_letters_amount = plan_info.new_memorization_letters_amount
+            required_memo_pages_amount = plan_info.new_memorization_pages_amount
             direction = plan_info.memorization_direction
 
+            required_minorRev_letters_amount = plan_info.small_revision_letters_amount
+            required_minorRev_pages_amount = plan_info.small_revision_pages_amount
+
             for day in days:
+                current_date = day["date"]
+                if required_minorRev_letters_amount:
+                    minor_revision_plan = self.generate_minor_revision_plan(student_id, required_minorRev_letters_amount)
+                elif required_minorRev_pages_amount:
+                    minor_revision_plan = self.generate_minor_revision_plan(student_id, required_minorRev_pages_amount, amount_type='pages')
+                
+                if minor_revision_plan:
+                    self.store_plan_in_database(student_id, minor_revision_plan, 'Minor_Revision', current_date)
+
+
                 start_verse = self.get_start_verse(last_verse, direction)
                 if start_verse:
-                    if required_letters_amount:
-                        plan = self.generate_memorization_plan(start_verse, required_letters_amount, direction)
-                    elif required_pages_amount:
-                        plan = self.generate_memorization_plan(start_verse, required_pages_amount, direction, amount_type='pages')
+                    if required_memo_letters_amount:
+                        memo_plan = self.generate_memorization_plan(start_verse, required_memo_letters_amount, direction)
+                    elif required_memo_pages_amount:
+                        memo_plan = self.generate_memorization_plan(start_verse, required_memo_pages_amount, direction, amount_type='pages')
                     else:
-                        plan = self.generate_memorization_plan_using_difficulty(start_verse, direction)
+                        memo_plan = self.generate_memorization_plan_using_difficulty(start_verse, direction)
                     
-                    if not plan:
-                        break
-
-                    self.store_plan_in_database(student_id, plan, 'New_Memorization')
-                    last_verse = plan['end_verse_id']
-                    
+                    if memo_plan:
+                        self.store_plan_in_database(student_id, memo_plan, 'New_Memorization', current_date)
+                        last_verse = memo_plan['end_verse_id']
             
         except Exception as e:
             self.db.session.rollback()
@@ -81,13 +93,14 @@ class PlanGenerationService:
     def generate_memorization_plan(self, start_verse, required_amount, direction, amount_type='letters'):
         try:
             total_plan_amount = 0
+            total_letters = 0
+            total_pages = 0
             current_verse = start_verse
             end_verse = start_verse
             current_surah = start_verse.surah_id
             index_column = Verse.order_in_quraan if direction else Verse.reverse_index
             amount_attr = 'letters_count' if amount_type == 'letters' else 'weight_on_page'
             verses_in_plan = []
-
             while total_plan_amount <= required_amount:
                 current_amount = getattr(current_verse, amount_attr)
                 potential_total = total_plan_amount + current_amount
@@ -100,6 +113,8 @@ class PlanGenerationService:
                 
                 verses_in_plan.append(current_verse)
                 total_plan_amount += current_amount
+                total_letters += current_verse.letters_count
+                total_pages += current_verse.weight_on_page
                 end_verse = current_verse
                 
                 current_index = getattr(current_verse, index_column.key)
@@ -131,40 +146,81 @@ class PlanGenerationService:
                 total_plan_amount += remaining_amount
                 end_verse = remaining_verses[-1] if remaining_verses else end_verse
 
-            return self.format_plan_response(start_verse, end_verse, total_plan_amount, verses_in_plan)
+            return self.format_plan_response(start_verse.verse_id, end_verse.verse_id, total_letters, total_pages)
 
         except Exception as e:
             db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
 
+    def generate_minor_revision_plan(self, student_id, required_amount, amount_type='letters'):
+        try:
+            sessions = RecitationSessionService.get_student_sessions(student_id, 'New_Memorization')
+            
+            new_memo_sessions = sorted([s[0] for s in sessions], 
+                                    key=lambda x: x.created_at, 
+                                    reverse=True)
+            
+            if not new_memo_sessions:
+                return None
 
-    def format_plan_response(self, start_verse, end_verse, total_letters, verses_in_plan):
+            latest_session = new_memo_sessions[0]
+            total_plan_amount = latest_session.letters_count if amount_type == 'letters' else latest_session.pages_count
+            total_letters = latest_session.letters_count
+            total_pages = latest_session.pages_count
+            current_start_verse = latest_session.start_verse_id
+            included_sessions = [latest_session]
 
+            for session in new_memo_sessions[1:]:
+                current_amount = session.letters_count if amount_type == 'letters' else session.pages_count
+                potential_total = total_plan_amount + current_amount
+                
+                diff_with = abs(potential_total - required_amount)
+                diff_without = abs(required_amount - total_plan_amount)
+                
+                if diff_without < diff_with:
+                    break
+                
+                included_sessions.append(session)
+                total_plan_amount = potential_total
+                total_letters += session.letters_count
+                total_pages += session.pages_count
+                current_start_verse = session.start_verse_id
+            
+            if included_sessions:
+                start_verse = current_start_verse
+                end_verse = latest_session.end_verse_id
+                return self.format_plan_response(start_verse, end_verse, total_letters, total_pages)
+                
+            return None
+            
+        except Exception as e:
+            self.db.session.rollback()
+            raise RuntimeError(f"Minor revision plan generation failed: {str(e)}")
+
+    def format_plan_response(self, start_verse, end_verse, total_letters, total_pages):
         return {
-            "start_verse_id": start_verse.verse_id,
-            "end_verse_id": end_verse.verse_id,
+            "start_verse_id": start_verse,
+            "end_verse_id": end_verse,
             "total_letters": total_letters,
-            "verses_count": len(verses_in_plan),
-            "surahs_count": len({v.surah_id for v in verses_in_plan})
+            "total_pages": total_pages,
         }
 
-    def store_plan_in_database(self, student_id, plan_data, recitation_type):
+    def store_plan_in_database(self, student_id, plan_data, recitation_type, plan_date=None):
         try:
-            if 'start_verse_id' in plan_data:
-                session_data = {
-                    'student_id': student_id,
-                    'type': recitation_type,
-                    'start_verse_id': plan_data['start_verse_id'],
-                    'end_verse_id': plan_data['end_verse_id'],
-                    'letters_count': plan_data['total_letters']
-                }
-                
-                return RecitationSessionService.create_session(session_data)
-            return None
+            session_data = {
+                'student_id': student_id,
+                'type': recitation_type,
+                'start_verse_id': plan_data['start_verse_id'],
+                'end_verse_id': plan_data['end_verse_id'],
+                'letters_count': plan_data['total_letters'],
+                'pages_count': plan_data['total_pages'],
+                'date': plan_date if plan_date else date.today()
+            }
+            
+            return RecitationSessionService.create_session(session_data)
         except Exception as e:
             self.db.session.rollback()
             raise RuntimeError(f"Failed to store plan in database: {str(e)}")
-
 
     def generate_memorization_plan_using_difficulty(self, start_verse, direction):
         try:
@@ -226,25 +282,51 @@ class PlanGenerationService:
             db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
 
-    def get_memorization_days_info(self, memorization_days):
+    def get_memorization_days_info(self, memorization_days, start_date=None):
         """Helper method to get information about memorization days"""
+        from datetime import datetime, timedelta
+
+        if start_date is None:
+            start_date = datetime.now()
+        elif isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+
         week_days = [
-            {"name": "الأحد", "value": 1},
-            {"name": "الاثنين", "value": 2},
-            {"name": "الثلاثاء", "value": 4},
-            {"name": "الأربعاء", "value": 8},
-            {"name": "الخميس", "value": 16},
-            {"name": "الجمعة", "value": 32},
-            {"name": "السبت", "value": 64}
+            {"name": "الأحد", "name_en": "Sunday", "value": 1},
+            {"name": "الاثنين", "name_en": "Monday", "value": 2},
+            {"name": "الثلاثاء", "name_en": "Tuesday", "value": 4},
+            {"name": "الأربعاء", "name_en": "Wednesday", "value": 8},
+            {"name": "الخميس", "name_en": "Thursday", "value": 16},
+            {"name": "الجمعة", "name_en": "Friday", "value": 32},
+            {"name": "السبت", "name_en": "Saturday", "value": 64}
         ]
-        
-        active_days = []
-        for day in week_days:
+
+        # Get current day index (0 = Monday, 6 = Sunday)
+        current_day_index = start_date.weekday()
+        # Convert to Sunday = 0 format
+        current_day_index = (current_day_index + 1) % 7
+
+        # Calculate remaining days
+        remaining_days = []
+        total_value = 0
+
+        for i in range(current_day_index, 7):
+            day = week_days[i]
             if memorization_days & day["value"]:
-                active_days.append(day)
+                day_date = start_date + timedelta(days=(i - current_day_index))
+                remaining_days.append({
+                    "name": day["name"],
+                    "name_en": day["name_en"],
+                    "value": day["value"],
+                    "date": day_date.strftime('%Y-%m-%d')
+                })
+                total_value += day["value"]
         
         return {
-            "days": active_days,
-            "count": len(active_days),
-            "names": [day["name"] for day in active_days]
+            "days": remaining_days,
+            "count": len(remaining_days),
+            "names": [day["name"] for day in remaining_days],
+            "names_en": [day["name_en"] for day in remaining_days],
+            "dates": [day["date"] for day in remaining_days],
+            "total_value": total_value
         }

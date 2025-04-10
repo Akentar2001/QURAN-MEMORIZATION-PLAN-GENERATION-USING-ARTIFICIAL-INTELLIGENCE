@@ -14,7 +14,6 @@ class RecitationSessionService:
                 end_verse_id=data['end_verse_id'],
                 letters_count=data['letters_count']
             )
-            
             if 'is_accepted' in data:
                 new_session.is_accepted = data['is_accepted']
             if 'rating' in data:
@@ -39,14 +38,19 @@ class RecitationSessionService:
         return recitation_session.query.get_or_404(session_id)
 
     @staticmethod
-    def get_student_sessions(student_id):
+    def get_student_sessions(student_id, recitation_type=None):
         StartVerse = aliased(verses)
         EndVerse = aliased(verses)
         StartSurah = aliased(surahs)
         EndSurah = aliased(surahs)
 
-        return (recitation_session.query
-            .filter_by(student_id=student_id)
+        query = (recitation_session.query
+            .filter_by(student_id=student_id))
+            
+        if recitation_type:
+            query = query.filter_by(type=recitation_type)
+            
+        return (query
             .join(StartVerse, StartVerse.verse_id == recitation_session.start_verse_id)
             .join(StartSurah, StartSurah.surah_id == StartVerse.surah_id)
             .join(EndVerse, EndVerse.verse_id == recitation_session.end_verse_id)
@@ -58,6 +62,7 @@ class RecitationSessionService:
                 EndVerse.order_in_surah.label('end_verse_order'),
                 EndSurah.name.label('end_surah_name')
             )
+            .order_by(recitation_session.date.desc())
             .all())
 
     @staticmethod
