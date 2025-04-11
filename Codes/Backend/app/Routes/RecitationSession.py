@@ -9,6 +9,7 @@ def create_session():
     try:
         data = request.get_json()
         
+        # Verify student exists
         student = StudentService.get_student(data['student_id'])
         if not student:
             return jsonify({'error': 'Student not found'}), 404
@@ -26,9 +27,6 @@ def create_session():
 def get_session(session_id):
     try:
         session_data = RecitationSessionService.get_session(session_id)
-        if not session_data:
-            return jsonify({'error': 'Session not found'}), 404
-            
         return jsonify({
             'session_id': session_data[0].session_id,
             'student_id': session_data[0].student_id,
@@ -36,13 +34,13 @@ def get_session(session_id):
             'type': session_data[0].type,
             'start_verse': {
                 'verse_id': session_data[0].start_verse_id,
-                'surah_name': session_data[0].start_surah_name,
-                'order_in_surah': session_data[0].start_verse_order
+                'surah_name': session_data.start_surah_name,
+                'order_in_surah': session_data.start_verse_order
             },
             'end_verse': {
                 'verse_id': session_data[0].end_verse_id,
-                'surah_name': session_data[0].end_surah_name,
-                'order_in_surah': session_data[0].end_verse_order
+                'surah_name': session_data.end_surah_name,
+                'order_in_surah': session_data.end_verse_order
             },
             'rating': session_data[0].rating,
             'is_accepted': session_data[0].is_accepted,
@@ -74,13 +72,13 @@ def get_student_sessions(student_id):
             'type': session[0].type,
             'start_verse': {
                 'verse_id': session[0].start_verse_id,
-                'surah_name': session[0].start_surah_name,
-                'order_in_surah': session[0].start_verse_order
+                'surah_name': session.start_surah_name,
+                'order_in_surah': session.start_verse_order
             },
             'end_verse': {
                 'verse_id': session[0].end_verse_id,
-                'surah_name': session[0].end_surah_name,
-                'order_in_surah': session[0].end_verse_order
+                'surah_name': session.end_surah_name,
+                'order_in_surah': session.end_verse_order
             },
             'rating': session[0].rating,
             'is_accepted': session[0].is_accepted,

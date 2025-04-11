@@ -66,6 +66,28 @@ class RecitationSessionService:
             .all())
 
     @staticmethod
+    def get_student_sessions_by_date(student_id, date):
+        StartVerse = aliased(verses)
+        EndVerse = aliased(verses)
+        StartSurah = aliased(surahs)
+        EndSurah = aliased(surahs)
+
+        return (recitation_session.query
+            .filter_by(student_id=student_id, date=date)
+            .join(StartVerse, StartVerse.verse_id == recitation_session.start_verse_id)
+            .join(StartSurah, StartSurah.surah_id == StartVerse.surah_id)
+            .join(EndVerse, EndVerse.verse_id == recitation_session.end_verse_id)
+            .join(EndSurah, EndSurah.surah_id == EndVerse.surah_id)
+            .add_columns(
+                recitation_session,
+                StartVerse.order_in_surah.label('start_verse_order'),
+                StartSurah.name.label('start_surah_name'),
+                EndVerse.order_in_surah.label('end_verse_order'),
+                EndSurah.name.label('end_surah_name')
+            )
+            .all())
+
+    @staticmethod
     def update_session(session_id, data):
         try:
             new_session = recitation_session.query.get_or_404(session_id)
@@ -96,3 +118,11 @@ class RecitationSessionService:
         except Exception as e:
             db.session.rollback()
             raise Exception(f"Error deleting session: {str(e)}")
+
+    @staticmethod
+    def get_student_session_by_date_and_type(student_id, date, session_type):
+        return recitation_session.query.filter_by(
+            student_id=student_id,
+            date=date,
+            type=session_type
+        ).first()

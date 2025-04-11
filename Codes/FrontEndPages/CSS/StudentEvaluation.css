@@ -84,8 +84,9 @@ body {
 }
 
 .evaluation-footer {
-    border-top: 1px solid #eee; /**/
-    padding-top: 0.4rem; 
+    border-top: 1px solid #eee;
+    /**/
+    padding-top: 0.4rem;
 }
 
 .from-to-container {
@@ -174,11 +175,21 @@ body {
 }
 
 @media (max-width: 768px) {
-.from-to-container {
-    flex-direction: column;
+    .from-to-container {
+        flex-direction: column;
+    }
+
+    .surah-group {
+        width: 100%;
+    }
 }
 
-.surah-group {
-    width: 100%;
+.card-body.disabled {
+    opacity: 0.6;
+    pointer-events: none;
 }
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
 }

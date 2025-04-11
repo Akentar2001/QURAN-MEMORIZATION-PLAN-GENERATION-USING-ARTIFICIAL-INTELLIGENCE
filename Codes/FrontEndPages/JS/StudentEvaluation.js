@@ -1,60 +1,3 @@
-const students = [
-    {
-        id: 1,
-        name: "أحمد محمد",
-        sections: {
-            memorization: { fromS: "البقرة", fromV: 1, toS: "البقرة", toV: 5, done: false},
-            minor_review: { fromS: "الفاتحة", fromV: 1, toS: "الفاتحة", toV: 7, done: true},
-            major_review: { fromS: "الناس", fromV: 1, toS: "الفلق", toV: 4, done: false}
-        }
-    },
-    {
-        id: 2,
-        name: "محمد علي",
-        sections: {
-            memorization: { fromS: "آل عمران", fromV: 1, toS: "آل عمران", toV: 5, done: true},
-            minor_review: { fromS: "البقرة", fromV: 1, toS: "البقرة", toV: 7, done: false},
-            major_review: { fromS: "الفاتحة", fromV: 1, toS: "الفاتحة", toV: 7, done: true}
-        }
-    },
-    {
-        id: 3,
-        name: "علي حسن",
-        sections: {
-            memorization: { fromS: "النساء", fromV: 1, toS: "النساء", toV: 5, done: false},
-            minor_review: { fromS: "المائدة", fromV: 1, toS: "المائدة", toV: 7, done: true},
-            major_review: { fromS: "الأنعام", fromV: 1, toS: "الأنعام", toV: 4, done: false}
-        }
-    },
-    {
-        id: 4,
-        name: "سارة أحمد",
-        sections: {
-            memorization: { fromS: "المائدة", fromV: 1, toS: "المائدة", toV: 10, done: true},
-            minor_review: { fromS: "النساء", fromV: 1, toS: "النساء", toV: 15, done: true},
-            major_review: { fromS: "البقرة", fromV: 1, toS: "البقرة", toV: 20, done: true}
-        }
-    },
-    {
-        id: 5,
-        name: "فاطمة محمود",
-        sections: {
-            memorization: { fromS: "الأنعام", fromV: 1, toS: "الأنعام", toV: 8, done: false},
-            minor_review: { fromS: "النساء", fromV: 10, toS: "النساء", toV: 20, done: false},
-            major_review: { fromS: "البقرة", fromV: 50, toS: "البقرة", toV: 60, done: false}
-        }
-    },
-    {
-        id: 6,
-        name: "خالد إبراهيم",
-        sections: {
-            memorization: { fromS: "الأعراف", fromV: 1, toS: "الأعراف", toV: 5, done: true},
-            minor_review: { fromS: "الأنعام", fromV: 1, toS: "الأنعام", toV: 10, done: false},
-            major_review: { fromS: "المائدة", fromV: 1, toS: "المائدة", toV: 10, done: true}
-        }
-    }
-];
-
 const surahs = [
     { name: "الفاتحة", verses: 7 },
     { name: "البقرة", verses: 286 },
@@ -172,6 +115,7 @@ const surahs = [
     { name: "الناس", verses: 6 }
 ];
 
+
 function createStudentCard(student) {
     const cardId = `card-${student.id}`;
 
@@ -180,28 +124,59 @@ function createStudentCard(student) {
             <div class="card student-card mb-2" id="${cardId}">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3" onclick="toggleCard('${cardId}')">
                     <h5 class="mb-0 text-primary">${student.name}</h5>
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="attendance-${student.id}" 
+                                   ${student.attendance_status === 'present' ? 'checked' : ''}
+                                   onchange="toggleAttendance('${student.id}')">
+                            <label class="form-check-label" for="attendance-${student.id}">حاضر</label>
+                        </div>
                         <i class="fas fa-chevron-up toggle-icon"></i>
                     </div>
                 </div>
-                <div class="card-body py-2">
-                    ${createSection('memorization', student.sections.memorization, student.id)}
-                    ${createSection('minor_review', student.sections.minor_review, student.id)}
-                    ${createSection('major_review', student.sections.major_review, student.id)}
-                    <button class="btn btn-primary btn-sm w-100 mt-2" id="save-${cardId}" onclick="saveEvaluation(${student.id})" disabled>حفظ التقييم
+                <div class="card-body py-2 ${student.attendance_status === 'absent' ? 'disabled' : ''}">
+                    ${Object.entries(student.sections).map(([key, value]) => createSection(key, value, student.id)).join('')}
+                    <button class="btn btn-primary btn-sm w-100 mt-2" 
+                            id="save-${cardId}" 
+                            onclick="saveEvaluation(${student.id})" 
+                            disabled>
+                        حفظ التقييم
                     </button>
                 </div>
             </div>
         </div>`;
 }
 
+function toggleAttendance(studentId) {
+    const checkbox = document.getElementById(`attendance-${studentId}`);
+    const cardBody = document.querySelector(`#card-${studentId} .card-body`);
+    const student = students.find(s => s.id === parseInt(studentId));
+
+    student.attendance_status = checkbox.checked ? 'present' : 'absent';
+    cardBody.classList.toggle('disabled', !checkbox.checked);
+
+    // Reset evaluations if marked as absent
+    if (!checkbox.checked) {
+        Object.values(student.sections).forEach(section => {
+            section.grade = null;
+        });
+    }
+
+    checkEvaluations(`card-${studentId}`);
+}
+
 function createSection(title, data, studentId) {
+    // If section doesn't exist, don't render it
+    if (!data) return '';
+
     const displayTitles = {
         'memorization': 'حفظ',
         'minor_review': 'مراجعة صغرى',
         'major_review': 'مراجعة كبرى'
     };
     const displayTitle = displayTitles[title];
+
     return `
         <div class="section-box ${title}">
             <h6 class="text-muted mb-2">${displayTitle}</h6>
@@ -259,18 +234,49 @@ function toggleCard(cardId) {
 
 function saveEvaluation(studentId) {
     const card = document.getElementById(`card-${studentId}`);
-    const sections = card.querySelectorAll('.section-box');
-    
     const student = students.find(s => s.id === studentId);
-    sections.forEach(section => {
-        const sectionType = section.classList[1]; // memorization, minor_review, or major_review
-        const grade = section.querySelector('.evaluation-select').value;
-        student.sections[sectionType].grade = grade;
+    const isPresent = document.getElementById(`attendance-${studentId}`).checked;
+
+    const evaluationData = {
+        student_id: studentId,
+        attendance_status: isPresent ? 'present' : 'absent',
+        sections: {}
+    };
+
+    Object.entries(student.sections).forEach(([sectionType, data]) => {
+        // Get the grade from the evaluation select element
+        const sectionElement = card.querySelector(`.${sectionType}`);
+        const gradeSelect = sectionElement.querySelector('.evaluation-select');
+        const selectedGrade = gradeSelect.value;
+
+        evaluationData.sections[sectionType] = {
+            session_id: data.session_id,
+            grade: isPresent ? selectedGrade : null,
+            is_accepted: isPresent ? (selectedGrade !== 'ضعيف' && selectedGrade !== 'غير حافظ') : false
+        };
     });
 
-    updateProgress();
-
-    showNotification(`تم حفظ تقييم الطالب ${student.name} بنجاح`);
+    // Send evaluation to backend
+    fetch('http://localhost:5000/api/students/evaluations', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(evaluationData)
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`تم حفظ تقييم الطالب ${student.name} بنجاح`);
+                updateProgress();
+            } else {
+                showNotification('حدث خطأ أثناء حفظ التقييم', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving evaluation:', error);
+            showNotification('حدث خطأ أثناء حفظ التقييم', 'error');
+        });
 }
 
 function showNotification(message) {
@@ -292,15 +298,26 @@ function showNotification(message) {
 function filterStudents() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const sortOrder = document.getElementById('sortOrder').value;
+    const evaluationStatus = document.getElementById('evaluationFilter').value;
 
     let filteredStudents = [...students];
 
+    // Filter by search term
     if (searchTerm) {
         filteredStudents = filteredStudents.filter(student =>
             student.name.toLowerCase().includes(searchTerm)
         );
     }
 
+    // Filter by evaluation status
+    if (evaluationStatus !== 'all') {
+        filteredStudents = filteredStudents.filter(student => {
+            const hasEvaluation = Object.values(student.sections).some(section => section.grade !== null);
+            return evaluationStatus === 'evaluated' ? hasEvaluation : !hasEvaluation;
+        });
+    }
+
+    // Apply sorting
     filteredStudents = sortStudents(filteredStudents, sortOrder);
 
     renderStudents(filteredStudents);
@@ -332,7 +349,7 @@ function renderStudents(studentsToRender) {
 function generateVerseOptions(surahName, selectedVerse) {
     const surah = surahs.find(s => s.name === surahName);
     if (!surah) return '';
-    
+
     let options = '';
     for (let i = 1; i <= surah.verses; i++) {
         options += `<option value="${i}" ${i === selectedVerse ? 'selected' : ''}>${i}</option>`;
@@ -344,7 +361,7 @@ function updateVerseOptions(surahSelect, type, studentId, sectionTitle) {
     const surahName = surahSelect.value;
     const verseSelect = surahSelect.parentElement.querySelector('.verse-input');
     const currentValue = verseSelect.value;
-    
+
     verseSelect.innerHTML = generateVerseOptions(surahName, parseInt(currentValue) || 1);
     checkEvaluations(`card-${studentId}`);
 }
@@ -353,7 +370,7 @@ function checkEvaluations(cardId) {
     const card = document.getElementById(cardId);
     const selects = card.querySelectorAll('.evaluation-select');
     const saveButton = document.getElementById(`save-${cardId}`);
-    
+
     const allSelected = Array.from(selects).every(select => select.value !== '');
     saveButton.disabled = !allSelected;
 }
@@ -375,11 +392,33 @@ function updateProgress() {
     progressBar.setAttribute('aria-valuenow', progressPercentage);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    renderStudents(students);
-    document.getElementById('studentCount').textContent = students.length;
-    updateProgress();
+// Replace the static students array with:
+let students = [];
 
+// Update the fetchStudents function
+async function fetchStudents() {
+    try {
+        const response = await fetch('http://localhost:5000/api/students/evaluations');
+        if (!response.ok) {
+            throw new Error('Failed to fetch students');
+        }
+
+        students = await response.json();
+        renderStudents(students);
+        document.getElementById('studentCount').textContent = students.length;
+        updateProgress();
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        showNotification('فشل في تحميل بيانات الطلاب', 'error');
+    }
+}
+
+// In the DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', () => {
+    fetchStudents();
+
+    // Add event listeners for search, sort and evaluation filter
     document.getElementById('searchInput').addEventListener('input', filterStudents);
     document.getElementById('sortOrder').addEventListener('change', filterStudents);
+    document.getElementById('evaluationFilter').addEventListener('change', filterStudents);
 });

@@ -1,6 +1,8 @@
 from app import db
 from app.models import students_plans_info, verses
 from datetime import datetime
+from app.Services.recitation_session_Service import RecitationSessionService
+
 
 class StudentPlanInfoService:
     @staticmethod
@@ -53,6 +55,18 @@ class StudentPlanInfoService:
         plan_info = students_plans_info.query.get(student_id)
         
         if plan_info:
+            # Handle last verse updates
+            if 'last_verse_recited_new_memorization' in plan_data:
+                plan_info.last_verse_recited_new_memorization = plan_data['last_verse_recited_new_memorization']
+                # Recalculate memorized parts when new memorization verse changes
+                plan_info.memorized_parts = StudentPlanInfoService.calculate_memorized_parts(
+                    plan_info.last_verse_recited_new_memorization, 
+                    plan_info.memorization_direction
+                )
+            
+            if 'last_verse_recited_large_revision' in plan_data:
+                plan_info.last_verse_recited_large_revision = plan_data['last_verse_recited_large_revision']
+
             if 'start_surah' in plan_data and 'no_verse_in_surah' in plan_data:
                 verse = verses.query.filter_by(surah_id=plan_data['start_surah'], order_in_surah=plan_data['no_verse_in_surah']).first()
                 last_verse = StudentPlanInfoService.calculate_last_verse_recited(verse, plan_data.get('memorization_direction', plan_info.memorization_direction))
@@ -139,3 +153,33 @@ class StudentPlanInfoService:
         
         rev_verse = verses.query.filter_by(reverse_index=verse.reverse_index - 1).first()
         return rev_verse.verse_id if rev_verse else 0
+
+    @staticmethod
+    def update_student_progress(student_id):
+        try:
+            # Get all accepted memorization sessions
+            sessions = RecitationSessionService.get_student_sessions(student_id, 'New_Memorization')
+            accepted_sessions = [s[0] for s in sessions if s[0].is_accepted]
+            
+            if not accepted_sessions:
+                return
+            
+            # Calculate total memorized parts
+            total_pages = sum(session.pages_count or 0 for session in accepted_sessions)
+            memorized_parts = total_pages / 20  # Assuming 20 pages per part
+            
+            # Calculate overall rating
+            rated_sessions = [s for s in accepted_sessions if s.rating is not None]
+            avg_rating = sum(s.rating for s in rated_sessions) / len(rated_sessions) if rated_sessions else None
+            
+            # Update student's plan info
+            plan_info = students_plans_info.query.get(student_id)
+            if plan_info:
+                plan_info.memorized_parts = plan_info.memorized_parts + memorized_parts
+                if avg_rating is not None:
+                    plan_info.overall_rating = avg_rating
+                db.session.commit()
+                
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Error updating student progress: {str(e)}")
