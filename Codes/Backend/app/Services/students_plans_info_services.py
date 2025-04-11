@@ -6,12 +6,12 @@ class StudentPlanInfoService:
     @staticmethod
     def create_planInfo(student_id, data):
         verse = verses.query.filter_by(surah_id=data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
-        last_verse = StudentPlanInfoService.calculate_last_verse_recited(verse, data.get('memorization_direction') == "true")
+        last_verse = StudentPlanInfoService.calculate_last_verse_recited(verse, data['memorization_direction'])
 
         student_plan = students_plans_info(
             student_id=student_id,
-            memorization_direction=data.get('memorization_direction') == "true",
-            revision_direction=data.get('revision_direction') == "true",
+            memorization_direction=data.get('memorization_direction'),
+            revision_direction=data.get('revision_direction'),
             memorization_days=data.get('memorization_days', 5),
             last_verse_recited_new_memorization=last_verse
         )
