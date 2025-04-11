@@ -12,118 +12,45 @@ class PlanGenerationService:
 
     def generate_plan(self, student_id):
         try:
-            plan_info = self.get_student_plan(student_id)
-            test_date = "2025-04-13"
-            days_info = self.get_memorization_days_info(plan_info.memorization_days, start_date=test_date if test_date else date.today())
-            days = days_info["days"]
-
-            memo_last_verse = plan_info.last_verse_recited_new_memorization
-            memo_required_letters_amount = plan_info.new_memorization_letters_amount
-            memo_required_pages_amount = plan_info.new_memorization_pages_amount
-            memo_direction = plan_info.memorization_direction
-
-            minorRev_required_letters_amount = plan_info.small_revision_letters_amount
-            minorRev_required_pages_amount = plan_info.small_revision_pages_amount
-
-            majorRev_last_verse = plan_info.last_verse_recited_large_revision
-            majorRev_required_letters_amount = plan_info.large_revision_letters_amount
-            majorRev_required_pages_amount = plan_info.large_revision_pages_amount
-            majorRev_direction = plan_info.revision_direction
-
-            for day in days:
-                current_date = day["date"]
-
-                # Minor_Revision
-                if minorRev_required_letters_amount:
-                    minor_revision_plan = self.generate_minor_revision_plan(student_id, minorRev_required_letters_amount)
-                elif minorRev_required_pages_amount:
-                    minor_revision_plan = self.generate_minor_revision_plan(student_id, minorRev_required_pages_amount, amount_type='pages')
-                else:
-                    minor_revision_plan = self.generate_minor_revision_plan(student_id, 1, amount_type='default')
+            plan_data = self._initialize_plan_data(student_id)
+            print(len(plan_data['days']))
+            for day in plan_data['days']:
+                self._generate_daily_plan(
+                    student_id=student_id,
+                    current_date=day["date"],
+                    memo_data=plan_data['memo'],
+                    minor_rev_data=plan_data['minor_rev'],
+                    major_rev_data=plan_data['major_rev']
+                )
                 
-                minorRev_current_surah = None
-                if minor_revision_plan:
-                    self.store_plan_in_database(student_id, minor_revision_plan, 'Minor_Revision', current_date)
-                    minorRev_current_surah = self.get_current_surah(minor_revision_plan['start_verse_id'])
-
-                # New_Memorization
-                memo_start_verse = self.get_start_verse(memo_last_verse, memo_direction)    
-                if memo_start_verse:
-                    if memo_required_letters_amount:
-                        memo_plan = self.generate_memorization_plan(memo_start_verse, memo_required_letters_amount, memo_direction)
-                    elif memo_required_pages_amount:
-                        memo_plan = self.generate_memorization_plan(memo_start_verse, memo_required_pages_amount, memo_direction, amount_type='pages')
-                    else:
-                        memo_plan = self.generate_memorization_plan_using_difficulty(memo_start_verse, memo_direction)
-                    
-                    if memo_plan:
-                        self.store_plan_in_database(student_id, memo_plan, 'New_Memorization', current_date)
-                        memo_last_verse = memo_plan['end_verse_id']
-                        memo_current_surah = self.get_current_surah(memo_plan['start_verse_id'])
-
-                # Major_Revision
-                majorRev_start_verse = self.get_start_verse(majorRev_last_verse, majorRev_direction) if majorRev_last_verse else None
-                current_surah = 0
-
-                if minorRev_current_surah:
-                    if not majorRev_start_verse or majorRev_start_verse.surah_id == minorRev_current_surah:
-                        majorRev_start_verse = self.update_majorRev_start_verse(minorRev_current_surah, majorRev_direction, memo_direction)
-                        current_surah = minorRev_current_surah
-                elif memo_current_surah:
-                    if not majorRev_start_verse or majorRev_start_verse.surah_id == memo_current_surah:
-                        majorRev_start_verse = self.update_majorRev_start_verse(memo_current_surah, majorRev_direction, memo_direction)
-                        current_surah = memo_current_surah
-
-                if majorRev_start_verse:
-                    if majorRev_required_letters_amount:
-                        majorRev_plan = self.generate_memorization_plan(majorRev_start_verse, majorRev_required_letters_amount, majorRev_direction, stop_place=current_surah)
-                    elif majorRev_required_pages_amount:
-                        majorRev_plan = self.generate_memorization_plan(majorRev_start_verse, majorRev_required_pages_amount, majorRev_direction, amount_type='pages', stop_place=current_surah)
-                    else:
-                        majorRev_plan = self.generate_memorization_plan_using_difficulty(majorRev_start_verse, majorRev_direction, factor=10)
-                    
-                    if majorRev_plan:
-                        self.store_plan_in_database(student_id, majorRev_plan, 'Major_Revision', current_date)
-                        majorRev_last_verse = majorRev_plan['end_verse_id']
-
         except Exception as e:
             self.db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
 
-
-    def update_majorRev_start_verse(self, temp_surah, majorRev_direction, memo_direction):        
-        if memo_direction:
-            if majorRev_direction:
-                current_surah = 1 if temp_surah != 1 else 0
-            else:
-                current_surah = temp_surah - 1
-        else:
-            if majorRev_direction:
-                current_surah = temp_surah + 1
-            else:
-                current_surah = 114 if temp_surah != 114 else 0
-
-        if current_surah < 1 or current_surah > 114:
-            return None
-
-        majorRev_start_verse = self.db.session.query(Verse).filter(
-            and_(
-                Verse.surah_id == current_surah,
-                Verse.order_in_surah == 1
-            )
-        ).first()
+    def _initialize_plan_data(self, student_id):
+        plan_info = self.get_student_plan(student_id)
+        fake_date = "2025-04-13"
+        days_info = self.get_memorization_days_info(plan_info.memorization_days, start_date=fake_date if fake_date else date.today())
         
-        return majorRev_start_verse
-
-
-    def get_current_surah(self, temp_verse):
-        current_verse = self.db.session.query(Verse).filter(
-            Verse.verse_id == temp_verse
-            ).first()
-
-        current_surah = current_verse.surah_id
-
-        return current_surah
+        return {
+            'days': days_info["days"],
+            'memo': {
+                'last_verse': plan_info.last_verse_recited_new_memorization,
+                'letters_amount': plan_info.new_memorization_letters_amount,
+                'pages_amount': plan_info.new_memorization_pages_amount,
+                'direction': plan_info.memorization_direction
+            },
+            'minor_rev': {
+                'letters_amount': plan_info.small_revision_letters_amount,
+                'pages_amount': plan_info.small_revision_pages_amount
+            },
+            'major_rev': {
+                'last_verse': plan_info.last_verse_recited_large_revision,
+                'letters_amount': plan_info.large_revision_letters_amount,
+                'pages_amount': plan_info.large_revision_pages_amount,
+                'direction': plan_info.revision_direction
+            }
+        }
 
     def get_student_plan(self, student_id):
         """Helper method to get student plan info"""
@@ -134,34 +61,73 @@ class PlanGenerationService:
             raise ValueError("Student plan info not found")
         return plan_info
 
-    def get_start_verse(self, last_verse, direction):
-        """Helper method to determine starting verse"""
-        index_column = Verse.order_in_quraan if direction else Verse.reverse_index
+    def _generate_daily_plan(self, student_id, current_date, memo_data, minor_rev_data, major_rev_data):
+        minor_rev_result = self._generate_minor_revision(student_id, current_date, minor_rev_data)
+        memo_result = self._generate_memorization(student_id, current_date, memo_data)
+        self._generate_major_revision(student_id, current_date, major_rev_data, minor_rev_result, memo_result, memo_data)
 
-        start_verse = self.db.session.query(Verse).filter(
-            Verse.verse_id == last_verse
-        ).first()
-
-        if not start_verse:
-            start_verse = self.db.session.query(Verse).order_by(index_column.asc()).first()
+    def _generate_minor_revision(self, student_id, current_date, minor_rev_data):
+        if minor_rev_data['letters_amount']:
+            minor_revision_plan = self.generate_minor_revision_plan(student_id, minor_rev_data['letters_amount'])
+        elif minor_rev_data['pages_amount']:
+            minor_revision_plan = self.generate_minor_revision_plan(student_id, minor_rev_data['pages_amount'], amount_type='pages')
         else:
-            current_index = getattr(start_verse, index_column.key)
-            next_verse = self.db.session.query(Verse).filter(
-                index_column == current_index + 1
-            ).first()
-
-            if next_verse:
-                start_verse = next_verse
-            else:
-                return None
-
-        if not start_verse:
-            raise ValueError("No verses found in database")
-            
-        return start_verse
-
+            minor_revision_plan = self.generate_minor_revision_plan(student_id, 1, amount_type='default')
         
-    def generate_memorization_plan(self, start_verse, required_amount, direction, amount_type='letters', stop_place=0):
+        if minor_revision_plan:
+            self.store_plan_in_database(student_id, minor_revision_plan, 'Minor_Revision', current_date)
+            return {
+                'current_surah': self.get_current_surah(minor_revision_plan['start_verse_id'])
+            }
+        return None
+
+    def _generate_memorization(self, student_id, current_date, memo_data):
+        memo_start_verse = self.get_start_verse(memo_data['last_verse'], memo_data['direction'])
+        if not memo_start_verse:
+            return None
+
+        if memo_data['letters_amount']:
+            memo_plan = self.generate_plan_by_amount(memo_start_verse, memo_data['letters_amount'], memo_data['direction'])
+        elif memo_data['pages_amount']:
+            memo_plan = self.generate_plan_by_amount(memo_start_verse, memo_data['pages_amount'], memo_data['direction'], amount_type='pages')
+        else:
+            memo_plan = self.generate_plan_by_difficulty(memo_start_verse, memo_data['direction'])
+        
+        if memo_plan:
+            self.store_plan_in_database(student_id, memo_plan, 'New_Memorization', current_date)
+            memo_data['last_verse'] = memo_plan['end_verse_id']
+            return {
+                'current_surah': self.get_current_surah(memo_plan['start_verse_id'])
+            }
+        return None
+
+    def _generate_major_revision(self, student_id, current_date, major_rev_data, minor_rev_result, memo_result, memo_data):
+        majorRev_start_verse = self.get_start_verse(major_rev_data['last_verse'], major_rev_data['direction']) if major_rev_data['last_verse'] else None
+        current_surah = 0
+
+        if minor_rev_result and minor_rev_result['current_surah']:
+            if not majorRev_start_verse or majorRev_start_verse.surah_id == minor_rev_result['current_surah']:
+                majorRev_start_verse = self.update_majorRev_start_verse(minor_rev_result['current_surah'], major_rev_data['direction'], memo_data['direction'])
+                current_surah = minor_rev_result['current_surah']
+        elif memo_result and memo_result['current_surah']:
+            if not majorRev_start_verse or majorRev_start_verse.surah_id == memo_result['current_surah']:
+                majorRev_start_verse = self.update_majorRev_start_verse(memo_result['current_surah'], major_rev_data['direction'], memo_data['direction'])
+                current_surah = memo_result['current_surah']
+
+        if majorRev_start_verse:
+            if major_rev_data['letters_amount']:
+                majorRev_plan = self.generate_plan_by_amount(majorRev_start_verse, major_rev_data['letters_amount'], major_rev_data['direction'], stop_place=current_surah)
+            elif major_rev_data['pages_amount']:
+                majorRev_plan = self.generate_plan_by_amount(majorRev_start_verse, major_rev_data['pages_amount'], major_rev_data['direction'], amount_type='pages', stop_place=current_surah)
+            else:
+                majorRev_plan = self.generate_plan_by_difficulty(majorRev_start_verse, major_rev_data['direction'], factor=10)
+            
+            if majorRev_plan:
+                self.store_plan_in_database(student_id, majorRev_plan, 'Major_Revision', current_date)
+                major_rev_data['last_verse'] = majorRev_plan['end_verse_id']
+        
+
+    def generate_plan_by_amount(self, start_verse, required_amount, direction, amount_type='letters', stop_place=0):
         try:
             total_plan_amount = 0
             total_letters = 0
@@ -223,12 +189,74 @@ class PlanGenerationService:
             db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
 
+    def generate_plan_by_difficulty(self, start_verse, direction, factor=1):
+        try:
+            total_difficulty = 0
+            total_plan_letters = 0
+            total_pages = 0
+            current_verse = start_verse
+            end_verse = start_verse
+            current_surah = start_verse.surah_id
+            index_column = Verse.order_in_quraan if direction else Verse.reverse_index
+            verses_in_plan = []
+
+            while total_difficulty < factor:
+                
+                potential_total = total_difficulty + current_verse.verse_difficulty
+                
+                if potential_total > factor:
+                    diff_with = abs(potential_total - factor)
+                    diff_without = abs(factor - total_difficulty)
+                    if diff_without < diff_with:
+                        break
+                
+                verses_in_plan.append(current_verse)
+                total_difficulty += current_verse.verse_difficulty
+                total_plan_letters += current_verse.letters_count
+                total_pages += current_verse.weight_on_page
+                end_verse = current_verse
+                
+                current_index = getattr(current_verse, index_column.key)
+                next_verse = db.session.query(Verse).filter(
+                    index_column == current_index + 1
+                ).first()
+
+                if not next_verse:
+                    break
+
+                if next_verse.surah_id != current_surah:
+                    remaining_allowance = factor - total_difficulty
+                    if remaining_allowance < (factor * 0.10):
+                        break
+                    current_surah = next_verse.surah_id
+
+                current_verse = next_verse
+
+            remaining_verses = db.session.query(Verse).filter(
+                and_(
+                    Verse.surah_id == current_surah,
+                    index_column > getattr(end_verse, index_column.key)
+                )
+            ).order_by(index_column.asc()).all()
+
+            remaining_difficulty = sum(v.verse_difficulty for v in remaining_verses)
+            if (total_difficulty + remaining_difficulty) <= (factor * 0.10):
+                verses_in_plan.extend(remaining_verses)
+                total_difficulty += remaining_difficulty
+                end_verse = remaining_verses[-1] if remaining_verses else end_verse
+    
+            return self.format_plan_response(start_verse.verse_id, end_verse.verse_id, total_plan_letters, total_pages)
+
+        except Exception as e:
+            db.session.rollback()
+            raise RuntimeError(f"Plan generation failed: {str(e)}")
+
     def generate_minor_revision_plan(self, student_id, required_amount, amount_type='letters'):
         try:
             sessions = RecitationSessionService.get_student_sessions(student_id, 'New_Memorization')
             
             new_memo_sessions = sorted([s[0] for s in sessions], 
-                                    key=lambda x: x.created_at, 
+                                    key=lambda x: x.date, 
                                     reverse=True)
             
             if not new_memo_sessions:
@@ -302,67 +330,65 @@ class PlanGenerationService:
             self.db.session.rollback()
             raise RuntimeError(f"Failed to store plan in database: {str(e)}")
 
-    def generate_memorization_plan_using_difficulty(self, start_verse, direction, factor=1):
-        try:
-            total_difficulty = 0
-            total_plan_letters = 0
-            total_pages = 0
-            current_verse = start_verse
-            end_verse = start_verse
-            current_surah = start_verse.surah_id
-            index_column = Verse.order_in_quraan if direction else Verse.reverse_index
-            verses_in_plan = []
 
-            while total_difficulty < factor:
-                
-                potential_total = total_difficulty + current_verse.verse_difficulty
-                
-                if potential_total > factor:
-                    diff_with = abs(potential_total - factor)
-                    diff_without = abs(factor - total_difficulty)
-                    if diff_without < diff_with:
-                        break
-                
-                verses_in_plan.append(current_verse)
-                total_difficulty += current_verse.verse_difficulty
-                total_plan_letters += current_verse.letters_count
-                total_pages += current_verse.weight_on_page
-                end_verse = current_verse
-                
-                current_index = getattr(current_verse, index_column.key)
-                next_verse = db.session.query(Verse).filter(
-                    index_column == current_index + 1
-                ).first()
+    # Helper methods
+    def get_start_verse(self, last_verse, direction):
+        index_column = Verse.order_in_quraan if direction else Verse.reverse_index
 
-                if not next_verse:
-                    break
+        start_verse = self.db.session.query(Verse).filter(
+            Verse.verse_id == last_verse
+        ).first()
 
-                if next_verse.surah_id != current_surah:
-                    remaining_allowance = factor - total_difficulty
-                    if remaining_allowance < (factor * 0.10):
-                        break
-                    current_surah = next_verse.surah_id
+        if not start_verse:
+            start_verse = self.db.session.query(Verse).order_by(index_column.asc()).first()
+        else:
+            current_index = getattr(start_verse, index_column.key)
+            next_verse = self.db.session.query(Verse).filter(
+                index_column == current_index + 1
+            ).first()
 
-                current_verse = next_verse
+            if next_verse:
+                start_verse = next_verse
+            else:
+                return None
 
-            remaining_verses = db.session.query(Verse).filter(
-                and_(
-                    Verse.surah_id == current_surah,
-                    index_column > getattr(end_verse, index_column.key)
-                )
-            ).order_by(index_column.asc()).all()
+        if not start_verse:
+            raise ValueError("No verses found in database")
+            
+        return start_verse
 
-            remaining_difficulty = sum(v.verse_difficulty for v in remaining_verses)
-            if (total_difficulty + remaining_difficulty) <= (factor * 0.10):
-                verses_in_plan.extend(remaining_verses)
-                total_difficulty += remaining_difficulty
-                end_verse = remaining_verses[-1] if remaining_verses else end_verse
-    
-            return self.format_plan_response(start_verse.verse_id, end_verse.verse_id, total_plan_letters, total_pages)
+    def get_current_surah(self, temp_verse):
+        current_verse = self.db.session.query(Verse).filter(
+            Verse.verse_id == temp_verse
+            ).first()
 
-        except Exception as e:
-            db.session.rollback()
-            raise RuntimeError(f"Plan generation failed: {str(e)}")
+        current_surah = current_verse.surah_id
+
+        return current_surah
+
+    def update_majorRev_start_verse(self, temp_surah, majorRev_direction, memo_direction):        
+        if memo_direction:
+            if majorRev_direction:
+                current_surah = 1 if temp_surah != 1 else 0
+            else:
+                current_surah = temp_surah - 1
+        else:
+            if majorRev_direction:
+                current_surah = temp_surah + 1
+            else:
+                current_surah = 114 if temp_surah != 114 else 0
+
+        if current_surah < 1 or current_surah > 114:
+            return None
+
+        majorRev_start_verse = self.db.session.query(Verse).filter(
+            and_(
+                Verse.surah_id == current_surah,
+                Verse.order_in_surah == 1
+            )
+        ).first()
+        
+        return majorRev_start_verse
 
     def get_memorization_days_info(self, memorization_days, start_date=None):
         """Helper method to get information about memorization days"""
