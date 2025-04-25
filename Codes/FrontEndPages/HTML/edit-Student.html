@@ -28,8 +28,21 @@
     <div id="nav-placeholder"></div>
     <div class="container py-3">
         <div class="main-container">
-            <div class="container-header d-flex justify-content-between align-items-center">
-                <h2 class="text-primary m-0">تعديل البيانات</h2>
+            <div class="container-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="student-avatar">
+                            <i class="fas fa-user-circle fa-3x text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h2 class="text-primary mb-2">تعديل بيانات الطالب</h2>
+                        <div class="student-info">
+                            <span class="h4 text-secondary" id="headerStudentName"></span>
+                            <span class="badge bg-info ms-2" id="studentIdBadge"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <form id="addStudentForm">
@@ -50,8 +63,8 @@
                             <label for="studentGender" class="form-label">الجنس</label>
                             <select class="form-select" id="studentGender" required>
                                 <option value="" selected disabled>اختر (ذكر / أنثى)</option>
-                                <option value="ذكر">ذكر</option>
-                                <option value="أنثى">أنثى</option>
+                                <option value="M">ذكر</option>
+                                <option value="F">أنثى</option>
                             </select>
                         </div>
                     </div>
@@ -70,7 +83,7 @@
                         </div>
                         <div class="col-md-4 mb-2">
                             <label for="parentPhone" class="form-label">رقم جوال الطالب</label>
-                            <input type="tel" class="form-control" id="parentPhone" placeholder="05xxxxxxxx"
+                            <input type="tel" class="form-control" id="studentPhone" placeholder="05xxxxxxxx"
                                 pattern="[0-9]{10}">
                         </div>
                         <div class="col-md-4 mb-2">
@@ -103,10 +116,10 @@
                             <div class="col-md-8 mb-2">
                                 <label class="form-label">ابتداء من:</label>
                                 <div class="input-group gap-2">
-                                    <select class="form-select" id="toSurah">
+                                    <select class="form-select" id="fromSurah">
                                         <option value="" selected disabled>اختر السورة</option>
                                     </select>
-                                    <select class="form-select" id="toVerse">
+                                    <select class="form-select" id="fromVerse">
                                         <option value="" selected disabled>اختر الآية</option>
                                     </select>
                                 </div>
@@ -173,7 +186,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i> حفظ وتعديل البيانات
                     </button>
-                    <button type="reset" class="btn btn-outline-danger">
+                    <button type="button" class="btn btn-outline-danger" onclick="window.location.href='../HTML/home.html'">
                         <i class="fas fa-times me-1"></i> إلغاء
                     </button>
                 </div>

@@ -223,18 +223,6 @@ const largeRevisionOptions = [
     { id: 33, name: "عشرة أجزاء (٢٠٠ صفحة)", amount: 200.0 }
 ];
 
-function populateSurahs() {
-    const fromSurahSelect = document.getElementById('fromSurah');
-    const toSurahSelect = document.getElementById('toSurah');
-
-    surahs.forEach(surah => {
-        const option = document.createElement('option');
-        option.value = surah.name;
-        option.textContent = surah.name;
-        fromSurahSelect.appendChild(option.cloneNode(true));
-        toSurahSelect.appendChild(option.cloneNode(true));
-    });
-}
 
 function setupMemorizationToggle() {
     document.querySelectorAll('input[name="hasMemorization"]').forEach(radio => {
@@ -249,14 +237,21 @@ function setupMemorizationToggle() {
     });
 }
 
-function setupDaySelection() {
+function setupDaySelection(storedDays) {
     const daysContainer = document.querySelector('.d-flex.flex-wrap.gap-1');
-    daysContainer.innerHTML = ''; // Clear existing buttons
+    daysContainer.innerHTML = ''; 
+
+    const selectedDayNames = storedDays ? getSelectedDays(storedDays) : [];
 
     weekDays.forEach(day => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = `btn btn-sm ${day.default ? 'btn-primary selected-day' : 'btn-outline-secondary'} day-btn`;
+        button.className = 'btn btn-sm day-btn';
+        
+        const isSelected = selectedDayNames.includes(day.name) || (!storedDays && day.default);
+        button.classList.add(isSelected ? 'btn-primary' : 'btn-outline-secondary');
+        if (isSelected) button.classList.add('selected-day');
+        
         button.setAttribute('data-day', day.name);
         button.textContent = day.name;
 
@@ -343,25 +338,25 @@ function setupDirectionSelectors() {
 }
 
 function setupSurahSelection() {
-    const toSurahSelect = document.getElementById('toSurah');
-    const toVerseSelect = document.getElementById('toVerse');
+    const fromSurahSelect = document.getElementById('fromSurah');
+    const fromVerseSelect = document.getElementById('fromVerse');
 
-    toSurahSelect.innerHTML = '';
+    fromSurahSelect.innerHTML = '';
     surahs.forEach(surah => {
         const option = document.createElement('option');
         option.value = surah.id;
         option.textContent = surah.name;
-        toSurahSelect.appendChild(option);
+        fromSurahSelect.appendChild(option);
     });
 
-    toSurahSelect.value = '114';
+    fromSurahSelect.value = '114';
 
     function populateVerseSelect(surahId) {
         const selectedSurah = surahs.find(s => s.id === parseInt(surahId));
         if (selectedSurah) {
             const verseSelect = document.createElement('select');
             verseSelect.className = 'form-select';
-            verseSelect.id = 'toVerse';
+            verseSelect.id = 'fromVerse';
 
             for (let i = 1; i <= selectedSurah.verses; i++) {
                 const option = document.createElement('option');
@@ -370,7 +365,7 @@ function setupSurahSelection() {
                 verseSelect.appendChild(option);
             }
 
-            const oldVerseSelect = document.getElementById('toVerse');
+            const oldVerseSelect = document.getElementById('fromVerse');
             oldVerseSelect.parentNode.replaceChild(verseSelect, oldVerseSelect);
             
             verseSelect.value = '1';
@@ -379,7 +374,7 @@ function setupSurahSelection() {
 
     populateVerseSelect('114');
 
-    toSurahSelect.addEventListener('change', function() {
+    fromSurahSelect.addEventListener('change', function() {
         populateVerseSelect(this.value);
     });
 }
@@ -413,34 +408,42 @@ async function fetchAndPopulateStudentData() {
 }
 
 function populateFormFields(data) {
-    document.getElementById('studentName').value = data.name;
-    document.getElementById('studentAge').value = data.age;
-    document.getElementById('studentGender').value = data.gender;
-    document.getElementById('nationality').value = data.nationality;
-    document.getElementById('parentPhone').value = data.parent_phone;
-    document.getElementById('studentPhone').value = data.student_phone;
-    document.getElementById('notes').value = data.notes;
-
-    if (data.plan_info) {
-        document.getElementById('memDirection').value = data.plan_info.memorization_direction;
-        document.getElementById('revDirection').value = data.plan_info.revision_direction;
-        document.getElementById('toSurah').value = data.plan_info.start_surah;
-        document.getElementById('toVerse').value = data.plan_info.no_verse_in_surah;
-        document.getElementById('newMemorizationAmount').value = data.plan_info.new_memorization_pages_amount;
-        document.getElementById('smallRevisionAmount').value = data.plan_info.small_revision_pages_amount;
-        document.getElementById('largeRevisionAmount').value = data.plan_info.large_revision_pages_amount;
-
-        const selectedDays = getSelectedDays(data.plan_info.memorization_days);
-        document.querySelectorAll('.day-btn').forEach(btn => {
-            if (selectedDays.includes(btn.dataset.day)) {
-                btn.classList.add('selected-day', 'btn-primary');
-                btn.classList.remove('btn-outline-secondary');
-            } else {
-                btn.classList.remove('selected-day', 'btn-primary');
-                btn.classList.add('btn-outline-secondary');
+    try {
+        if (!data) {
+            console.error('No data provided to populateFormFields');
+            window.location.href = '../HTML/home.html';
+            return;
+        }
+        const setElementValue = (id, value, property = 'value') => {
+            const element = document.getElementById(id);
+            if (element && value) {
+                element[property] = value;
             }
-        });
-        document.getElementById('selectedDays').value = data.plan_info.memorization_days;
+        };
+
+        setElementValue('headerStudentName', data.name, 'textContent');
+        setElementValue('studentName', data.name);
+        setElementValue('studentAge', data.age);
+        setElementValue('studentGender', data.gender);
+        setElementValue('nationality', data.nationality);
+        setElementValue('studentPhone', data.student_phone);
+        setElementValue('parentPhone', data.parent_phone);
+        setElementValue('notes', data.notes);
+
+        if (data.plan_info) {
+            setupDaySelection(data.plan_info.memorization_days);
+            setElementValue('memDirection', data.plan_info.memorization_direction);
+            setElementValue('fromSurah', data.plan_info.start_surah);
+            setElementValue('fromVerse', data.plan_info.no_verse_in_surah);
+            setElementValue('revDirection', data.plan_info.revision_direction);
+            setElementValue('newMemorizationAmount', data.plan_info.new_memorization_pages_amount);
+            setElementValue('smallRevisionAmount', data.plan_info.small_revision_pages_amount);
+            setElementValue('largeRevisionAmount', data.plan_info.large_revision_pages_amount);
+        }
+
+    } catch (error) {
+        console.error('Error populating form fields:', error);
+        alert('حدث خطأ أثناء تعبئة البيانات');
     }
 }
 
@@ -458,8 +461,8 @@ function setupFormSubmission() {
 
         const memorization_direction = document.getElementById('memDirection').value;
         const revision_direction = document.getElementById('revDirection').value;
-        const start_surah = parseInt(document.getElementById('toSurah').value);
-        const no_verse_in_surah = parseInt(document.getElementById('toVerse').value);
+        const start_surah = parseInt(document.getElementById('fromSurah').value);
+        const no_verse_in_surah = parseInt(document.getElementById('fromVerse').value);
         const new_memorization_amount = parseFloat(document.getElementById('newMemorizationAmount').value);
         const small_revision_amount = parseFloat(document.getElementById('smallRevisionAmount').value);
         const large_revision_amount = parseFloat(document.getElementById('largeRevisionAmount').value);

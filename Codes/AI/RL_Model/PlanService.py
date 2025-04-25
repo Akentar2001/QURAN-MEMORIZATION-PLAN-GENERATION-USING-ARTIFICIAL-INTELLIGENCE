@@ -1,12 +1,10 @@
-from database import Session
-from models import StudentsPlansInfo
+from app.Services.students_plans_info_services import StudentPlanInfoService
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 import os
 from LSTMPredictor import LSTMPredictor
 from QuranLearningEnv import QuranLearningEnv
 from datetime import datetime
-
 
 class PlanService:
     def __init__(self):
@@ -22,11 +20,9 @@ class PlanService:
 
     def generate_weekly_plans(self, student_id: int) -> dict:
         """Generate all weekly plans at once"""
-        db_session = Session()
+        
         try:
-            plan_info = db_session.query(StudentsPlansInfo)\
-                .filter(StudentsPlansInfo.student_id == student_id)\
-                .first()
+            plan_info = StudentPlanInfoService.get_planInfo(student_id=student_id)
 
             # Generate plans for all session types
             plans = {}
@@ -44,18 +40,18 @@ class PlanService:
                     'adjustment': f"{action[0]*100:.1f}%"
                 }
 
-            # Update all amounts at once
-            plan_info.new_memorization_amount = plans['New_Memorization']['final']
-            plan_info.small_revision_amount = plans['Minor_Revision']['final']
-            plan_info.large_revision_amount = plans['Major_Revision']['final']
-            db_session.commit()
+            new_amount = {
+                "new_memorization_letters_amount": plans["New_Memorization"]["final"],
+                "small_revision_letters_amount": plans["Minor_Revision"]["final"],
+                "large_revision_letters_amount": plans["Major_Revision"]["final"]
+                # Also update RL_last_action
+            }
+
+            StudentPlanInfoService.update_planInfo(student_id=student_id, plan_data=new_amount)
 
             return plans
         except Exception as e:
-            db_session.rollback()
             return {"error": str(e)}
-        finally:
-            db_session.close()
 
     def _session_type_name(self, session_type: int) -> str:
         return {1: 'New_Memorization', 2: 'Minor_Revision', 3: 'Major_Revision'}[session_type]

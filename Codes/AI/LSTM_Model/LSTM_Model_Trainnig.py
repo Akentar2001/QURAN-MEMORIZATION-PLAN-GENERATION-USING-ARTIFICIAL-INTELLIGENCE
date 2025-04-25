@@ -88,8 +88,17 @@ if len(X_major) > 0:
 # 4. Save Models & Scalers
 # ========================
 for pillar in models:
-    save_model(models[pillar], f'model_pillar_{pillar}.h5')
-    with open(f'scaler_pillar_{pillar}.pkl', 'wb') as f:
+    if pillar == 1: 
+        save_model(models[pillar], f'model_new.h5')
+        scaler_name = 'scaler_new.pkl'
+    elif pillar == 2: 
+        save_model(models[pillar], f'model_minor.h5')
+        scaler_name = 'scaler_minor.pkl'
+    elif pillar == 3: 
+        save_model(models[pillar], f'model_major.h5')
+        scaler_name = 'scaler_major.pkl'
+
+    with open(scaler_name, 'wb') as f:
         if pillar == 1:
             pickle.dump(scaler_new, f)
         elif pillar == 2:

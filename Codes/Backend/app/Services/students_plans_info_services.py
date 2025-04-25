@@ -7,6 +7,8 @@ from app.Services.recitation_session_Service import RecitationSessionService
 class StudentPlanInfoService:
     @staticmethod
     def create_planInfo(student_id, data):
+        # if not 'last_verse_recited_new_memorization' in data:
+        # if 'start_surah' in plan_data and 'no_verse_in_surah' in data:
         verse = verses.query.filter_by(surah_id=data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
         last_verse = StudentPlanInfoService.calculate_last_verse_recited(verse, data['memorization_direction'])
 
@@ -31,6 +33,7 @@ class StudentPlanInfoService:
             'last_verse_recited_large_revision',
             'overall_rating_new_memorization',
             'overall_rating_large_revision'
+            'rl_last_action'
         ]
         
         for field in optional_fields:
@@ -48,36 +51,31 @@ class StudentPlanInfoService:
 
     @staticmethod
     def get_planInfo(student_id):
-        return students_plans_info.query.get(student_id)
+        plan_info = students_plans_info.query.get(student_id)
+        if plan_info:
+            StudentPlanInfoService.calculate_start_surah_and_verse(plan_info)
+
+        return plan_info
 
     @staticmethod
     def update_planInfo(student_id, plan_data):
         plan_info = students_plans_info.query.get(student_id)
         
         if plan_info:
-            # Handle last verse updates
-            if 'last_verse_recited_new_memorization' in plan_data:
-                plan_info.last_verse_recited_new_memorization = plan_data['last_verse_recited_new_memorization']
-                # Recalculate memorized parts when new memorization verse changes
-                plan_info.memorized_parts = StudentPlanInfoService.calculate_memorized_parts(
-                    plan_info.last_verse_recited_new_memorization, 
-                    plan_info.memorization_direction
-                )
-            
-            if 'last_verse_recited_large_revision' in plan_data:
-                plan_info.last_verse_recited_large_revision = plan_data['last_verse_recited_large_revision']
-
-            if 'start_surah' in plan_data and 'no_verse_in_surah' in plan_data:
-                verse = verses.query.filter_by(surah_id=plan_data['start_surah'], order_in_surah=plan_data['no_verse_in_surah']).first()
-                last_verse = StudentPlanInfoService.calculate_last_verse_recited(verse, plan_data.get('memorization_direction', plan_info.memorization_direction))
-                plan_info.last_verse_recited_new_memorization = last_verse
-
             if 'memorization_direction' in plan_data:
                 plan_info.memorization_direction = plan_data['memorization_direction']
             if 'revision_direction' in plan_data:
                 plan_info.revision_direction = plan_data['revision_direction']
             if 'memorization_days' in plan_data:
                 plan_info.memorization_days = plan_data['memorization_days']
+            if 'last_verse_recited_new_memorization' in plan_data:
+                plan_info.last_verse_recited_new_memorization = plan_data['last_verse_recited_new_memorization']
+            if 'last_verse_recited_large_revision' in plan_data:
+                plan_info.last_verse_recited_large_revision = plan_data['last_verse_recited_large_revision']
+            if 'start_surah' in plan_data and 'no_verse_in_surah' in plan_data:
+                verse = verses.query.filter_by(surah_id=plan_data['start_surah'], order_in_surah=plan_data['no_verse_in_surah']).first()
+                last_verse = StudentPlanInfoService.calculate_last_verse_recited(verse, plan_data.get('memorization_direction', plan_info.memorization_direction))
+                plan_info.last_verse_recited_new_memorization = last_verse
 
             optional_fields = [
                 'new_memorization_letters_amount',
@@ -90,6 +88,7 @@ class StudentPlanInfoService:
                 'overall_rating',
                 'overall_rating_new_memorization',
                 'overall_rating_large_revision'
+                'rl_last_action'
             ]
             
             for field in optional_fields:
@@ -141,6 +140,9 @@ class StudentPlanInfoService:
         if memorized_parts < 0:
             memorized_parts = 0.05
 
+        if memorized_parts > 30:
+            memorized_parts = 30
+
         return memorized_parts
 
     @staticmethod
@@ -157,22 +159,18 @@ class StudentPlanInfoService:
     @staticmethod
     def update_student_progress(student_id):
         try:
-            # Get all accepted memorization sessions
             sessions = RecitationSessionService.get_student_sessions(student_id, 'New_Memorization')
             accepted_sessions = [s[0] for s in sessions if s[0].is_accepted]
             
             if not accepted_sessions:
                 return
             
-            # Calculate total memorized parts
             total_pages = sum(session.pages_count or 0 for session in accepted_sessions)
-            memorized_parts = total_pages / 20  # Assuming 20 pages per part
+            memorized_parts = total_pages / 20  
             
-            # Calculate overall rating
             rated_sessions = [s for s in accepted_sessions if s.rating is not None]
             avg_rating = sum(s.rating for s in rated_sessions) / len(rated_sessions) if rated_sessions else None
             
-            # Update student's plan info
             plan_info = students_plans_info.query.get(student_id)
             if plan_info:
                 plan_info.memorized_parts = plan_info.memorized_parts + memorized_parts
@@ -183,3 +181,32 @@ class StudentPlanInfoService:
         except Exception as e:
             db.session.rollback()
             raise Exception(f"Error updating student progress: {str(e)}")
+
+    @staticmethod
+    def calculate_start_surah_and_verse(plan_info):
+        verse = verses.query.get(plan_info.last_verse_recited_new_memorization)
+
+        if plan_info.memorization_direction:
+            if verse:
+                next_verse = verses.query.get(plan_info.last_verse_recited_new_memorization + 1)
+                if next_verse:
+                    plan_info.start_surah = next_verse.surah_id
+                    plan_info.no_verse_in_surah = next_verse.order_in_surah
+                else:
+                    plan_info.start_surah = 1
+                    plan_info.no_verse_in_surah = 7
+            else:
+                plan_info.start_surah = 1
+                plan_info.no_verse_in_surah = 1
+        else:
+            if verse:
+                next_verse = verses.query.filter_by(reverse_index=verse.reverse_index + 1).first()
+                if next_verse:
+                    plan_info.start_surah = next_verse.surah_id
+                    plan_info.no_verse_in_surah = next_verse.order_in_surah
+                else:
+                    plan_info.start_surah = 114
+                    plan_info.no_verse_in_surah = 6
+            else:
+                plan_info.start_surah = 114
+                plan_info.no_verse_in_surah = 1

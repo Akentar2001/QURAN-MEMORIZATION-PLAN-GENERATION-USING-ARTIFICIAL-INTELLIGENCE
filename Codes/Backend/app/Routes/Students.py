@@ -115,10 +115,18 @@ def get_student(student_id):
             'notes': student.notes,
             'plan_info': {
                 'memorized_parts': plan_info.memorized_parts,
+                'overall_rating': plan_info.overall_rating,
+                'memorization_days': plan_info.memorization_days,
+                'new_memorization_pages_amount': plan_info.new_memorization_pages_amount,
+                'large_revision_pages_amount': plan_info.large_revision_pages_amount,
+                'small_revision_pages_amount': plan_info.small_revision_pages_amount,
                 'memorization_direction': plan_info.memorization_direction,
                 'revision_direction': plan_info.revision_direction,
-                'memorization_days': plan_info.memorization_days,
-                'overall_rating': plan_info.overall_rating,
+                'last_verse_recited_new_memorization': plan_info.last_verse_recited_new_memorization,
+                'last_verse_recited_large_revision': plan_info.last_verse_recited_large_revision,
+                'start_surah': plan_info.start_surah,
+                'no_verse_in_surah': plan_info.no_verse_in_surah,
+                'created_at': plan_info.created_at.isoformat() if plan_info.created_at else None,
                 'updated_at': plan_info.updated_at.isoformat() if plan_info.updated_at else None
             } if plan_info else None
         }
@@ -159,15 +167,17 @@ def delete_student(student_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @students_bp.route('/evaluations', methods=['GET'])
 def get_all_students_evaluations():
     try:
         students_list = StudentService.get_all_students()
         today = datetime.now().date()
+        fake_date = "2025-04-14"
         response = []
 
         for student in students_list:
-            sessions = RecitationSessionService.get_student_sessions_by_date(student.student_id, today)
+            sessions = RecitationSessionService.get_student_sessions(student_id=student.student_id, date_only=fake_date if fake_date else today)
             
             if not sessions:
                 continue

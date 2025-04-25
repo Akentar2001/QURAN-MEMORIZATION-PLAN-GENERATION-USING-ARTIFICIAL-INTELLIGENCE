@@ -73,7 +73,6 @@ class recitation_session(db.Model):
     is_accepted = db.Column(db.Boolean, nullable=True)
     pages_count = db.Column(db.Float, nullable=True)
     letters_count = db.Column(db.Integer, nullable=False)
-    rl_reward_signal = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
@@ -105,3 +104,5 @@ class students_plans_info(db.Model):
 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    rl_last_action = db.Column(db.Float, nullable=True)

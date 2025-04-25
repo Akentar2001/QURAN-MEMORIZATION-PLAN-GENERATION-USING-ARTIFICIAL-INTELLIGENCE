@@ -46,7 +46,6 @@ def get_session(session_id):
             'is_accepted': session_data[0].is_accepted,
             'pages_count': session_data[0].pages_count,
             'letters_count': session_data[0].letters_count,
-            'rl_reward_signal': session_data[0].rl_reward_signal
         }), 200
 
     except Exception as e:
@@ -60,7 +59,7 @@ def get_student_sessions(student_id):
         if not student:
             return jsonify({'error': 'Student not found'}), 404
 
-        sessions = RecitationSessionService.get_student_sessions(student_id)
+        sessions = RecitationSessionService.get_student_sessions(student_id=student_id)
 
         if not sessions:
             return jsonify({'message': 'No sessions found for this student'})
@@ -84,7 +83,6 @@ def get_student_sessions(student_id):
             'is_accepted': session[0].is_accepted,
             'pages_count': session[0].pages_count,
             'letters_count': session[0].letters_count,
-            'rl_reward_signal': session[0].rl_reward_signal
         } for session in sessions]), 200
 
     except Exception as e:

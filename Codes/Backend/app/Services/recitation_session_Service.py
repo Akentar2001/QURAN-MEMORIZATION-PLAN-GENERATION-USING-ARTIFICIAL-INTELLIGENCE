@@ -1,6 +1,7 @@
 from datetime import date
 from app.models import db, recitation_session, verses, surahs
 from sqlalchemy.orm import aliased
+from sqlalchemy import func, cast, Date
 
 class RecitationSessionService:
     @staticmethod
@@ -18,8 +19,6 @@ class RecitationSessionService:
                 new_session.is_accepted = data['is_accepted']
             if 'rating' in data:
                 new_session.rating = data['rating']
-            if 'rl_reward_signal' in data:
-                new_session.rl_reward_signal = data['rl_reward_signal']
             if 'pages_count' in data:
                 new_session.pages_count = data['pages_count']
             
@@ -38,7 +37,7 @@ class RecitationSessionService:
         return recitation_session.query.get_or_404(session_id)
 
     @staticmethod
-    def get_student_sessions(student_id, recitation_type=None):
+    def get_student_sessions(student_id, recitation_type=None, limit_count=None, start_date=None, end_date=None, date_only=None):
         StartVerse = aliased(verses)
         EndVerse = aliased(verses)
         StartSurah = aliased(surahs)
@@ -46,11 +45,19 @@ class RecitationSessionService:
 
         query = (recitation_session.query
             .filter_by(student_id=student_id))
-            
+
         if recitation_type:
             query = query.filter_by(type=recitation_type)
-            
-        return (query
+
+        if date_only:
+            query = query.filter(cast(recitation_session.date, Date) == date_only)
+        else:
+            if start_date:
+                query = query.filter(recitation_session.date >= start_date)
+            if end_date:
+                query = query.filter(recitation_session.date <= end_date)
+
+        query = (query
             .join(StartVerse, StartVerse.verse_id == recitation_session.start_verse_id)
             .join(StartSurah, StartSurah.surah_id == StartVerse.surah_id)
             .join(EndVerse, EndVerse.verse_id == recitation_session.end_verse_id)
@@ -63,29 +70,12 @@ class RecitationSessionService:
                 EndSurah.name.label('end_surah_name')
             )
             .order_by(recitation_session.date.desc())
-            .all())
+        )
 
-    @staticmethod
-    def get_student_sessions_by_date(student_id, date):
-        StartVerse = aliased(verses)
-        EndVerse = aliased(verses)
-        StartSurah = aliased(surahs)
-        EndSurah = aliased(surahs)
+        if limit_count:
+            query = query.limit(limit_count)
 
-        return (recitation_session.query
-            .filter_by(student_id=student_id, date=date)
-            .join(StartVerse, StartVerse.verse_id == recitation_session.start_verse_id)
-            .join(StartSurah, StartSurah.surah_id == StartVerse.surah_id)
-            .join(EndVerse, EndVerse.verse_id == recitation_session.end_verse_id)
-            .join(EndSurah, EndSurah.surah_id == EndVerse.surah_id)
-            .add_columns(
-                recitation_session,
-                StartVerse.order_in_surah.label('start_verse_order'),
-                StartSurah.name.label('start_surah_name'),
-                EndVerse.order_in_surah.label('end_verse_order'),
-                EndSurah.name.label('end_surah_name')
-            )
-            .all())
+        return query.all()
 
     @staticmethod
     def update_session(session_id, data):
@@ -96,8 +86,6 @@ class RecitationSessionService:
                 new_session.is_accepted = data['is_accepted']
             if 'rating' in data:
                 new_session.rating = data['rating']
-            if 'rl_reward_signal' in data:
-                new_session.rl_reward_signal = data['rl_reward_signal']
             if 'pages_count' in data:
                 new_session.pages_count = data['pages_count']
                 
@@ -119,10 +107,21 @@ class RecitationSessionService:
             db.session.rollback()
             raise Exception(f"Error deleting session: {str(e)}")
 
+
     @staticmethod
-    def get_student_session_by_date_and_type(student_id, date, session_type):
-        return recitation_session.query.filter_by(
-            student_id=student_id,
-            date=date,
-            type=session_type
-        ).first()
+    def get_student_sessions_count(student_id, recitation_type=None, start_date=None, end_date=None, date_only=None):
+        query = db.session.query(func.count(recitation_session.session_id))\
+            .filter_by(student_id=student_id)
+
+        if recitation_type:
+            query = query.filter_by(type=recitation_type)
+
+        if date_only:
+            query = query.filter(cast(recitation_session.date, Date) == date_only)
+        else:
+            if start_date:
+                query = query.filter(recitation_session.date >= start_date)
+            if end_date:
+                query = query.filter(recitation_session.date <= end_date)
+
+        return query.scalar()
