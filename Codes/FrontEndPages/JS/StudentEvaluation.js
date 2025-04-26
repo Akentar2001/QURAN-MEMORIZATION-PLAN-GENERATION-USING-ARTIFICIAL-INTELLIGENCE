@@ -118,6 +118,7 @@ const surahs = [
 
 function createStudentCard(student) {
     const cardId = `card-${student.id}`;
+    const sectionOrder = ['memorization', 'minor_review', 'major_review'];
 
     return `
         <div class="col-12 col-md-6 col-lg-4">
@@ -136,7 +137,10 @@ function createStudentCard(student) {
                     </div>
                 </div>
                 <div class="card-body py-2 ${student.attendance_status === 'absent' ? 'disabled' : ''}">
-                    ${Object.entries(student.sections).map(([key, value]) => createSection(key, value, student.id)).join('')}
+                    ${sectionOrder
+                        .map(sectionKey => createSection(sectionKey, student.sections[sectionKey], student.id))
+                        .filter(section => section !== '')
+                        .join('')}
                     <button class="btn btn-primary btn-sm w-100 mt-2" 
                             id="save-${cardId}" 
                             onclick="saveEvaluation(${student.id})" 

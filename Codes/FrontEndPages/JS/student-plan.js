@@ -48,8 +48,8 @@ class StudentPlanManager {
         
         if (studentInfo) {
             document.getElementById('studentName').textContent = studentInfo.name;
-            document.getElementById('studentInfo').textContent = 
-            `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.plan_info?.memorized_parts || 0}`;
+            // document.getElementById('studentInfo').textContent = 
+            // `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.plan_info?.memorized_parts || 0}`;
         } else {
             document.getElementById('studentName').textContent = 'اسم الطالب';
             this.showNotification('حدث خطأ أثناء تحميل بيانات الطالب', 'danger');

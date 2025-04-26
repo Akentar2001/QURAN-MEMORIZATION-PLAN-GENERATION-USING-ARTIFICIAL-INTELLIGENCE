@@ -184,3 +184,81 @@ body {
         margin: 1cm;
     }
 }
+
+.student-header {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 0.6rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
+}
+
+.student-avatar {
+    font-size: 3.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-right: 1rem;
+}
+
+.student-name {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 500;
+}
+
+.student-details {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.quick-stats .stat-box {
+    padding: 0 1.5rem;
+    position: relative;
+}
+
+.quick-stats .stat-box:not(:first-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 90%;
+    width: 1.2px;
+    background-color: white;
+}
+
+.quick-stats .stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.quick-stats .stat-label {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+@media (max-width: 992px) {
+    .quick-stats {
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .quick-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .quick-stats .stat-box {
+        border-left: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 0;
+    }
+    
+    .quick-stats .stat-box:last-child {
+        border-bottom: none;
+    }
+}

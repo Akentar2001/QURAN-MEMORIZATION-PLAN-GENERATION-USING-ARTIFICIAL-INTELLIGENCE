@@ -4,10 +4,14 @@
         const navHTML = `
             <nav class="navbar navbar-expand-lg navbar-light">
                 <div class="container">
-                    <a class="navbar-brand" href="../HTML/home.html">
-                        <i class="fas fa-book-quran ms-2"></i>
-                        نظام متابعة حفظ القرآن
+                    <a class="navbar-brand d-flex align-items-center" href="../HTML/home.html" style="gap: 8px;"> 
+                        <img src="../images/logo.png" alt="Logo" style="width: 60px; height: 60px;">
+                        <div class="d-flex flex-column justify-content-center">
+                            <span class="fw-bold" style="font-size: 1.8rem; color: #0d6efc">متقن</span>
+                            <span class="text-muted" style="font-size: 1rem;">لإنشاء خطط لحفظ القرآن الكريم</span>
+                        </div>
                     </a>
+
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span class="navbar-toggler-icon"></span>
                     </button>

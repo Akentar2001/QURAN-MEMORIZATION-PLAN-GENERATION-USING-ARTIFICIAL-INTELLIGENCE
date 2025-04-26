@@ -95,6 +95,7 @@ class StudentPlanInfoService:
                 if field in plan_data:
                     setattr(plan_info, field, plan_data[field])
 
+            # plan_info.overall_rating = 1.5
             plan_info.memorized_parts = StudentPlanInfoService.calculate_memorized_parts(
                 plan_info.last_verse_recited_new_memorization, 
                 plan_info.memorization_direction

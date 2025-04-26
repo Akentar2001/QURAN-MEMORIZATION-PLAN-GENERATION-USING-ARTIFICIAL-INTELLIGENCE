@@ -15,11 +15,45 @@
 <body>
     <div id="nav-placeholder"></div>
     <div class="container py-4 print-section">
-        <div class="student-info-card">
-            <h3 id="studentName"></h3>
-            <p id="studentInfo" class="mb-0"></p>
-        </div>
+        <div class="student-header">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="student-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="student-name mb-2" id="studentName"></h2>
+                            <div class="student-details">
+                                <span class="badge bg-light text-primary me-2" id="studentId"></span>
+                                <span class="text-light" id="studentInfo"></span>
+                            </div>
+                        </div>
+                        <div class="quick-stats d-flex">
+                            <div class="stat-box text-center">
+                                <span class="stat-label">التقييم العام</span>
+                                <span class="stat-value">ممتاز</span>
+                            </div>
+                            <div class="stat-box text-center">
+                                <span class="stat-label">الأجزاء المحفوظة</span>
+                                <span class="stat-value">19</span>
 
+                            </div>
+                            <!-- <div class="stat-box text-center">
+                                <span class="stat-value">380</span>
+                                <span class="stat-label">صفحة</span>
+                            </div> -->
+                            <div class="stat-box text-center">
+                                <span class="stat-label">نسبة الإنجاز</span>
+                                <span class="stat-value">60%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="main-container">
             <div class="container-header">
                 <h3 class="text-primary m-0"><i class="fas fa-calendar-alt ms-2"></i>خطة الأسبوع</h3>
