@@ -63,7 +63,7 @@ class StudentPlanManager {
         
         if (studentId) {
             try {
-                const response = await fetch(`http://localhost:5000/api/recitation_session/sessions/student/${studentId}`, {
+                const response = await fetch(`http://localhost:5000/api/recitation_session/getSessions/student/${studentId}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
