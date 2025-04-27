@@ -13,7 +13,6 @@ class PlanGenerationService:
     def generate_plan(self, student_id):
         try:
             plan_data = self._initialize_plan_data(student_id)
-            print(len(plan_data['days']))
             for day in plan_data['days']:
                 self._generate_daily_plan(
                     student_id=student_id,

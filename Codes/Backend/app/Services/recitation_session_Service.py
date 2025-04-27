@@ -38,7 +38,7 @@ class RecitationSessionService:
         return recitation_session.query.get_or_404(session_id)
 
     @staticmethod
-    def get_student_sessions(student_id, recitation_type=None, limit_count=None, start_date=None, end_date=None, date_only=None, is_accepted=None, is_accepted_not_none=None, is_rating_not_none=None):
+    def get_student_sessions(student_id, recitation_type=None, limit_count=None, start_date=None, end_date=None, date_only=None, is_accepted=None, is_accepted_not_none=None, is_rating_not_none=None, after_session=None, ascending=False):
         StartVerse = aliased(verses)
         EndVerse = aliased(verses)
         StartSurah = aliased(surahs)
@@ -68,6 +68,9 @@ class RecitationSessionService:
             if end_date:
                 query = query.filter(recitation_session.date <= end_date)
 
+        if after_session:
+            query = query.filter(recitation_session.session_id > after_session)
+
         query = (query
             .join(StartVerse, StartVerse.verse_id == recitation_session.start_verse_id)
             .join(StartSurah, StartSurah.surah_id == StartVerse.surah_id)
@@ -80,7 +83,7 @@ class RecitationSessionService:
                 EndVerse.order_in_surah.label('end_verse_order'),
                 EndSurah.name.label('end_surah_name')
             )
-            .order_by(recitation_session.date.desc())
+            .order_by(recitation_session.session_id if ascending else recitation_session.session_id.desc())
         )
 
         if limit_count:
@@ -149,105 +152,3 @@ class RecitationSessionService:
                 query = query.filter(recitation_session.date <= end_date)
 
         return query.scalar()
-    @staticmethod
-    def _get_verse_id(surah_id, verse_order):
-        verse = verses.query.filter_by(surah_id=surah_id, order_in_surah=verse_order).first()
-        return verse.verse_id if verse else None
-
-    @staticmethod
-    def _update_section_rating(student_plan, session, section_data, rating_fields):
-        old_rate = session.rating or 0
-        new_rate = section_data['grade'] or 0
-        
-        section_sessions_count = RecitationSessionService.get_student_sessions_count(
-            student_id=student_plan.student_id,
-            recitation_type=session.type,
-            is_rating_not_none=True
-        )
-        
-        current_rating = getattr(student_plan, rating_fields[session.type]) or 0
-        sum_old_section_rating = (current_rating * section_sessions_count) - old_rate + new_rate
-        
-        if not session.rating:
-            section_sessions_count += 1
-            
-        return {
-            'new_rate': new_rate,
-            'old_rate': old_rate,
-            'rating_value': sum_old_section_rating / (section_sessions_count * 1.0)
-        }
-
-    @staticmethod
-    def _prepare_session_update(section_data):
-        update_data = {
-            'is_accepted': section_data['is_accepted'],
-            'rating': section_data['grade']
-        }
-        
-        from_verse_id = RecitationSessionService._get_verse_id(
-            section_data['fromSurah'],
-            section_data['fromVerse']
-        )
-        to_verse_id = RecitationSessionService._get_verse_id(
-            section_data['toSurah'],
-            section_data['toVerse']
-        )
-        
-        if from_verse_id:
-            update_data['fromVerse'] = from_verse_id
-        if to_verse_id:
-            update_data['toVerse'] = to_verse_id
-            
-        return update_data
-
-    @staticmethod
-    def process_sessions_and_eval(student_id, data):
-        try:            
-            student_plan = StudentPlanInfoService.get_planInfo(student_id)
-            if not student_plan:
-                raise Exception('Student plan not found')
-
-            rating_fields = {
-                'New_Memorization': 'overall_rating_new_memorization',
-                'Major_Revision': 'overall_rating_large_revision',
-                'Minor_Revision': 'overall_rating_small_revision'
-            }
-
-            # Initialize overall rating calculation
-            sessions_count = RecitationSessionService.get_student_sessions_count(student_id, is_rating_not_none=True)
-            sum_old_overall_rating = (student_plan.overall_rating or 0) * sessions_count
-            plan_update_data = {}
-
-            # Process each section
-            for section_type, section_data in data['sections'].items():
-                session = RecitationSessionService.get_session(section_data['session_id'])
-                
-                # Update section rating
-                rating_update = RecitationSessionService._update_section_rating(
-                    student_plan, session, section_data, rating_fields
-                )
-                sum_old_overall_rating += rating_update['new_rate'] - rating_update['old_rate']
-                plan_update_data[rating_fields[session.type]] = rating_update['rating_value']
-
-                # Update session data
-                update_data = RecitationSessionService._prepare_session_update(section_data)
-                RecitationSessionService.update_session(session.session_id, update_data)
-
-                # Update last verse if accepted
-                if section_data['is_accepted']:
-                    if session.type == 'New_Memorization':
-                        plan_update_data['last_verse_recited_new_memorization'] = session.end_verse_id
-                    elif session.type == 'Major_Revision':
-                        plan_update_data['last_verse_recited_large_revision'] = session.end_verse_id
-
-            # Update overall rating
-            new_sessions_count = RecitationSessionService.get_student_sessions_count(student_id, is_rating_not_none=True)
-            plan_update_data['overall_rating'] = sum_old_overall_rating / new_sessions_count
-
-            # Save updates
-            if plan_update_data:
-                StudentPlanInfoService.update_planInfo(student_id, plan_update_data)
-            
-            return True
-        except Exception as e:
-            raise e
