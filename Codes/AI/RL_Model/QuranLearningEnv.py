@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from Backend.app.Services.recitation_session_Service import RecitationSessionService
 from Backend.app.Services.students_plans_info_services import StudentPlanInfoService
 import numpy as np
@@ -5,7 +6,6 @@ from sqlalchemy import func
 import gym
 from gym import spaces
 from LSTMPredictor import LSTMPredictor
-
 
 class QuranLearningEnv(gym.Env):
     def __init__(self, student_id: int, session_type: int, history_window: int = 7):
@@ -120,23 +120,55 @@ class QuranLearningEnv(gym.Env):
         ], dtype=np.float32)
 
     def step(self, action):
-        plan_info = StudentPlanInfoService.get_planInfo(student_id=student_id)
-
-        lstm_base = self.lstm_predictor.predict(self.student_id, self.session_type)
-        current_amount = getattr(plan_info, self._amount_column())
-        new_amount = max(current_amount * (1 + float(action[0])), 10.0)
+        """Execute one time step within the environment"""
+        # Get current state
+        current_state = self._get_state()
         
-        # Apply update 
-        setattr(plan_info, self._amount_column(), new_amount)
-
-        session = SessionService.get_student_sessions(
+        # Get LSTM prediction as base amount
+        lstm_base = self.lstm_predictor.predict(self.student_id, self.session_type)
+        
+        # Calculate new amount based on action
+        # Action is a percentage adjustment to the LSTM prediction
+        new_amount = lstm_base * (1 + float(action[0]))
+        
+        # Get the latest session for this type to calculate reward
+        latest_session = RecitationSessionService.get_student_sessions(
             student_id=self.student_id,
-            recitation_type=self.lstm_predictor._type_name(self.session_type),
+            recitation_type=self._session_type_name(self.session_type),
             limit_count=1
         )
-
-        reward = self._calculate_reward(session, new_amount, lstm_base) if session else 0.0
-        return self._get_state(), reward, False, {}
+        latest_session = latest_session[0] if latest_session else None
+        
+        # Calculate reward based on session outcome
+        reward = 0.0
+        if latest_session:
+            reward = self._calculate_reward(latest_session, new_amount, lstm_base)
+            
+            # 1. Save current values from DB
+            current_plan = StudentPlanInfoService.get_planInfo(self.student_id)
+            original_amount = getattr(current_plan, self._amount_column())
+            
+            # 2. Update with new values temporarily
+            plan_update = {
+                self._amount_column(): new_amount,
+            }
+            StudentPlanInfoService.update_planInfo(self.student_id, plan_update)
+            
+            # 3. Get next state
+            next_state = self._get_state()
+            
+            # 4. Restore original values
+            restore_update = {
+                self._amount_column(): original_amount,
+            }
+            StudentPlanInfoService.update_planInfo(self.student_id, restore_update)
+        else:
+            next_state = current_state
+        
+        # Environment never terminates
+        done = False
+        
+        return next_state, reward, done, {}
 
     def _calculate_reward(self, session, assigned_amount: float, lstm_base: float) -> float:
         """Enhanced reward function with ambition incentives"""
