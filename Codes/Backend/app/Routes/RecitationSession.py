@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.Services.recitation_session_Service import RecitationSessionService
 from app.Services.Students_Services import StudentService
 from app.Services.students_plans_info_services import StudentPlanInfoService
+from app.Services.manage_recitation_evaluation_service import ManageRecitationEvaluationService
 from datetime import datetime
 
 recitation_session_bp = Blueprint('recitation_session', __name__)
@@ -119,7 +120,7 @@ def get_all_students_sessions():
     try:
         students_list = StudentService.get_all_students()
         today = datetime.now().date()
-        fake_date = "2025-04-16"
+        fake_date = "2025-04-14"
         date = fake_date if fake_date else today
 
         response = []
@@ -168,7 +169,7 @@ def get_all_students_sessions():
 def save_student_Sessions_evaluation(student_id):
     try:
         data = request.get_json()
-        RecitationSessionService.process_sessions_and_eval(student_id, data)
+        ManageRecitationEvaluationService.evaluate_sessions(student_id, data)
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

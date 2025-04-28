@@ -150,28 +150,13 @@ class StudentPlanManager {
                 const daySession = this.sessions[date];
                 
                 html += `
-                <tr>
+                <tr ${this._getTextColorStyle(daySession)}>
                     <td>${index + 1}</td>
                     <td class="day-col">${dayName}</td>
                     <td class="date-col">${dateStr}</td>
-                    ${daySession?.memorization ? `
-                        <td class="memorization-cell">${daySession.memorization.start_verse?.surah_name || '-'}</td>
-                        <td class="memorization-cell">${daySession.memorization.start_verse?.order_in_surah || '-'}</td>
-                        <td class="memorization-cell">${daySession.memorization.end_verse?.surah_name || '-'}</td>
-                        <td class="memorization-cell">${daySession.memorization.end_verse?.order_in_surah || '-'}</td>
-                    ` : '<td colspan="4" class="memorization-cell text-center">لا يوجد حفظ جديد للطالب</td>'}
-                    ${daySession.minorRevision ? `
-                        <td class="minor-revision-cell">${daySession.minorRevision.start_verse.surah_name}</td>
-                        <td class="minor-revision-cell">${daySession.minorRevision.start_verse.order_in_surah}</td>
-                        <td class="minor-revision-cell">${daySession.minorRevision.end_verse.surah_name}</td>
-                        <td class="minor-revision-cell">${daySession.minorRevision.end_verse.order_in_surah}</td>
-                    ` : '<td colspan="4" class="minor-revision-cell text-center">لا يوجد مراجعة صغرى للطالب</td>'}
-                    ${daySession.majorRevision ? `
-                        <td class="major-revision-cell">${daySession.majorRevision.start_verse.surah_name}</td>
-                        <td class="major-revision-cell">${daySession.majorRevision.start_verse.order_in_surah}</td>
-                        <td class="major-revision-cell">${daySession.majorRevision.end_verse.surah_name}</td>
-                        <td class="major-revision-cell">${daySession.majorRevision.end_verse.order_in_surah}</td>
-                    ` : '<td colspan="4" class="major-revision-cell text-center">لا يوجد مراجعة كبرى للطالب</td>'}
+                    ${daySession?.memorization ? this._getSessionCells(daySession.memorization, 'memorization-cell') : '<td colspan="4" class="memorization-cell text-center">لا يوجد حفظ جديد للطالب</td>'}
+                    ${daySession?.minorRevision ? this._getSessionCells(daySession.minorRevision, 'minor-revision-cell') : '<td colspan="4" class="minor-revision-cell text-center">لا يوجد مراجعة صغرى للطالب</td>'}
+                    ${daySession?.majorRevision ? this._getSessionCells(daySession.majorRevision, 'major-revision-cell') : '<td colspan="4" class="major-revision-cell text-center">لا يوجد مراجعة كبرى للطالب</td>'}
                 </tr>`;
             });
         }
@@ -179,6 +164,22 @@ class StudentPlanManager {
         this.weekPlanBody.innerHTML = html;
     }
     
+    _getTextColorStyle(session) {
+        if (session?.is_accepted === true) return 'color: #006400; font-weight: bold;';
+        if (session?.is_accepted === false) return 'color: red; font-weight: bold;';
+        return '';
+    }
+
+    _getSessionCells(session, cellClass) {
+        const style = this._getTextColorStyle(session);
+        return `
+            <td class="${cellClass}" style="${style}">${session.start_verse?.surah_name || '-'}</td>
+            <td class="${cellClass}" style="${style}">${session.start_verse?.order_in_surah || '-'}</td>
+            <td class="${cellClass}" style="${style}">${session.end_verse?.surah_name || '-'}</td>
+            <td class="${cellClass}" style="${style}">${session.end_verse?.order_in_surah || '-'}</td>
+        `;
+    }
+
     formatDate(date) {
         return `${date.getDate()} ${this.arabicMonths[date.getMonth()]} ${date.getFullYear()}`;
     }
