@@ -1,3 +1,8 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 from datetime import datetime, timedelta
 from Backend.app.Services.recitation_session_Service import RecitationSessionService
 from Backend.app.Services.students_plans_info_services import StudentPlanInfoService

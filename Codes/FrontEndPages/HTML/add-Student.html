@@ -124,6 +124,17 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-md-8 mb-2">
+                                <label class="form-label">ابتداء المراجعة من:</label>
+                                <div class="input-group gap-2">
+                                    <select class="form-select" id="revFromSurah">
+                                        <option value="" selected disabled>اختر السورة</option>
+                                    </select>
+                                    <select class="form-select" id="revFromVerse">
+                                        <option value="" selected disabled>اختر الآية</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -196,7 +207,7 @@
                     aria-label="Close"></button>
             </div>
         </div>
-        
+
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert"
             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">

@@ -1,4 +1,9 @@
-from app.Services.recitation_session_Service import RecitationSessionService
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from Backend.app.Services.recitation_session_Service import RecitationSessionService
 
 import numpy as np
 import pandas as pd

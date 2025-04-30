@@ -1,3 +1,15 @@
+import sys
+import os
+
+# Add both project root and Backend directory to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+backend_path = os.path.join(project_root, 'Backend')
+sys.path.append(project_root)
+sys.path.append(backend_path)
+
+# Set the PYTHONPATH environment variable
+os.environ['PYTHONPATH'] = f"{project_root};{backend_path}"
+
 from PlanService import PlanService
 
 def test_weekly_plan():
@@ -5,7 +17,7 @@ def test_weekly_plan():
     plan_service = PlanService()
     
     # Call generate_weekly_plans with a student ID
-    student_id = 567  # Replace with actual student ID
+    student_id = 578  # Replace with actual student ID
     weekly_plans = plan_service.generate_weekly_plans(student_id)
     
     # Check the results

@@ -345,26 +345,88 @@ function setupDirectionSelectors() {
 function setupSurahSelection() {
     const toSurahSelect = document.getElementById('toSurah');
     const toVerseSelect = document.getElementById('toVerse');
+    const revFromSurahSelect = document.getElementById('revFromSurah');
+    const revFromVerseSelect = document.getElementById('revFromVerse');
 
-    // Clear and populate surah select
-    toSurahSelect.innerHTML = '';
-    surahs.forEach(surah => {
-        const option = document.createElement('option');
-        option.value = surah.id;
-        option.textContent = surah.name;
-        toSurahSelect.appendChild(option);
+    function makeSelectSearchable(select) {
+        select.setAttribute('autocomplete', 'off');
+
+        let searchText = '';
+        let searchTimeout;
+
+        select.addEventListener('keydown', function (e) {
+            if (e.key === 'Tab' || e.key === 'Enter') return;
+            e.preventDefault();
+
+            if (e.key === 'Backspace') {
+                searchText = searchText.slice(0, -1);
+            } else if (e.key.length === 1) {
+                searchText += e.key.toLowerCase();
+            }
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchText = '';
+            }, 1500);
+
+            const options = Array.from(this.options).slice(1); // Skip the first disabled option
+            const matchingOptions = options.filter(option =>
+                option.text.toLowerCase().includes(searchText)
+            );
+
+            // Hide non-matching options and show matching ones
+            options.forEach(option => {
+                option.style.display = matchingOptions.includes(option) ? '' : 'none';
+            });
+
+            // Select the first matching option if exists
+            if (matchingOptions.length > 0) {
+                this.value = matchingOptions[0].value;
+                if (this.id === 'toSurah' || this.id === 'revFromSurah') {
+                    populateVerseSelect(this.value, this.id === 'toSurah' ? 'toVerse' : 'revFromVerse');
+                }
+            }
+        });
+
+        // Reset display of all options when dropdown is closed
+        select.addEventListener('blur', function () {
+            Array.from(this.options).forEach(option => {
+                option.style.display = '';
+            });
+            searchText = '';
+        });
+    }
+
+    // Clear and populate surah selects
+    [toSurahSelect, revFromSurahSelect].forEach(select => {
+        select.innerHTML = '<option value="" selected disabled>اختر السورة</option>';
+        surahs.forEach(surah => {
+            const option = document.createElement('option');
+            option.value = surah.id;
+            option.textContent = surah.name;
+            select.appendChild(option);
+        });
+        makeSelectSearchable(select);
     });
 
     // Set default to Surah An-Nas (114)
     toSurahSelect.value = '114';
+    revFromSurahSelect.value = '114';
 
     // Function to populate verse select based on selected surah
-    function populateVerseSelect(surahId) {
+    function populateVerseSelect(surahId, verseSelectId) {
         const selectedSurah = surahs.find(s => s.id === parseInt(surahId));
         if (selectedSurah) {
             const verseSelect = document.createElement('select');
             verseSelect.className = 'form-select';
-            verseSelect.id = 'toVerse';
+            verseSelect.id = verseSelectId;
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            defaultOption.textContent = 'اختر الآية';
+            verseSelect.appendChild(defaultOption);
 
             for (let i = 1; i <= selectedSurah.verses; i++) {
                 const option = document.createElement('option');
@@ -374,20 +436,26 @@ function setupSurahSelection() {
             }
 
             // Replace old verse select with new one
-            const oldVerseSelect = document.getElementById('toVerse');
+            const oldVerseSelect = document.getElementById(verseSelectId);
             oldVerseSelect.parentNode.replaceChild(verseSelect, oldVerseSelect);
-            
+            makeSelectSearchable(verseSelect);
+
             // Set to verse 1 by default
             verseSelect.value = '1';
         }
     }
 
-    // Initialize verse select with An-Nas verses
-    populateVerseSelect('114');
+    // Initialize verse selects
+    populateVerseSelect('114', 'toVerse');
+    populateVerseSelect('114', 'revFromVerse');
 
     // Handle surah changes
-    toSurahSelect.addEventListener('change', function() {
-        populateVerseSelect(this.value);
+    toSurahSelect.addEventListener('change', function () {
+        populateVerseSelect(this.value, 'toVerse');
+    });
+
+    revFromSurahSelect.addEventListener('change', function () {
+        populateVerseSelect(this.value, 'revFromVerse');
     });
 }
 
@@ -407,6 +475,8 @@ function setupFormSubmission() {
         const revision_direction = document.getElementById('revDirection').value;
         const start_surah = parseInt(document.getElementById('toSurah').value);
         const no_verse_in_surah = parseInt(document.getElementById('toVerse').value);
+        const rev_from_surah = parseInt(document.getElementById('revFromSurah').value);
+        const rev_from_verse = parseInt(document.getElementById('revFromVerse').value);
         const new_memorization_amount = parseFloat(document.getElementById('newMemorizationAmount').value);
         const small_revision_amount = parseFloat(document.getElementById('smallRevisionAmount').value);
         const large_revision_amount = parseFloat(document.getElementById('largeRevisionAmount').value);
@@ -426,13 +496,14 @@ function setupFormSubmission() {
                 start_surah: start_surah,
                 no_verse_in_surah: no_verse_in_surah,
                 revision_direction: revision_direction === "true",
+                rev_from_surah: rev_from_surah,
+                rev_from_verse: rev_from_verse,
                 new_memorization_pages_amount: new_memorization_amount,
                 small_revision_pages_amount: small_revision_amount,
                 large_revision_pages_amount: large_revision_amount,
                 memorization_days: memorization_days
             }
         };
-
         const submitBtn = document.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
@@ -462,7 +533,7 @@ function setupFormSubmission() {
 
                 if (!event.submitter || event.submitter.id !== 'saveAndAddAnother') {
                     setTimeout(() => {
-                        window.location.href = '../HTML/home.html'; 
+                        window.location.href = '../HTML/home.html';
                     }, 1500);
                 } else {
                     document.getElementById('addStudentForm').reset();

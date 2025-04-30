@@ -5,9 +5,11 @@ from datetime import datetime
 class StudentPlanInfoService:
     @staticmethod
     def create_planInfo(student_id, data):
+
         verse = verses.query.filter_by(surah_id=data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
+        rev_verse = verses.query.filter_by(surah_id=data['rev_from_surah'], order_in_surah=data['rev_from_verse']).first()
         last_verse_memo = StudentPlanInfoService.calculate_last_verse_recited(verse, data['memorization_direction'])
-        last_verse_rev = StudentPlanInfoService.calculate_last_verse_recited(verse, data['revision_direction'])
+        last_verse_rev = StudentPlanInfoService.calculate_last_verse_recited(rev_verse, data['revision_direction'])
 
         student_plan = students_plans_info(
             student_id=student_id,
