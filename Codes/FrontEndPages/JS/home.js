@@ -182,10 +182,10 @@ class StudentManager {
     calculateEvaluation(overall_rating) {
         if (!overall_rating) return StudentManager.EVALUATION.NEW;
         
-        if (overall_rating >= 4) return StudentManager.EVALUATION.EXCELLENT;
-        if (overall_rating >= 3) return StudentManager.EVALUATION.VERY_GOOD;
-        if (overall_rating >= 2) return StudentManager.EVALUATION.GOOD;
-        if (overall_rating >= 1) return StudentManager.EVALUATION.FAIR;
+        if (overall_rating > 4) return StudentManager.EVALUATION.EXCELLENT;
+        if (overall_rating > 3) return StudentManager.EVALUATION.VERY_GOOD;
+        if (overall_rating > 2) return StudentManager.EVALUATION.GOOD;
+        if (overall_rating > 1) return StudentManager.EVALUATION.FAIR;
         return StudentManager.EVALUATION.WEAK;
     }
 

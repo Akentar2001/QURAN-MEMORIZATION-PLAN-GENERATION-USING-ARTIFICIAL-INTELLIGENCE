@@ -11,6 +11,7 @@ import pickle
 lessons_df = pd.read_csv('cleaned_student_data.csv', encoding='utf-8-sig')
 lessons_df['date_of'] = pd.to_datetime(lessons_df['date_of'])
 
+
 # ========================
 # 2. Preprocess Data (Fixed Index Alignment)
 # ========================
@@ -34,11 +35,11 @@ def preprocess_data(df, pillar_type):
     for student_id, group in grouped:
         # Get indices relative to pillar_df (not original lessons_df)
         group_indices = group.index
-        if len(group_indices) < 3:
-            continue  # Skip students with <3 sessions
+        if len(group_indices) < 5:
+            continue  # Skip students with <5 sessions
         
-        for i in range(3, len(group_indices)):
-            seq_indices = group_indices[i-3:i]
+        for i in range(5, len(group_indices)):
+            seq_indices = group_indices[i-5:i]
             target_index = group_indices[i]
             
             # Ensure indices are within bounds
@@ -102,6 +103,6 @@ for pillar in models:
         if pillar == 1:
             pickle.dump(scaler_new, f)
         elif pillar == 2:
-            pickle.dump(scaler_major, f)
-        else:
             pickle.dump(scaler_minor, f)
+        else:
+            pickle.dump(scaler_major, f)

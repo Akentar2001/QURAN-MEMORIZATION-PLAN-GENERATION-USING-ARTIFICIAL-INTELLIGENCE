@@ -3,6 +3,7 @@ from app import db
 from app.Services.students_plans_info_services import StudentPlanInfoService
 from app.Services.plan_generation_service import PlanGenerationService
 from datetime import datetime
+from datetime import datetime, date, timedelta
 
 class StudentService:
     @staticmethod
@@ -33,8 +34,11 @@ class StudentService:
             if 'plan_info' in data:
                 plan_info = StudentPlanInfoService.create_planInfo(new_student.student_id, data['plan_info'])
 
+            fake_date = "2025-03-02"  #! Change this to the desired start date
+            start_date = date.fromisoformat(fake_date) if fake_date else date.today()
+
             plan_generator = PlanGenerationService()
-            plan_generator.generate_plan(new_student.student_id)
+            plan_generator.generate_plan(new_student.student_id, start_date=start_date)
             
             db.session.commit()
 

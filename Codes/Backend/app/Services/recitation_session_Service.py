@@ -47,7 +47,10 @@ class RecitationSessionService:
         query = (recitation_session.query
             .filter_by(student_id=student_id))
 
-        if is_accepted is not None:
+        if is_accepted is True and is_accepted_not_none is False:
+            
+            query = query.filter(recitation_session.is_accepted.isnot(False))
+        elif is_accepted is not None:
             query = query.filter_by(is_accepted=is_accepted)
         elif is_accepted_not_none:
             query = query.filter(recitation_session.is_accepted.isnot(None))
@@ -83,7 +86,7 @@ class RecitationSessionService:
                 EndVerse.order_in_surah.label('end_verse_order'),
                 EndSurah.name.label('end_surah_name')
             )
-            .order_by(recitation_session.session_id if ascending else recitation_session.session_id.desc())
+            .order_by(recitation_session.date if ascending else recitation_session.date.desc())
         )
 
         if limit_count:
@@ -99,13 +102,24 @@ class RecitationSessionService:
                 new_session.is_accepted = data['is_accepted']
             if 'rating' in data:
                 new_session.rating = data['rating']
+            if 'date' in data:
+                new_session.date = data['date']
+            if 'type' in data:
+                new_session.type = data['type']
             if 'pages_count' in data:
                 new_session.pages_count = data['pages_count']
-            if 'fromVerse' in data:
-                new_session.start_verse_id = data['fromVerse']
-            if 'toVerse' in data:
-                new_session.end_verse_id = data['toVerse']
+            if 'letters_count' in data:
+                new_session.letters_count = data['letters_count']
+            if 'start_verse_id' in data:
+                new_session.start_verse_id = data['start_verse_id']
+            if 'end_verse_id' in data:
+                new_session.end_verse_id = data['end_verse_id']
                 
+            if 'start_verse_id' in data or 'end_verse_id' in data:
+                amounts = RecitationSessionService._update_amount(new_session.start_verse_id, new_session.end_verse_id)
+                new_session.letters_count = amounts['letters_count']
+                new_session.pages_count = amounts['pages_count']
+
             db.session.commit()
             return new_session
             
@@ -124,6 +138,43 @@ class RecitationSessionService:
             db.session.rollback()
             raise Exception(f"Error deleting session: {str(e)}")
 
+    
+    @staticmethod
+    def delete_sessions(student_id, recitation_type=None, start_date=None, end_date=None, date_only=None, is_accepted=None, is_accepted_not_none=None, after_session=None):
+        try:
+            query = recitation_session.query.filter_by(student_id=student_id)
+
+            if is_accepted is not None:
+                query = query.filter_by(is_accepted=is_accepted)
+            elif is_accepted_not_none:
+                query = query.filter(recitation_session.is_accepted.isnot(None))
+            elif is_accepted_not_none is False:
+                query = query.filter(recitation_session.is_accepted.is_(None))
+
+            if recitation_type:
+                query = query.filter_by(type=recitation_type)
+
+            if date_only:
+                query = query.filter(cast(recitation_session.date, Date) == date_only)
+            else:
+                if start_date:
+                    query = query.filter(recitation_session.date >= start_date)
+                if end_date:
+                    query = query.filter(recitation_session.date <= end_date)
+
+            if after_session:
+                query = query.filter(recitation_session.session_id > after_session)
+
+            sessions = query.all()
+            for session in sessions:
+                db.session.delete(session)
+            
+            db.session.commit()
+            return True
+            
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Error deleting sessions: {str(e)}")
 
     @staticmethod
     def get_student_sessions_count(student_id, recitation_type=None, start_date=None, end_date=None, date_only=None, is_accepted=None, is_accepted_not_none=None, is_rating_not_none=None):
@@ -152,3 +203,35 @@ class RecitationSessionService:
                 query = query.filter(recitation_session.date <= end_date)
 
         return query.scalar()
+
+    @staticmethod
+    def _update_amount(start_verse_id, end_verse_id, direction=None):
+        try:
+            direction = direction if direction is not None else start_verse_id <= end_verse_id
+            total_letters = 0
+            total_pages = 0
+            index_column = verses.order_in_quraan if direction else verses.reverse_index
+            current_verse = db.session.query(verses).filter(verses.verse_id == start_verse_id).first()
+            last_verse = db.session.query(verses).filter(verses.verse_id == end_verse_id).first()
+
+            if not current_verse or not last_verse:
+                return {'letters_count': 0, 'pages_count': 0}
+
+            while current_verse != last_verse:
+                total_letters += current_verse.letters_count
+                total_pages += current_verse.weight_on_page
+                current_index = getattr(current_verse, index_column.key)
+                current_verse = db.session.query(verses).filter(index_column == current_index + 1).first()
+                if not current_verse:
+                    break
+
+            total_letters += last_verse.letters_count
+            total_pages += last_verse.weight_on_page
+
+            return {
+                'letters_count': total_letters,
+                'pages_count': total_pages
+            }
+            
+        except Exception as e:
+            raise Exception(f"Error calculating amounts: {str(e)}")

@@ -1,0 +1,23 @@
+from PlanService import PlanService
+
+def test_weekly_plan():
+    # Initialize the PlanService
+    plan_service = PlanService()
+    
+    # Call generate_weekly_plans with a student ID
+    student_id = 567  # Replace with actual student ID
+    weekly_plans = plan_service.generate_weekly_plans(student_id)
+    
+    # Check the results
+    if "error" in weekly_plans:
+        print(f"Error generating weekly plans: {weekly_plans['error']}")
+    else:
+        print("\nWeekly Plans Generated:")
+        for session_type, plan in weekly_plans.items():
+            print(f"\n{session_type}:")
+            print(f"Base amount: {plan['base']}")
+            print(f"Final amount: {plan['final']}")
+            print(f"Adjustment: {plan['adjustment']}")
+
+if __name__ == "__main__":
+    test_weekly_plan()

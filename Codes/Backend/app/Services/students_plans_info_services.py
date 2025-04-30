@@ -1,14 +1,10 @@
 from app import db
 from app.models import students_plans_info, verses
 from datetime import datetime
-from app.Services.recitation_session_Service import RecitationSessionService
-
 
 class StudentPlanInfoService:
     @staticmethod
     def create_planInfo(student_id, data):
-        # if not 'last_verse_recited_new_memorization' in data:
-        # if 'start_surah' in plan_data and 'no_verse_in_surah' in data:
         verse = verses.query.filter_by(surah_id=data['start_surah'], order_in_surah=data['no_verse_in_surah']).first()
         last_verse_memo = StudentPlanInfoService.calculate_last_verse_recited(verse, data['memorization_direction'])
         last_verse_rev = StudentPlanInfoService.calculate_last_verse_recited(verse, data['revision_direction'])
@@ -20,11 +16,10 @@ class StudentPlanInfoService:
             memorization_days=data.get('memorization_days', 5),
             last_verse_recited_new_memorization=last_verse_memo,
             last_verse_recited_large_revision=last_verse_rev if last_verse_rev else None
-        )
+            )
 
         student_plan.memorized_parts = StudentPlanInfoService.calculate_memorized_parts(student_plan.last_verse_recited_new_memorization, student_plan.memorization_direction)
 
-        # Calculate start_surah and no_verse_in_surah
         optional_fields = [
             'overall_rating',
             'new_memorization_letters_amount',
@@ -35,7 +30,8 @@ class StudentPlanInfoService:
             'large_revision_pages_amount',
             'last_verse_recited_large_revision',
             'overall_rating_new_memorization',
-            'overall_rating_large_revision'
+            'overall_rating_large_revision',
+            'overall_rating_small_revision',
             'rl_last_action'
         ]
         
@@ -90,7 +86,8 @@ class StudentPlanInfoService:
                 'last_verse_recited_large_revision',
                 'overall_rating',
                 'overall_rating_new_memorization',
-                'overall_rating_large_revision'
+                'overall_rating_large_revision',
+                'overall_rating_small_revision',
                 'rl_last_action'
             ]
             
@@ -98,12 +95,17 @@ class StudentPlanInfoService:
                 if field in plan_data:
                     setattr(plan_info, field, plan_data[field])
 
-            # plan_info.overall_rating = 1.5
             plan_info.memorized_parts = StudentPlanInfoService.calculate_memorized_parts(
                 plan_info.last_verse_recited_new_memorization, 
                 plan_info.memorization_direction
             )
             
+            # fake_date = "2025-03-02"  #! Change this to the desired start date
+            # start_date = date.fromisoformat(fake_date) if fake_date else date.today()
+
+            # plan_generator = PlanGenerationService()
+            # plan_generator.generate_plan(new_student.student_id, start_date=start_date)
+
             plan_info.updated_at = datetime.utcnow()
             db.session.commit()
             
@@ -159,32 +161,6 @@ class StudentPlanInfoService:
         
         rev_verse = verses.query.filter_by(reverse_index=verse.reverse_index - 1).first()
         return rev_verse.verse_id if rev_verse else 0
-
-    @staticmethod
-    def update_student_progress(student_id):
-        try:
-            sessions = RecitationSessionService.get_student_sessions(student_id, 'New_Memorization')
-            accepted_sessions = [s[0] for s in sessions if s[0].is_accepted]
-            
-            if not accepted_sessions:
-                return
-            
-            total_pages = sum(session.pages_count or 0 for session in accepted_sessions)
-            memorized_parts = total_pages / 20  
-            
-            rated_sessions = [s for s in accepted_sessions if s.rating is not None]
-            avg_rating = sum(s.rating for s in rated_sessions) / len(rated_sessions) if rated_sessions else None
-            
-            plan_info = students_plans_info.query.get(student_id)
-            if plan_info:
-                plan_info.memorized_parts = plan_info.memorized_parts + memorized_parts
-                if avg_rating is not None:
-                    plan_info.overall_rating = avg_rating
-                db.session.commit()
-                
-        except Exception as e:
-            db.session.rollback()
-            raise Exception(f"Error updating student progress: {str(e)}")
 
     @staticmethod
     def calculate_start_surah_and_verse(plan_info):

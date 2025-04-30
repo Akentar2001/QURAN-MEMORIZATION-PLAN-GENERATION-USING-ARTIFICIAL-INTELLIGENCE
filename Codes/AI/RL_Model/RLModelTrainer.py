@@ -75,6 +75,7 @@ class RLModelTrainer:
         
         # Get all sessions from past week
         sessions = RecitationSessionService.get_student_sessions(
+            #student_id
             start_date=cutoff_date,
             is_rating_not_none=True
         )

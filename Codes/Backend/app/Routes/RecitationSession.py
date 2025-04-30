@@ -60,7 +60,7 @@ def get_student_sessions(student_id):
         student = StudentService.get_student_by_id(student_id)
         if not student:
             return jsonify({'error': 'Student not found'}), 404
-
+        
         sessions = RecitationSessionService.get_student_sessions(student_id=student_id)
 
         if not sessions:
@@ -120,7 +120,7 @@ def get_all_students_sessions():
     try:
         students_list = StudentService.get_all_students()
         today = datetime.now().date()
-        fake_date = "2025-04-14"
+        fake_date = "2025-03-06"  #! Put the date of the sessions you want to get, Default is today
         date = fake_date if fake_date else today
 
         response = []
@@ -173,71 +173,3 @@ def save_student_Sessions_evaluation(student_id):
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-        # is_present = data['attendance_status'] == 'present' ##
-        # today = datetime.now().date() ##
-        # print(data) ##
-        
-        # # Get student plan info
-        # student_plan = StudentPlanInfoService.get_planInfo(student_id) ##
-        # if not student_plan:
-        #     return jsonify({'error': 'Student plan not found'}), 404
-        # for section_type, section_data in data['sections'].items():
-        #     session = RecitationSessionService.get_session(section_data['session_id'])
-            
-        #     update_data = {
-        #         'student_id': student_id,
-        #         'is_accepted': section_data['is_accepted'],
-        #         'rating': section_data['grade'],
-        #         'fromSurah': section_data['fromSurah'],
-        #         'toSurah': section_data['toSurah'],
-        #         'fromVerse': section_data['fromVerse'],
-        #         'toVerse': section_data['toVerse']
-        #     }
-            
-        #     RecitationSessionService.update_session(session.session_id, update_data)
-
-            # if not is_present or not section_data['is_accepted']:
-            #     next_day = session.date + timedelta(days=1)
-            #     next_day_session = RecitationSessionService.get_student_session_by_date_and_type(
-            #         student_id, 
-            #         next_day, 
-            #         session.type
-            #     )
-                
-            #     if next_day_session:
-            #         update_next_day_data = {
-            #             'start_verse_id': session.start_verse_id,
-            #             'end_verse_id': session.end_verse_id,
-            #             'letters_count': session.letters_count,
-            #             'pages_count': session.pages_count
-            #         }
-            #         RecitationSessionService.update_session(next_day_session.session_id, update_next_day_data)
-            # Update last verse recited based on session type
-
-
-        #     if is_present and section_data['is_accepted']:
-        #         plan_update_data = {}
-        #         if session.type == 'New_Memorization':
-        #             plan_update_data['last_verse_recited_new_memorization'] = session.end_verse_id
-        #         elif session.type == 'Major_Revision':
-        #             plan_update_data['last_verse_recited_large_revision'] = session.end_verse_id
-                
-        #         if plan_update_data:
-        #             StudentPlanInfoService.update_planInfo(student_id, plan_update_data)
-
-        # # Update student's overall progress and ratings
-        # StudentPlanInfoService.update_student_progress(student_id)
-        
-    #     return jsonify({'success': True})
-    # except Exception as e:
-    #     return jsonify({'error': str(e)}), 500
-
-# def convert_grade_to_rating(grade):
-#     ratings = {
-#         'ممتاز': 5,
-#         'جيد جدا': 4,
-#         'جيد': 3,
-#         'ضعيف': 2,
-#         'غير حافظ': 1
-#     }
-#     return ratings.get(grade, 0)

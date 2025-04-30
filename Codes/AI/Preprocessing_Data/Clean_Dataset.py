@@ -63,22 +63,22 @@ def clean_student_entries(lessons_df, verses_df, surahs_df, max_pages, max_lette
 
 # Load datasets
 lessons_df = pd.read_csv('Codes\\AI\\Output\\New_Calculated_student_lessons_history.csv', encoding='utf-8-sig')
-verses_df = pd.read_excel('Datsets\\surahs.xlsx')
-surahs_df = pd.read_excel('Datsets\\verses.xlsx')
+verses_df = pd.read_excel('Datsets\\verses.xlsx')
+surahs_df = pd.read_excel('Datsets\\surahs.xlsx')
 
 # Clean the data
 cleaned_data = merge_df(lessons_df)
-cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 9, 3000, 1, max_invalid=3)
+# cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 9, 3000, 1, max_invalid=3)
 
-cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 20, 15000, 1, max_invalid=0)
+cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 5, 15000, 1, max_invalid=0)
 
-cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 50, 30000, 2, max_invalid=0)
+cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 20, 30000, 2, max_invalid=0)
 
-cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 100, 55000, 3, max_invalid=0)
+cleaned_data = clean_student_entries(cleaned_data, verses_df, surahs_df, 40, 55000, 3, max_invalid=0)
 
 
 # Save cleaned data
-cleaned_data.to_csv('cleaned_student_data.csv', index=False)
+cleaned_data.to_csv('cleaned_student_data2.csv', index=False)
 
 # Optional: Validation
 print("\nValidation Stats:")

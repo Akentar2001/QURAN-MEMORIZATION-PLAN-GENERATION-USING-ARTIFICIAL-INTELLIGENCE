@@ -48,13 +48,60 @@ class StudentPlanManager {
         
         if (studentInfo) {
             document.getElementById('studentName').textContent = studentInfo.name;
-            // document.getElementById('studentInfo').textContent = 
-            // `العمر: ${studentInfo.age} سنة | الأجزاء المحفوظة: ${studentInfo.plan_info?.memorized_parts || 0}`;
+            document.getElementById('overallRating').textContent = this.calculateEvaluation(studentInfo.plan_info ? studentInfo.plan_info.overall_rating : null);
+            const memorizedParts = Number((studentInfo.plan_info.memorized_parts || 0).toFixed(1));
+            document.getElementById('memorizedParts').textContent = memorizedParts % 1 === 0 ? Math.floor(memorizedParts) : memorizedParts;
+            
+            const completionRate = this.calculateCompletionRate();
+            document.getElementById('completionRate').textContent = `${completionRate}%`;
         } else {
             document.getElementById('studentName').textContent = 'اسم الطالب';
+            document.getElementById('studentId').textContent = '-';
+            document.getElementById('overallRating').textContent = '-';
+            document.getElementById('memorizedParts').textContent = '-';
+            document.getElementById('completionRate').textContent = '-';
             this.showNotification('حدث خطأ أثناء تحميل بيانات الطالب', 'danger');
         }
+    }
+
+    calculateEvaluation(overall_rating) {
+        if (!overall_rating) return StudentPlanManager.EVALUATION.NEW;
         
+        if (overall_rating > 4) return StudentPlanManager.EVALUATION.EXCELLENT;
+        if (overall_rating > 3) return StudentPlanManager.EVALUATION.VERY_GOOD;
+        if (overall_rating > 2) return StudentPlanManager.EVALUATION.GOOD;
+        if (overall_rating > 1) return StudentPlanManager.EVALUATION.FAIR;
+        return StudentPlanManager.EVALUATION.WEAK;
+    }
+
+    static EVALUATION = {
+        NEW: 'طالب جديد',
+        EXCELLENT: 'ممتاز',
+        VERY_GOOD: 'جيد جدا',
+        GOOD: 'جيد',
+        FAIR: 'مقبول',
+        WEAK: 'ضعيف'
+    };
+
+    calculateCompletionRate() {
+        if (!this.sessions) return 0;
+        
+        let totalSessions = 0;
+        let acceptedSessions = 0;
+        
+        Object.values(this.sessions).forEach(daySession => {
+            ['memorization', 'minorRevision', 'majorRevision'].forEach(type => {
+                if (daySession[type]) {
+                    totalSessions++;
+                    if (daySession[type].is_accepted === true) {
+                        acceptedSessions++;
+                    }
+                }
+            });
+        });
+        
+        if (totalSessions === 0) return 0;
+        return ((acceptedSessions / totalSessions) * 100).toFixed(1);
     }
 
     async loadStudentSessions() {

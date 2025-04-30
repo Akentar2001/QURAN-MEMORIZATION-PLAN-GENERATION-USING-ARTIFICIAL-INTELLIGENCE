@@ -4,32 +4,38 @@ from app.models import students_plans_info as StudentsPlansInfo
 from app.models import verses as Verse
 from app.models import db
 from app.Services.recitation_session_Service import RecitationSessionService
-from datetime import date
+from datetime import date, timedelta
 
 class PlanGenerationService:
     def __init__(self):
         self.db = db
 
-    def generate_plan(self, student_id):
+    def generate_plan(self, student_id, start_date=date.today(), isUpdate=False):
         try:
-            plan_data = self._initialize_plan_data(student_id)
+            # fake_date = "2025-03-02"  #! I transferred it to Students_Services line 36
+            # start_date = date.fromisoformat(fake_date) if fake_date else date.today()
+            plan_data = self._initialize_plan_data(student_id, start_date)
+            
             for day in plan_data['days']:
+                current_date = date.fromisoformat(day["date"])
                 self._generate_daily_plan(
                     student_id=student_id,
-                    current_date=day["date"],
+                    current_date=current_date,
                     memo_data=plan_data['memo'],
                     minor_rev_data=plan_data['minor_rev'],
-                    major_rev_data=plan_data['major_rev']
+                    major_rev_data=plan_data['major_rev'], 
+                    isUpdate=isUpdate
                 )
-                
+                #Update
+                plan_data['minor_rev']['memo_sissions'] = self._get_past_memo_sessions(student_id, current_date)
         except Exception as e:
             self.db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
 
-    def _initialize_plan_data(self, student_id):
+    def _initialize_plan_data(self, student_id, start_date):
         plan_info = self.get_student_plan(student_id)
-        fake_date = "2025-04-13"
-        days_info = self.get_memorization_days_info(plan_info.memorization_days, start_date=fake_date if fake_date else date.today())
+        days_info = self.get_memorization_days_info(plan_info.memorization_days, start_date=start_date)
+        mem_sissions = RecitationSessionService.get_student_sessions(student_id=student_id, recitation_type='New_Memorization', ascending=False, is_accepted=True, end_date=start_date - timedelta(days=1))
         
         return {
             'days': days_info["days"],
@@ -41,7 +47,8 @@ class PlanGenerationService:
             },
             'minor_rev': {
                 'letters_amount': plan_info.small_revision_letters_amount,
-                'pages_amount': plan_info.small_revision_pages_amount
+                'pages_amount': plan_info.small_revision_pages_amount,
+                'memo_sissions': self._get_past_memo_sessions(student_id, start_date, isFirstDayWeek=True)
             },
             'major_rev': {
                 'last_verse': plan_info.last_verse_recited_large_revision,
@@ -60,27 +67,27 @@ class PlanGenerationService:
             raise ValueError("Student plan info not found")
         return plan_info
 
-    def _generate_daily_plan(self, student_id, current_date, memo_data, minor_rev_data, major_rev_data):
-        minor_rev_result = self._generate_minor_revision(student_id, current_date, minor_rev_data)
-        memo_result = self._generate_memorization(student_id, current_date, memo_data)
-        self._generate_major_revision(student_id, current_date, major_rev_data, minor_rev_result, memo_result, memo_data)
+    def _generate_daily_plan(self, student_id, current_date, memo_data, minor_rev_data, major_rev_data, isUpdate=False):
+        memo_result = self._generate_memorization(student_id, current_date, memo_data, isUpdate)
+        minor_rev_result = self._generate_minor_revision(student_id, current_date, minor_rev_data, isUpdate)
+        self._generate_major_revision(student_id, current_date, major_rev_data, minor_rev_result, memo_result, memo_data, isUpdate)
 
-    def _generate_minor_revision(self, student_id, current_date, minor_rev_data):
+    def _generate_minor_revision(self, student_id, current_date, minor_rev_data, isUpdate=False):
         if minor_rev_data['letters_amount']:
-            minor_revision_plan = self.generate_minor_revision_plan(student_id, minor_rev_data['letters_amount'])
+            minor_revision_plan = self.generate_minor_revision_plan(student_id, minor_rev_data['letters_amount'], minor_rev_data['memo_sissions'])
         elif minor_rev_data['pages_amount']:
-            minor_revision_plan = self.generate_minor_revision_plan(student_id, minor_rev_data['pages_amount'], amount_type='pages')
+            minor_revision_plan = self.generate_minor_revision_plan(student_id, minor_rev_data['pages_amount'], minor_rev_data['memo_sissions'], amount_type='pages')
         else:
-            minor_revision_plan = self.generate_minor_revision_plan(student_id, 1, amount_type='default')
+            minor_revision_plan = self.generate_minor_revision_plan(student_id, 1, minor_rev_data['memo_sissions'], amount_type='default')
         
         if minor_revision_plan:
-            self.store_plan_in_database(student_id, minor_revision_plan, 'Minor_Revision', current_date)
+            self.store_plan_in_database(student_id, minor_revision_plan, 'Minor_Revision', current_date, isUpdate)
             return {
                 'current_surah': self.get_current_surah(minor_revision_plan['start_verse_id'])
             }
         return None
 
-    def _generate_memorization(self, student_id, current_date, memo_data):
+    def _generate_memorization(self, student_id, current_date, memo_data, isUpdate=False):
         memo_start_verse = self.get_start_verse(memo_data['last_verse'], memo_data['direction'])
         if not memo_start_verse:
             return None
@@ -93,14 +100,14 @@ class PlanGenerationService:
             memo_plan = self.generate_plan_by_difficulty(memo_start_verse, memo_data['direction'])
         
         if memo_plan:
-            self.store_plan_in_database(student_id, memo_plan, 'New_Memorization', current_date)
+            self.store_plan_in_database(student_id, memo_plan, 'New_Memorization', current_date, isUpdate)
             memo_data['last_verse'] = memo_plan['end_verse_id']
             return {
                 'current_surah': self.get_current_surah(memo_plan['start_verse_id'])
             }
         return None
 
-    def _generate_major_revision(self, student_id, current_date, major_rev_data, minor_rev_result, memo_result, memo_data):
+    def _generate_major_revision(self, student_id, current_date, major_rev_data, minor_rev_result, memo_result, memo_data, isUpdate=False):
         majorRev_start_verse = self.get_start_verse(major_rev_data['last_verse'], major_rev_data['direction']) if major_rev_data['last_verse'] else None
         current_surah = 0
 
@@ -122,10 +129,9 @@ class PlanGenerationService:
                 majorRev_plan = self.generate_plan_by_difficulty(majorRev_start_verse, major_rev_data['direction'], factor=10)
             
             if majorRev_plan:
-                self.store_plan_in_database(student_id, majorRev_plan, 'Major_Revision', current_date)
+                self.store_plan_in_database(student_id, majorRev_plan, 'Major_Revision', current_date, isUpdate)
                 major_rev_data['last_verse'] = majorRev_plan['end_verse_id']
         
-
     def generate_plan_by_amount(self, start_verse, required_amount, direction, amount_type='letters', stop_place=0):
         try:
             total_plan_amount = 0
@@ -250,16 +256,14 @@ class PlanGenerationService:
             db.session.rollback()
             raise RuntimeError(f"Plan generation failed: {str(e)}")
 
-    def generate_minor_revision_plan(self, student_id, required_amount, amount_type='letters'):
+    def generate_minor_revision_plan(self, student_id, required_amount, new_memo_sessions, amount_type='letters'):
         try:
-            sessions = RecitationSessionService.get_student_sessions(student_id, 'New_Memorization')
-            
-            new_memo_sessions = sorted([s[0] for s in sessions], 
-                                    key=lambda x: x.date, 
-                                    reverse=True)
             
             if not new_memo_sessions:
                 return None
+            
+            # new_memo_sessions = [s[0] for s in sessions]
+            new_memo_sessions = [self.db.session.merge(session) for session in new_memo_sessions]
 
             if amount_type == 'default':
                 included_sessions = new_memo_sessions[:3]
@@ -270,14 +274,13 @@ class PlanGenerationService:
                     end_verse = included_sessions[0].end_verse_id
                     return self.format_plan_response(start_verse, end_verse, total_letters, total_pages)
                 return None
-
             latest_session = new_memo_sessions[0]
             total_plan_amount = latest_session.letters_count if amount_type == 'letters' else latest_session.pages_count
             total_letters = latest_session.letters_count
             total_pages = latest_session.pages_count
             current_start_verse = latest_session.start_verse_id
             included_sessions = [latest_session]
-
+            
             for session in new_memo_sessions[1:]:
                 current_amount = session.letters_count if amount_type == 'letters' else session.pages_count
                 potential_total = total_plan_amount + current_amount
@@ -313,7 +316,7 @@ class PlanGenerationService:
             "total_pages": total_pages,
         }
 
-    def store_plan_in_database(self, student_id, plan_data, recitation_type, plan_date=None):
+    def store_plan_in_database(self, student_id, plan_data, recitation_type, plan_date=None, isUpdate=False):
         try:
             session_data = {
                 'student_id': student_id,
@@ -324,11 +327,13 @@ class PlanGenerationService:
                 'pages_count': plan_data['total_pages'],
                 'date': plan_date if plan_date else date.today()
             }
+            if isUpdate:
+                old_session = RecitationSessionService.get_student_sessions(student_id=student_id, recitation_type=recitation_type, date_only=plan_date)[0][0]
+                return RecitationSessionService.update_session(old_session.session_id, session_data)
             return RecitationSessionService.create_session(session_data)
         except Exception as e:
             self.db.session.rollback()
             raise RuntimeError(f"Failed to store plan in database: {str(e)}")
-
 
     # Helper methods
     def get_start_verse(self, last_verse, direction):
@@ -413,7 +418,6 @@ class PlanGenerationService:
         # Convert to Sunday = 0 format
         current_day_index = (current_day_index + 1) % 7
 
-        # Calculate remaining days
         remaining_days = []
         total_value = 0
 
@@ -437,4 +441,16 @@ class PlanGenerationService:
             "dates": [day["date"] for day in remaining_days],
             "total_value": total_value
         }
-        
+
+    def _get_past_memo_sessions(self, student_id, current_date, isFirstDayWeek=False): 
+        try:
+            if isFirstDayWeek:
+                sessions = RecitationSessionService.get_student_sessions(student_id=student_id, recitation_type='New_Memorization', ascending=False, is_accepted=True, end_date=current_date - timedelta(days=1))
+            else:
+                sessions = RecitationSessionService.get_student_sessions(student_id=student_id, recitation_type='New_Memorization', ascending=False, is_accepted=True, is_accepted_not_none=False, end_date=current_date)
+            if not sessions:
+                return None
+            return [s[0] for s in sessions]
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get past memorization sessions: {str(e)}")

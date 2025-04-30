@@ -1,6 +1,8 @@
 from app.models import db, verses
 from app.Services.students_plans_info_services import StudentPlanInfoService
 from app.Services.recitation_session_Service import RecitationSessionService
+from app.Services.plan_generation_service import PlanGenerationService
+from datetime import date, timedelta
 
 class ManageRecitationEvaluationService:
     RATING_FIELDS = {
@@ -44,19 +46,23 @@ class ManageRecitationEvaluationService:
             'rating': section_data['grade']
         }
         
-        from_verse_id = ManageRecitationEvaluationService._get_verse_id(
+        if section_data['is_accepted'] is False:
+            update_data['letters_count'] = 0
+            update_data['pages_count'] = 0
+
+        start_verse_id = ManageRecitationEvaluationService._get_verse_id(
             section_data['fromSurah'],
             section_data['fromVerse']
         )
-        to_verse_id = ManageRecitationEvaluationService._get_verse_id(
+        end_verse_id = ManageRecitationEvaluationService._get_verse_id(
             section_data['toSurah'],
             section_data['toVerse']
         )
         
-        if from_verse_id:
-            update_data['fromVerse'] = from_verse_id
-        if to_verse_id:
-            update_data['toVerse'] = to_verse_id
+        if start_verse_id:
+            update_data['start_verse_id'] = start_verse_id
+        if end_verse_id:
+            update_data['end_verse_id'] = end_verse_id
             
         return update_data
 
@@ -70,15 +76,29 @@ class ManageRecitationEvaluationService:
             sessions_count = RecitationSessionService.get_student_sessions_count(student_id, is_rating_not_none=True)
             sum_old_overall_rating = (student_plan.overall_rating or 0) * sessions_count
             plan_update_data = {}
+
+            needs_plan_update = False
+            latest_session_date = None
             
             for section_type, section_data in data['sections'].items():
                 session = RecitationSessionService.get_session(section_data['session_id'])
                 
+                if not latest_session_date or session.date > latest_session_date:
+                    latest_session_date = session.date
+
                 rating_update = ManageRecitationEvaluationService._update_section_rating(
                     student_plan, session, section_data
                 )
-                sum_old_overall_rating += rating_update['new_rate'] - rating_update['old_rate']
+                sum_old_overall_rating += rating_update['new_rate'] - rating_update['old_rate'] 
                 plan_update_data[ManageRecitationEvaluationService.RATING_FIELDS[session.type]] = rating_update['rating_value']
+
+                if section_data['toSurah'] and section_data['toVerse']:
+                    end_verse_id = ManageRecitationEvaluationService._get_verse_id(
+                        section_data['toSurah'],
+                        section_data['toVerse']
+                    )
+                    if end_verse_id != session.end_verse_id:
+                        needs_plan_update = True
 
                 update_data = ManageRecitationEvaluationService._prepare_session_update(section_data)
                 RecitationSessionService.update_session(session.session_id, update_data)
@@ -108,6 +128,14 @@ class ManageRecitationEvaluationService:
             if plan_update_data:
                 StudentPlanInfoService.update_planInfo(student_id, plan_update_data)
             
+            if needs_plan_update and latest_session_date:
+                plan_generator = PlanGenerationService()
+                plan_generator.generate_plan(
+                    student_id, 
+                    start_date=latest_session_date + timedelta(days=1),
+                    isUpdate=True
+                )
+
             return True
         except Exception as e:
             raise e
@@ -168,8 +196,8 @@ class ManageRecitationEvaluationService:
                 current_end_verse = next_end_verse
 
             db.session.commit()
+
             return True
-            
         except Exception as e:
             db.session.rollback()
             raise Exception(f"Error shifting session verses: {str(e)}")

@@ -281,10 +281,10 @@ function saveEvaluation(studentId) {
             session_id: data.session_id,
             grade: isPresent ? selectedGrade : null,
             is_accepted: isPresent ? (selectedGrade > 0) : false,
-            fromSurah: (fromSurahSelect !== data.fromS || fromVerseSelect !== data.fromV)? surahs.find(s => s.name === fromSurahSelect).id : null,
-            fromVerse: (fromSurahSelect !== data.fromS || fromVerseSelect !== data.fromV)? fromVerseSelect : null,
-            toSurah: (toSurahSelect !== data.toS || toVerseSelect !== data.toV)? surahs.find(s => s.name === toSurahSelect).id : null,
-            toVerse: (toSurahSelect !== data.toS || toVerseSelect !== data.toV)? toVerseSelect : null
+            fromSurah: isPresent && selectedGrade > 0 && (fromSurahSelect !== data.fromS || fromVerseSelect !== data.fromV)? surahs.find(s => s.name === fromSurahSelect).id : null,
+            fromVerse: isPresent && selectedGrade > 0 && (fromSurahSelect !== data.fromS || fromVerseSelect !== data.fromV)? fromVerseSelect : null,
+            toSurah: isPresent && selectedGrade > 0 && (toSurahSelect !== data.toS || toVerseSelect !== data.toV)? surahs.find(s => s.name === toSurahSelect).id : null,
+            toVerse: isPresent && selectedGrade > 0 && (toSurahSelect !== data.toS || toVerseSelect !== data.toV)? toVerseSelect : null
         };
     });
 

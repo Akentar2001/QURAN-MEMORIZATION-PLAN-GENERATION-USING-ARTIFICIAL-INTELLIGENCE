@@ -18,12 +18,20 @@ def load_models_and_scalers():
     """Load trained models and scalers for each pillar"""
     models = {}
     scalers = {}
-    
+
     for pillar in [1, 2, 3]:
         try:
-            models[pillar] = load_model(f'model_pillar_{pillar}.h5', 
-                                        custom_objects={'mse': mean_squared_error})
-            with open(f'scaler_pillar_{pillar}.pkl', 'rb') as f:
+            if pillar == 1: 
+                models[pillar] = load_model(f'model_new.h5', custom_objects={'mse': mean_squared_error})
+                scaler_name = 'scaler_new.pkl'
+            elif pillar == 2: 
+                models[pillar] = load_model(f'model_minor.h5', custom_objects={'mse': mean_squared_error})
+                scaler_name = 'scaler_minor.pkl'
+            elif pillar == 3: 
+                models[pillar] = load_model(f'model_major.h5', custom_objects={'mse': mean_squared_error})
+                scaler_name = 'scaler_major.pkl'
+
+            with open(scaler_name, 'rb') as f:
                 scalers[pillar] = pickle.load(f)
         except (FileNotFoundError, IOError):
             print(f"Model or scaler for pillar {pillar} not found. Skipping.")
@@ -73,12 +81,12 @@ def prepare_test_sequences(df, pillar_id, scaler, test_students=None):
             
         # Get indices
         group_indices = group.index
-        if len(group_indices) < 4:  # Need at least 4 sessions for one test sequence
+        if len(group_indices) < 6:  # Need at least 4 sessions for one test sequence
             continue
         
         # Use the last session as test data
-        for i in range(3, len(group_indices)):
-            seq_indices = group_indices[i-3:i]
+        for i in range(5, len(group_indices)):
+            seq_indices = group_indices[i-5:i]
             target_index = group_indices[i]
             
             seq = scaled_features[seq_indices]
