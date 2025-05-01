@@ -120,7 +120,7 @@ def get_all_students_sessions():
     try:
         students_list = StudentService.get_all_students()
         today = datetime.now().date()
-        fake_date = "2025-03-020"  #! Put the date of the sessions you want to get, Default is today
+        fake_date = "2025-03-027"  #! Put the date of the sessions you want to get, Default is today
         date = fake_date if fake_date else today
 
         response = []

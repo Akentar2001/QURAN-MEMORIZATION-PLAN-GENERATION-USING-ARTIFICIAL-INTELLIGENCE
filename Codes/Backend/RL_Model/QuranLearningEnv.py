@@ -11,6 +11,7 @@ from sqlalchemy import func
 import gym
 from gym import spaces
 from LSTMPredictor import LSTMPredictor
+import random
 
 class QuranLearningEnv(gym.Env):
     def __init__(self, student_id: int, session_type: int, history_window: int = 7):
@@ -20,32 +21,49 @@ class QuranLearningEnv(gym.Env):
         self.history_window = history_window
         self.lstm_predictor = LSTMPredictor()
 
-        # Define state space with 10 dimensions
+        # Define state space with 14 dimensions (corrected based on previous context)
         self.observation_space = spaces.Box(
             low=np.array([
                 0.0,    # Average rating (0-1)
                 0.0,    # Success rate (0-1)
                 0.0,    # Performance variance
-                0.0,    # LSTM prediction (normalized)
-                0.0,    # Memorized Parts
-                0.0,    # Normalized session count
+                0.0,    # LSTM prediction (normalized) - Assuming this is normalized elsewhere or bounded
+                0.0,    # Memorized Parts percentage (0-1)
+                0.0,    # Normalized session count (0-1)
                 0.0,    # avg_letters_normalized
                 0.0,    # letters_variance_normalized
                 0.0,    # current_amount_normalized
-                0.0,    # Overall rating for this session type
-                0.0,    # Overall general rating
+                0.0,    # Overall rating for this session type (0-1)
+                0.0,    # Overall general rating (0-1)
                 0.0,    # Session type one-hot (3 dimensions)
                 0.0,
                 0.0,
             ], dtype=np.float32),
-            high=np.array([1.0] * 14, dtype=np.float32)
+            # Adjust high bounds if necessary, especially for LSTM prediction if not normalized to 1
+            high=np.array([
+                1.0, 1.0, 1.0, np.inf, 1.0, 1.0, # Set LSTM high bound appropriately
+                np.inf, np.inf, np.inf, # Set letter normalization high bounds appropriately
+                1.0, 1.0, 1.0, 1.0, 1.0
+                ], dtype=np.float32)
         )
-        
+
         self.action_space = spaces.Box(
             low=-0.3,
             high=0.3,
             shape=(1,)
         )
+        # Initialize seed
+        self.seed()
+
+
+    def seed(self, seed=None):
+        """Sets the seed for this env's random number generator(s)."""
+        # Note: Gym environments should implement this method
+        # We use Python's random and NumPy's random for consistency
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        random.seed(seed)
+        # If you use other RNGs, seed them here too
+        return [seed]
 
     def reset(self):
         return self._get_state()
@@ -55,20 +73,16 @@ class QuranLearningEnv(gym.Env):
         recent_sessions = RecitationSessionService.get_student_sessions(
             student_id=self.student_id,
             recitation_type=self._session_type_name(self.session_type),
-            # start_date=cutoff_date,
-            is_rating_not_none = True #!!
-            # is_accepted_not_none = True
+            is_rating_not_none = True
         )
 
         # Calculate performance metrics
-        # Access attributes via s.recitation_session or s[0]
-        ratings = [s.recitation_session.rating / 5.0 for s in recent_sessions if s.recitation_session.rating is not None]
+        ratings = [s[0].rating / 5.0 for s in recent_sessions if s[0].rating is not None]
         avg_rating = np.mean(ratings) if ratings else 0.0
-        # Access attributes via s.recitation_session or s[0]
-        success_rate = np.mean([1.0 if s.recitation_session.is_accepted else 0.0 for s in recent_sessions])
+        # Corrected line: Access is_accepted directly from s[0]
+        success_rate = np.mean([1.0 if s[0].is_accepted else 0.0 for s in recent_sessions if s[0].is_accepted is not None]) # Also added check for None
         perf_variance = np.var(ratings) if len(ratings) > 1 else 0.0
 
-        # Get LSTM prediction
         lstm_pred = self.lstm_predictor.predict(self.student_id, self.session_type)
 
         # Progress indicators
@@ -84,11 +98,9 @@ class QuranLearningEnv(gym.Env):
         session_count = RecitationSessionService.get_student_sessions_count(
             student_id=self.student_id,
             recitation_type=self._session_type_name(self.session_type),
-            # start_date=cutoff_date,
-            is_rating_not_none = True #!
+            is_rating_not_none = True 
         )
         session_count_normalized = (session_count / self.history_window) if self.history_window > 0 else 0.0
-        ### ??? Is it correct - Seems reasonable if history_window is fixed
 
         # Session type encoding
         session_type_onehot = np.zeros(3) # Initialize with zeros
@@ -96,23 +108,13 @@ class QuranLearningEnv(gym.Env):
             session_type_onehot[self.session_type - 1] = 1.0
 
 
-        # ********* I added the following values ​​as suggestions (Through AI):
-
-        # Again
-        recent_sessions2 = RecitationSessionService.get_student_sessions(
-            student_id=self.student_id,
-            recitation_type=self._session_type_name(self.session_type),
-            # start_date=cutoff_date,
-            is_accepted = True #!
-        )
-
-        # Access attributes via s.recitation_session or s[0]
-        letters_counts = [s.recitation_session.letters_count for s in recent_sessions2 if s.recitation_session.letters_count is not None]
+        accepted_sessions = [s for s in recent_sessions if s[0].is_accepted is True]
+        letters_counts = [s[0].letters_count for s in accepted_sessions if s[0].letters_count is not None]
         avg_letters = np.mean(letters_counts) if letters_counts else 0.0
         letters_variance = np.var(letters_counts) if len(letters_counts) > 1 else 0.0
 
         # Get current letters amount - Handle potential None
-        current_amount = getattr(plan_info, self._amount_column(), 0.0) # Default to 0.0 if attribute missing or None
+        current_amount = getattr(plan_info, self._amount_column(), 0.0) 
         current_amount = current_amount if current_amount is not None else 0.0
 
 
@@ -164,19 +166,21 @@ class QuranLearningEnv(gym.Env):
         new_amount = lstm_base * (1 + float(action[0]))
         
         # Get the latest session for this type to calculate reward
+        # This call might be returning a session with rating=None
         latest_session = RecitationSessionService.get_student_sessions(
             student_id=self.student_id,
             recitation_type=self._session_type_name(self.session_type),
-            limit_count=1 
+            limit_count=1 # Assuming it fetches the single latest session
         )
-        latest_session = latest_session[0] if latest_session else None
+        latest_session = latest_session[0][0] if latest_session else None # Access session object
+        print(latest_session)
         
         # Calculate reward based on session outcome
         reward = 0.0
         if latest_session:
             print("////////////////////////////////////////")
             reward = self._calculate_reward(latest_session, new_amount, lstm_base)
-            
+            print("yep")
             # 1. Save current values from DB
             current_plan = StudentPlanInfoService.get_planInfo(self.student_id)
             original_amount = getattr(current_plan, self._amount_column())
@@ -199,20 +203,22 @@ class QuranLearningEnv(gym.Env):
             next_state = current_state
         
         # Environment never terminates
-        done = False
+        done = True 
         
         return next_state, reward, done, {}
 
     def _calculate_reward(self, session, assigned_amount: float, lstm_base: float) -> float:
         """Enhanced reward function with ambition incentives"""
-        print("******************************")
-        # Access rating via session.recitation_session or session[0]
-        rating_raw = session.recitation_session.rating if session.recitation_session else None
-        if rating_raw is None:
-            print("Warning: Rating is None in _calculate_reward. Using 0.0.")
-            rating = 0.0
+        # Check if session exists and has a rating
+        if session and session.rating is not None:
+             rating = session.rating / 5.0 # Normalize rating
+             print(rating)
         else:
-            rating = rating_raw / 5.0
+             # This is where the warning is likely generated
+             print("******************************")
+             print("Warning: Rating is None in _calculate_reward. Using 0.0.")
+            #  print("////////////////////////////////////////")
+             rating = 0.0 # Default reward component if no rating
 
         # Avoid division by zero for ambition_bonus
         ambition_bonus = 0.0
@@ -237,3 +243,11 @@ class QuranLearningEnv(gym.Env):
 
     def _session_type_name(self, session_type: int) -> str:
         return {1: 'New_Memorization', 2: 'Minor_Revision', 3: 'Major_Revision'}[session_type]
+
+    def render(self, mode='human'):
+        # Optional: Implement rendering if needed for visualization
+        pass
+
+    def close(self):
+        # Optional: Implement cleanup if needed
+        pass

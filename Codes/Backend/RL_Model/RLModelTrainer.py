@@ -1,20 +1,19 @@
 import sys
 import os
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-backend_path = os.path.join(project_root, 'Backend')
-if backend_path not in sys.path:
-     sys.path.append(backend_path)
+backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, backend_path)
+
 from datetime import datetime, timedelta
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import EvalCallback
-from Backend.app.Services.recitation_session_Service import RecitationSessionService
+from app.Services.recitation_session_Service import RecitationSessionService
+# Import StudentService to get student IDs
+from app.Services.Students_Services import StudentService
 from QuranLearningEnv import QuranLearningEnv
 import os
+from datetime import datetime
 
 class RLModelTrainer:
     def __init__(self, model_path="rl_model.zip"):
@@ -42,22 +41,19 @@ class RLModelTrainer:
 
     def train_on_student(self, student_id: int, session_type: int):
         """Train model on specific student's data"""
-        # Create environment for this student
+      
         env = QuranLearningEnv(student_id, session_type)
-        
-        # Get recent sessions
-        cutoff_date = datetime.now() - timedelta(days=7)
+
         sessions = RecitationSessionService.get_student_sessions(
             student_id=student_id,
             recitation_type=env._session_type_name(session_type),
-            start_date=cutoff_date,
             is_rating_not_none=True
         )
-        
+
         if not sessions:
+            print(f"No sessions found for student {student_id}, type {session_type}. Skipping training.") 
             return False
-            
-        # Create evaluation callback
+
         eval_env = QuranLearningEnv(student_id, session_type)
         eval_callback = EvalCallback(
             eval_env,
@@ -67,43 +63,46 @@ class RLModelTrainer:
             deterministic=True,
             render=False
         )
-        
+
         # Train on the collected experiences
         self.model.set_env(make_vec_env(lambda: QuranLearningEnv(student_id, session_type)))
+        print(f"Training on {len(sessions)} sessions for student {student_id}, type {session_type}...") # Added print statement
         self.model.learn(
             total_timesteps=len(sessions) * 10,  # Multiple passes over the data
             callback=eval_callback
         )
-        
+        print(55555555555555555555555555555555555555555555)
         # Save the updated model
         self.model.save(self.model_path)
+        print(f"Training complete for student {student_id}, type {session_type}. Model saved.") # Added print statement
         return True
 
     def weekly_training(self):
-        """Perform weekly training on all available data"""
-        cutoff_date = datetime.now() - timedelta(days=7)
-        
-        # Get all sessions from past week
-        sessions = RecitationSessionService.get_student_sessions(
-            #student_id
-            start_date=cutoff_date,
-            is_rating_not_none=True
-        )
-        
-        if not sessions:
-            return
-            
-        # Group sessions by student and type
-        training_groups = {}
-        for session in sessions:
-            key = (session.student_id, self._session_type_num(session.type))
-            if key not in training_groups:
-                training_groups[key] = []
-            training_groups[key].append(session)
-            
-        # Train on each group
-        for (student_id, session_type), _ in training_groups.items():
-            self.train_on_student(student_id, session_type)
+        """Perform training on all available data for all students"""
+        print("Fetching all student IDs for weekly training...")
+        try:
+            # Get all student IDs
+            students = StudentService.get_all_students()
+            if not students:
+                print("No students found. Weekly training skipped.")
+                return
+
+            student_ids = [student.student_id for student in students]
+            print(f"Found {len(student_ids)} students.")
+
+            # Train on each student and session type
+            for student_id in student_ids:
+                for session_type in [1, 2, 3]: # Iterate through New, Minor, Major
+                    print(f"\n--- Training group: Student {student_id}, Type {session_type} ---")
+                    self.train_on_student(student_id, session_type)
+
+            print("\n--- Weekly training process finished ---")
+
+        except Exception as e:
+            print(f"An error occurred during weekly training: {e}")
+
 
     def _session_type_num(self, type_name: str) -> int:
         return {'New_Memorization': 1, 'Minor_Revision': 2, 'Major_Revision': 3}[type_name]
+
+
