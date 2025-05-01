@@ -1,16 +1,16 @@
 class StudentPlanManager {
     constructor() {
         this.initializeData();
-    Promise.all([
-        this.loadStudentInfo(),
-        this.loadStudentSessions()
-    ]).then(() => {
-        this.bindElements();
-        this.bindEvents();
-        this.generatePlan();
-        this.setupPrintOptimization();
-        this.updateProgressSummary();
-    });
+        Promise.all([
+            this.loadStudentInfo(),
+            this.loadStudentSessions()
+        ]).then(() => {
+            this.bindElements();
+            this.bindEvents();
+            this.generatePlan();
+            this.setupPrintOptimization();
+            this.updateProgressSummary();
+        });
     }
 
     initializeData() {
@@ -21,9 +21,9 @@ class StudentPlanManager {
     async loadStudentInfo() {
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = parseInt(urlParams.get('id'));
-        
+
         let studentInfo;
-        
+
         if (studentId) {
             try {
                 const response = await fetch(`http://localhost:5000/api/students/getStudent/${studentId}`, {
@@ -45,13 +45,13 @@ class StudentPlanManager {
                 this.showNotification('حدث خطأ أثناء تحميل بيانات الطالب', 'danger');
             }
         }
-        
+
         if (studentInfo) {
             document.getElementById('studentName').textContent = studentInfo.name;
             document.getElementById('overallRating').textContent = this.calculateEvaluation(studentInfo.plan_info ? studentInfo.plan_info.overall_rating : null);
             const memorizedParts = Number((studentInfo.plan_info.memorized_parts || 0).toFixed(1));
             document.getElementById('memorizedParts').textContent = memorizedParts % 1 === 0 ? Math.floor(memorizedParts) : memorizedParts;
-            
+            await this.loadStudentSessions();
             const completionRate = this.calculateCompletionRate();
             document.getElementById('completionRate').textContent = `${completionRate}%`;
         } else {
@@ -66,7 +66,7 @@ class StudentPlanManager {
 
     calculateEvaluation(overall_rating) {
         if (!overall_rating) return StudentPlanManager.EVALUATION.NEW;
-        
+
         if (overall_rating > 4) return StudentPlanManager.EVALUATION.EXCELLENT;
         if (overall_rating > 3) return StudentPlanManager.EVALUATION.VERY_GOOD;
         if (overall_rating > 2) return StudentPlanManager.EVALUATION.GOOD;
@@ -85,10 +85,10 @@ class StudentPlanManager {
 
     calculateCompletionRate() {
         if (!this.sessions) return 0;
-        
+
         let totalSessions = 0;
         let acceptedSessions = 0;
-        
+
         Object.values(this.sessions).forEach(daySession => {
             ['memorization', 'minorRevision', 'majorRevision'].forEach(type => {
                 if (daySession[type]) {
@@ -99,7 +99,7 @@ class StudentPlanManager {
                 }
             });
         });
-        
+
         if (totalSessions === 0) return 0;
         return ((acceptedSessions / totalSessions) * 100).toFixed(1);
     }
@@ -107,7 +107,7 @@ class StudentPlanManager {
     async loadStudentSessions() {
         const urlParams = new URLSearchParams(window.location.search);
         const studentId = parseInt(urlParams.get('id'));
-        
+
         if (studentId) {
             try {
                 const response = await fetch(`http://localhost:5000/api/recitation_session/getSessions/student/${studentId}`, {
@@ -118,18 +118,18 @@ class StudentPlanManager {
                     mode: 'cors',
                     credentials: 'include'
                 });
-    
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch sessions');
                 }
-                
+
                 const data = await response.json();
                 const sessions = Array.isArray(data) ? data : [];
 
                 const sessionsByDate = {};
                 sessions.forEach(session => {
                     if (!session.date) return;
-                    
+
                     const dateObj = new Date(session.date);
                     const dateStr = dateObj.toISOString().split('T')[0];
 
@@ -140,7 +140,7 @@ class StudentPlanManager {
                             majorRevision: null
                         };
                     }
-                    
+
                     switch (session.type) {
                         case 'New_Memorization':
                             sessionsByDate[dateStr].memorization = session;
@@ -153,10 +153,10 @@ class StudentPlanManager {
                             break;
                     }
                 });
-                
+
                 this.sessions = sessionsByDate;
                 return this.sessions;
-    
+
             } catch (error) {
                 console.error('Error fetching sessions:', error);
                 this.showNotification('حدث خطأ أثناء تحميل جلسات الحفظ', 'danger');
@@ -183,7 +183,7 @@ class StudentPlanManager {
     generatePlan() {
         let html = '';
         const dates = Object.keys(this.sessions || {}).sort();
-        
+
         if (!this.sessions || Object.keys(this.sessions).length === 0) {
             html = `
             <tr>
@@ -195,7 +195,7 @@ class StudentPlanManager {
                 const dayName = this.arabicDays[currentDate.getDay()];
                 const dateStr = this.formatDate(currentDate);
                 const daySession = this.sessions[date];
-                
+
                 html += `
                 <tr ${this._getTextColorStyle(daySession)}>
                     <td>${index + 1}</td>
@@ -207,10 +207,10 @@ class StudentPlanManager {
                 </tr>`;
             });
         }
-        
+
         this.weekPlanBody.innerHTML = html;
     }
-    
+
     _getTextColorStyle(session) {
         if (session?.is_accepted === true) return 'color: #006400; font-weight: bold;';
         if (session?.is_accepted === false) return 'color: red; font-weight: bold;';

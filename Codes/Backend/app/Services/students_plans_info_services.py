@@ -51,11 +51,17 @@ class StudentPlanInfoService:
         return student_plan
 
     @staticmethod
+    @staticmethod
     def get_planInfo(student_id):
-        plan_info = students_plans_info.query.get(student_id)
+        try:
+            plan_info = students_plans_info.query.get(student_id)
+        except Exception as e:
+            print(f"Error querying students_plans_info: {e}")
+            raise
+            
         if plan_info:
             StudentPlanInfoService.calculate_start_surah_and_verse(plan_info)
-
+    
         return plan_info
 
     @staticmethod

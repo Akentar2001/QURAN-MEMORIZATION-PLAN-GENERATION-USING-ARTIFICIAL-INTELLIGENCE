@@ -55,15 +55,17 @@ class QuranLearningEnv(gym.Env):
         recent_sessions = RecitationSessionService.get_student_sessions(
             student_id=self.student_id,
             recitation_type=self._session_type_name(self.session_type),
-            start_date=cutoff_date,
+            # start_date=cutoff_date,
             is_rating_not_none = True #!!
-            # is_accepted_not_none = True 
+            # is_accepted_not_none = True
         )
-        
+
         # Calculate performance metrics
-        ratings = [s.rating/5.0 for s in recent_sessions if s.rating is not None]
+        # Access attributes via s.recitation_session or s[0]
+        ratings = [s.recitation_session.rating / 5.0 for s in recent_sessions if s.recitation_session.rating is not None]
         avg_rating = np.mean(ratings) if ratings else 0.0
-        success_rate = np.mean([1.0 if s.is_accepted else 0.0 for s in recent_sessions])
+        # Access attributes via s.recitation_session or s[0]
+        success_rate = np.mean([1.0 if s.recitation_session.is_accepted else 0.0 for s in recent_sessions])
         perf_variance = np.var(ratings) if len(ratings) > 1 else 0.0
 
         # Get LSTM prediction
@@ -71,45 +73,61 @@ class QuranLearningEnv(gym.Env):
 
         # Progress indicators
         plan_info = StudentPlanInfoService.get_planInfo(student_id=self.student_id)
-        memorized_parts_percentage = plan_info.memorized_parts / 30.0
+        # Handle potential None for plan_info
+        if not plan_info:
+             # Return a default state or raise an error if plan_info is crucial
+             # For now, returning a zero state of the correct shape
+             print(f"Warning: No plan_info found for student {self.student_id}. Returning zero state.")
+             return np.zeros(self.observation_space.shape, dtype=np.float32)
+
+        memorized_parts_percentage = (plan_info.memorized_parts / 30.0) if plan_info.memorized_parts is not None else 0.0
         session_count = RecitationSessionService.get_student_sessions_count(
             student_id=self.student_id,
             recitation_type=self._session_type_name(self.session_type),
-            start_date=cutoff_date,
+            # start_date=cutoff_date,
             is_rating_not_none = True #!
         )
-        session_count_normalized = session_count / history_window
-        ### ??? Is it correct
+        session_count_normalized = (session_count / self.history_window) if self.history_window > 0 else 0.0
+        ### ??? Is it correct - Seems reasonable if history_window is fixed
 
         # Session type encoding
-        session_type_onehot = np.eye(3)[self.session_type - 1]
+        session_type_onehot = np.zeros(3) # Initialize with zeros
+        if 1 <= self.session_type <= 3:
+            session_type_onehot[self.session_type - 1] = 1.0
+
 
         # ********* I added the following values ​​as suggestions (Through AI):
 
-        # Again 
+        # Again
         recent_sessions2 = RecitationSessionService.get_student_sessions(
             student_id=self.student_id,
             recitation_type=self._session_type_name(self.session_type),
-            start_date=cutoff_date,
+            # start_date=cutoff_date,
             is_accepted = True #!
         )
 
-        letters_counts = [s.letters_count for s in recent_sessions2]
+        # Access attributes via s.recitation_session or s[0]
+        letters_counts = [s.recitation_session.letters_count for s in recent_sessions2 if s.recitation_session.letters_count is not None]
         avg_letters = np.mean(letters_counts) if letters_counts else 0.0
         letters_variance = np.var(letters_counts) if len(letters_counts) > 1 else 0.0
-        
-        # Get current letters amount
-        current_amount = getattr(plan_info, self._amount_column())
-        
-        # Normalize letters-related features relative to LSTM prediction        
+
+        # Get current letters amount - Handle potential None
+        current_amount = getattr(plan_info, self._amount_column(), 0.0) # Default to 0.0 if attribute missing or None
+        current_amount = current_amount if current_amount is not None else 0.0
+
+
+        # Normalize letters-related features relative to LSTM prediction
         avg_letters_normalized = avg_letters / lstm_pred if lstm_pred > 0 else 0.0
         letters_variance_normalized = letters_variance / (lstm_pred ** 2) if lstm_pred > 0 else 0.0
         current_amount_normalized = current_amount / lstm_pred if lstm_pred > 0 else 0.0
 
-        overall_rating_section = getattr(plan_info, self._rating_column()) / 5.0  # Normalize to 0-1
-        overall_rating = plan_info.overall_rating / 5.0  # Normalize to 0-1
+        # Handle potential None for ratings
+        overall_rating_section_raw = getattr(plan_info, self._rating_column(), 0.0)
+        overall_rating_section = (overall_rating_section_raw / 5.0) if overall_rating_section_raw is not None else 0.0
+        overall_rating = (plan_info.overall_rating / 5.0) if plan_info.overall_rating is not None else 0.0
 
-        return np.array([
+
+        state_array = np.array([
             avg_rating,
             success_rate,
             perf_variance,
@@ -123,6 +141,15 @@ class QuranLearningEnv(gym.Env):
             overall_rating,
             *session_type_onehot
         ], dtype=np.float32)
+
+        # Ensure the state array matches the observation space shape
+        if state_array.shape != self.observation_space.shape:
+            print(f"Error: State shape mismatch. Expected {self.observation_space.shape}, got {state_array.shape}")
+            # Pad or truncate if necessary, or raise an error
+            # For now, returning a zero state as a fallback
+            return np.zeros(self.observation_space.shape, dtype=np.float32)
+
+        return state_array
 
     def step(self, action):
         """Execute one time step within the environment"""
@@ -140,13 +167,14 @@ class QuranLearningEnv(gym.Env):
         latest_session = RecitationSessionService.get_student_sessions(
             student_id=self.student_id,
             recitation_type=self._session_type_name(self.session_type),
-            limit_count=1
+            limit_count=1 
         )
         latest_session = latest_session[0] if latest_session else None
         
         # Calculate reward based on session outcome
         reward = 0.0
         if latest_session:
+            print("////////////////////////////////////////")
             reward = self._calculate_reward(latest_session, new_amount, lstm_base)
             
             # 1. Save current values from DB
@@ -177,14 +205,28 @@ class QuranLearningEnv(gym.Env):
 
     def _calculate_reward(self, session, assigned_amount: float, lstm_base: float) -> float:
         """Enhanced reward function with ambition incentives"""
-        rating = session.rating / 5.0
-        ambition_bonus = 0.2 * (assigned_amount / lstm_base)
-        
-        if rating > 0.8 and assigned_amount < lstm_base:
-            penalty = 0.5 * (1 - (assigned_amount / lstm_base))
+        print("******************************")
+        # Access rating via session.recitation_session or session[0]
+        rating_raw = session.recitation_session.rating if session.recitation_session else None
+        if rating_raw is None:
+            print("Warning: Rating is None in _calculate_reward. Using 0.0.")
+            rating = 0.0
         else:
-            penalty = 0.0
-            
+            rating = rating_raw / 5.0
+
+        # Avoid division by zero for ambition_bonus
+        ambition_bonus = 0.0
+        if lstm_base > 0:
+             ambition_bonus = 0.2 * (assigned_amount / lstm_base)
+        else:
+             print("Warning: lstm_base is zero or negative in _calculate_reward.")
+             # Decide how to handle this case, e.g., bonus is 0 or based on assigned_amount
+
+        penalty = 0.0
+        # Avoid division by zero for penalty
+        if lstm_base > 0 and rating > 0.8 and assigned_amount < lstm_base:
+            penalty = 0.5 * (1 - (assigned_amount / lstm_base))
+
         return rating + ambition_bonus - penalty
 
     def _amount_column(self) -> str:
