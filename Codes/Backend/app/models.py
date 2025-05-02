@@ -102,7 +102,11 @@ class students_plans_info(db.Model):
     last_verse_recited_large_revision = db.Column(db.Integer, nullable=True)
     overall_rating_large_revision = db.Column(db.Float, nullable=True)
 
+    rl_last_action_new_memorization = db.Column(db.Float, nullable=True)
+    rl_last_action_minor_revision = db.Column(db.Float, nullable=True)
+    rl_last_action_major_revision = db.Column(db.Float, nullable=True)
+    
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
-    rl_last_action = db.Column(db.Float, nullable=True)
+ 

@@ -34,7 +34,9 @@ class StudentPlanInfoService:
             'overall_rating_new_memorization',
             'overall_rating_large_revision',
             'overall_rating_small_revision',
-            'rl_last_action'
+            'rl_last_action_new_memorization',
+            'rl_last_action_minor_revision',
+            'rl_last_action_major_revision'
         ]
         
         for field in optional_fields:
@@ -96,7 +98,9 @@ class StudentPlanInfoService:
                 'overall_rating_new_memorization',
                 'overall_rating_large_revision',
                 'overall_rating_small_revision',
-                'rl_last_action'
+                'rl_last_action_new_memorization',
+                'rl_last_action_minor_revision',
+                'rl_last_action_major_revision'
             ]
             
             for field in optional_fields:

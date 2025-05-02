@@ -47,7 +47,9 @@ class PlanService:
                     "new_memorization_letters_amount": plans["New_Memorization"]["final"],
                     "small_revision_letters_amount": plans["Minor_Revision"]["final"],
                     "large_revision_letters_amount": plans["Major_Revision"]["final"],
-                    'rl_last_action': plans[self._session_type_name(session_type)]['adjustment'] 
+                    "rl_last_action_new_memorization": float(plans["New_Memorization"]["adjustment"].rstrip('%')) / 100.0,
+                    "rl_last_action_minor_revision": float(plans["Minor_Revision"]["adjustment"].rstrip('%')) / 100.0,
+                    "rl_last_action_major_revision": float(plans["Major_Revision"]["adjustment"].rstrip('%')) / 100.0
                 }
 
                 StudentPlanInfoService.update_planInfo(student_id=student_id, plan_data=new_amount)
