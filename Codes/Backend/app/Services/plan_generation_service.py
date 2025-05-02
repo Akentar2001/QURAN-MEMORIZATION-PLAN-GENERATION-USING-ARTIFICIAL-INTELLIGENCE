@@ -1,5 +1,4 @@
 from sqlalchemy import and_
-from sqlalchemy.orm import Session
 from app.models import students_plans_info as StudentsPlansInfo
 from app.models import verses as Verse
 from app.models import db
@@ -12,8 +11,6 @@ class PlanGenerationService:
 
     def generate_plan(self, student_id, start_date=date.today(), isUpdate=False):
         try:
-            # fake_date = "2025-03-02"  #! I transferred it to Students_Services line 36
-            # start_date = date.fromisoformat(fake_date) if fake_date else date.today()
             plan_data = self._initialize_plan_data(student_id, start_date)
             
             for day in plan_data['days']:
@@ -262,7 +259,6 @@ class PlanGenerationService:
             if not new_memo_sessions:
                 return None
             
-            # new_memo_sessions = [s[0] for s in sessions]
             new_memo_sessions = [self.db.session.merge(session) for session in new_memo_sessions]
 
             if amount_type == 'default':

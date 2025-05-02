@@ -1,11 +1,11 @@
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, backend_path)
 
-from datetime import datetime, timedelta
-from Backend.app.Services.recitation_session_Service import RecitationSessionService
-from Backend.app.Services.students_plans_info_services import StudentPlanInfoService
+from app.Services.recitation_session_Service import RecitationSessionService
+from app.Services.students_plans_info_services import StudentPlanInfoService
 import numpy as np
 from sqlalchemy import func
 import gym
@@ -58,14 +58,20 @@ class QuranLearningEnv(gym.Env):
 
     def seed(self, seed=None):
         """Sets the seed for this env's random number generator(s)."""
-        # Note: Gym environments should implement this method
-        # We use Python's random and NumPy's random for consistency
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         random.seed(seed)
         # If you use other RNGs, seed them here too
         return [seed]
 
     def reset(self):
+        # Load all sessions for this student and session type, ordered oldest to newest
+        self.sessions = RecitationSessionService.get_student_sessions(
+            student_id=self.student_id,
+            recitation_type=self._session_type_name(self.session_type),
+            is_rating_not_none=True,
+            ascending=True  # <-- This ensures oldest to newest order
+        )
+        self.session_pointer = 0
         return self._get_state()
 
     def _get_state(self) -> np.ndarray:
@@ -89,8 +95,6 @@ class QuranLearningEnv(gym.Env):
         plan_info = StudentPlanInfoService.get_planInfo(student_id=self.student_id)
         # Handle potential None for plan_info
         if not plan_info:
-             # Return a default state or raise an error if plan_info is crucial
-             # For now, returning a zero state of the correct shape
              print(f"Warning: No plan_info found for student {self.student_id}. Returning zero state.")
              return np.zeros(self.observation_space.shape, dtype=np.float32)
 
@@ -162,17 +166,15 @@ class QuranLearningEnv(gym.Env):
         lstm_base = self.lstm_predictor.predict(self.student_id, self.session_type)
         
         # Calculate new amount based on action
-        # Action is a percentage adjustment to the LSTM prediction
         new_amount = lstm_base * (1 + float(action[0]))
         
-        # Get the latest session for this type to calculate reward
-        # This call might be returning a session with rating=None
-        latest_session = RecitationSessionService.get_student_sessions(
-            student_id=self.student_id,
-            recitation_type=self._session_type_name(self.session_type),
-            limit_count=1 # Assuming it fetches the single latest session
-        )
-        latest_session = latest_session[0][0] if latest_session else None # Access session object
+        # Use the session at the current pointer
+        if self.session_pointer < len(self.sessions):
+            current_session_tuple = self.sessions[self.session_pointer]
+            latest_session = current_session_tuple[0] if current_session_tuple else None
+        else:
+            latest_session = None
+
         print(latest_session)
         
         # Calculate reward based on session outcome
@@ -203,8 +205,14 @@ class QuranLearningEnv(gym.Env):
             next_state = current_state
         
         # Environment never terminates
-        done = True 
         
+        
+        # Increment pointer for next step
+        self.session_pointer += 1
+
+        # Set done=True if all sessions have been used
+        done = self.session_pointer >= len(self.sessions)
+        print(done)
         return next_state, reward, done, {}
 
     def _calculate_reward(self, session, assigned_amount: float, lstm_base: float) -> float:
@@ -214,10 +222,7 @@ class QuranLearningEnv(gym.Env):
              rating = session.rating / 5.0 # Normalize rating
              print(rating)
         else:
-             # This is where the warning is likely generated
-             print("******************************")
              print("Warning: Rating is None in _calculate_reward. Using 0.0.")
-            #  print("////////////////////////////////////////")
              rating = 0.0 # Default reward component if no rating
 
         # Avoid division by zero for ambition_bonus

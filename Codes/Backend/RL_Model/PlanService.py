@@ -19,7 +19,7 @@ class PlanService:
         self.app = app  
 
     def _load_model(self):
-        model_path = "rl_model.zip"
+        model_path = os.path.join(os.path.dirname(__file__), "rl_model.zip")
         if os.path.exists(model_path):
             return PPO.load(model_path)
         return PPO("MlpPolicy", make_vec_env(lambda: QuranLearningEnv(0, 1)))
@@ -30,7 +30,6 @@ class PlanService:
             with self.app.app_context():
                 plan_info = StudentPlanInfoService.get_planInfo(student_id=student_id)
            
-                # Generate plans for all session types
                 plans = {}
                 for session_type in [1, 2, 3]:
                     env = QuranLearningEnv(student_id, session_type)
@@ -38,7 +37,6 @@ class PlanService:
                     action, _ = self.rl_model.predict(state, deterministic=True)
                     lstm_base = self.lstm_predictor.predict(student_id, session_type)
                     final_amount = max(lstm_base * (1 + action[0]), 10.0)
-                    print(444444444444444444444444)
                     plans[self._session_type_name(session_type)] = {
                         'base': lstm_base,
                         'final': final_amount,
@@ -48,7 +46,8 @@ class PlanService:
                 new_amount = {
                     "new_memorization_letters_amount": plans["New_Memorization"]["final"],
                     "small_revision_letters_amount": plans["Minor_Revision"]["final"],
-                    "large_revision_letters_amount": plans["Major_Revision"]["final"]
+                    "large_revision_letters_amount": plans["Major_Revision"]["final"],
+                    'rl_last_action': plans[self._session_type_name(session_type)]['adjustment'] 
                 }
 
                 StudentPlanInfoService.update_planInfo(student_id=student_id, plan_data=new_amount)
