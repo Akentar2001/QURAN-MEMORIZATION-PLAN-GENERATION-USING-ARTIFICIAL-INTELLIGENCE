@@ -78,9 +78,9 @@ def main():
         
         if choice == "1":
             student_id = int(input("Enter student ID: "))
-            # year = int(input("Enter year (YYYY): "))
-            # month = int(input("Enter month (1-12): "))
-            # day = int(input("Enter day (1-31): "))
+            year = int(input("Enter year (YYYY): "))
+            month = int(input("Enter month (1-12): "))
+            day = int(input("Enter day (1-31): "))
             generate_plan_for_student(student_id, date(year, month, day))
         
         elif choice == "2":
