@@ -41,7 +41,7 @@ def load_models_and_scalers():
 # ========================
 # 2. Prepare Test Sequences
 # ========================
-def prepare_test_sequences(df, pillar_id, scaler, test_students=None):
+def prepare_test_sequences(df, pillar_id, scaler, sequence_length=5, test_students=None):
     """
     Prepare test sequences for a specific pillar
     
@@ -49,6 +49,7 @@ def prepare_test_sequences(df, pillar_id, scaler, test_students=None):
     - df: DataFrame with student data
     - pillar_id: The pillar ID to filter for
     - scaler: The scaler for this pillar's data
+    - sequence_length: Length of input sequences
     - test_students: Optional list of student IDs to use for testing
     
     Returns:
@@ -75,22 +76,19 @@ def prepare_test_sequences(df, pillar_id, scaler, test_students=None):
     # Group by student
     grouped = pillar_df.groupby('student_id')
     for student_id, group in grouped:
-        # Skip if student_id is not in test_students (if specified)
         if test_students is not None and student_id not in test_students:
             continue
             
-        # Get indices
         group_indices = group.index
-        if len(group_indices) < 6:  # Need at least 4 sessions for one test sequence
+        if len(group_indices) < sequence_length + 1:
             continue
         
-        # Use the last session as test data
-        for i in range(5, len(group_indices)):
-            seq_indices = group_indices[i-5:i]
+        for i in range(sequence_length, len(group_indices)):
+            seq_indices = group_indices[i-sequence_length:i]
             target_index = group_indices[i]
             
             seq = scaled_features[seq_indices]
-            target = scaled_features[target_index, 0]  # Only take letters_count (first column)
+            target = scaled_features[target_index, 0]
             
             sequences.append((seq, target))
             student_ids.append(student_id)
@@ -364,14 +362,14 @@ def test_models():
 # ========================
 # 8. New Student Prediction Function
 # ========================
-def predict_letters_for_new_student(student_id, pillar_id, last_3_sessions, model, scaler):
+def predict_letters_for_new_student(student_id, pillar_id, last_sessions, model, scaler):
     """
     Predict next session letters count for a specific student and pillar
     
     Parameters:
     - student_id: ID of the student
     - pillar_id: Pillar type to predict for
-    - last_3_sessions: List of tuples (letters_count, pages_count) for last 3 sessions
+    - last_sessions: List of tuples (letters_count, pages_count) for last sessions
     - model: Trained model for this pillar
     - scaler: Scaler for this pillar
     
@@ -379,13 +377,20 @@ def predict_letters_for_new_student(student_id, pillar_id, last_3_sessions, mode
     - Predicted letters_count for next session
     """
     # Convert to array
-    last_3_sessions_array = np.array(last_3_sessions)
+    last_sessions_array = np.array(last_sessions)
     
     # Scale the input
-    scaled_input = scaler.transform(last_3_sessions_array)
+    scaled_input = scaler.transform(last_sessions_array)
+    
+    # Get the sequence length from the model's input shape
+    sequence_length = model.input_shape[1]
+    
+    # Ensure we have the correct number of sessions
+    if len(last_sessions) != sequence_length:
+        raise ValueError(f"Model expects {sequence_length} sessions, but got {len(last_sessions)}")
     
     # Reshape for LSTM (samples, time steps, features)
-    X_input = scaled_input.reshape(1, 3, 2)
+    X_input = scaled_input.reshape(1, sequence_length, 2)
     
     # Make prediction
     scaled_prediction = model.predict(X_input)[0]
